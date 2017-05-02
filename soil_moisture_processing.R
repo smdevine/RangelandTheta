@@ -2,6 +2,7 @@
 #large divergence at Location 11 at 22 cm depth
 library(rgdal)
 library(raster)
+library(sp)
 min_modified <- function(x) {
   if(all(is.na(x))) {
     return(NA)
@@ -14,7 +15,7 @@ max_modified <- function(x) {
   }
   else {max(x, na.rm = TRUE)}
 }
-mainDir <- 'C:/Users/smdevine/Desktop/rangeland project/soilmoisture/jan2017/csv files'
+mainDir <- 'C:/Users/smdevine/Desktop/rangeland project/soilmoisture/apr2017/csv_files'
 spatialDir <- 'C:/Users/smdevine/Desktop/rangeland project/soilmoisture/sensor_coordinates'
 terrainDir <- 'C:/Users/smdevine/Desktop/rangeland project/terrain_analysis_r'
 #read-in coordinate data
@@ -26,12 +27,16 @@ print(sensor_coords, digits=10) #default is 7, which could be changed under opti
 longitude <- sensor_coords$Easting_utm10N #this is x coordinate
 latitude <- sensor_coords$Northing_utm10N #this is y coordinate
 lonlat <- cbind(longitude, latitude) #convention is to present as x, y
-library(sp)
 crs_sensors <- CRS('+proj=utm +zone=10 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0') #as defined by prj file sent by Grace to me for sensor locations
 sensor_pts <- SpatialPoints(lonlat, proj4string=crs_sensors)
 sensor_pts <- SpatialPointsDataFrame(sensor_pts, data=sensor_coords)
+
 #write to file if so desired
 shapefile(x=sensor_pts, filename='5TM_sensor_locations_Camatta.shp')
+
+#read-in sensor pts file
+setwd(spatialDir)
+sensor_pts <- shapefile('5TM_sensor_locations_Camatta.shp')
 
 #plot aspect of the catchment
 setwd(plotDir)
@@ -55,8 +60,6 @@ plot(e_clip, main='Soil moisture sensor locations and elevation of Camatta catch
 plot(sensor_pts, pch=17, col='blue', add=T)
 text(x=sensor_pts, labels='datalogger_no', pos=1, cex=1.1, halo=T)
 
-
-
 #read in terrain rasters from 10 m DEM analysis done in 'study_site_analysis.R" for slope, aspect, and TPI. CTI calc done in ArcGIS and exported to same folder as tif files.
 setwd(terrainDir)
 slope <- raster('slope.tif') #expressed in degrees
@@ -79,10 +82,12 @@ sensor_pts_df$latitude <- NULL
 
 #now, read-in and process the soil moisture data
 setwd(mainDir)
-soil_moisture_fnames <- list.files()
+soil_moisture_fnames <- list.files(pattern = glob2rx('*.csv'))
 soil_moisture_dfs <- lapply(soil_moisture_fnames, read.csv, stringsAsFactors=FALSE, na.strings="***")
 names(soil_moisture_dfs) <- soil_moisture_fnames
 # test <- lapply(soil_moisture_dfs, function(x) {x[1, 1] <- ""}) #this didn't work0
+
+#reformat each dataframe; need to check excel files exported from DataTrac that sensor names are included (e.g. 5TM_P16_A7)
 for (i in 1:length(soil_moisture_dfs)) {
   soil_moisture_dfs[[i]][1, 1] <- ""
   colnames(soil_moisture_dfs[[i]]) <- paste(soil_moisture_dfs[[i]][1, ], soil_moisture_dfs[[i]][2, ])
@@ -101,15 +106,15 @@ for (i in 1:length(soil_moisture_dfs)) {
   print(paste("Location ", soil_moisture_dfs[[i]]$location[1], 'B at 7 cm depth has ', length(which(is.na(soil_moisture_dfs[[i]][ ,6]))), " NAs for VWC.", sep=''))
   print(paste("Location ", soil_moisture_dfs[[i]]$location[1], 'B at 22 cm depth has ', length(which(is.na(soil_moisture_dfs[[i]][ ,8]))), " NAs for VWC.", sep=''))
 }
-#switch A7 sensor with A22 sensor data for location 15
-a22VWC <- soil_moisture_dfs$`Cam15-16Jan2017-1514.csv`$`5TM_P15_A7 m³/m³ VWC`
-a7VWC <- soil_moisture_dfs$`Cam15-16Jan2017-1514.csv`$`5TM_P15_A22 m³/m³ VWC`
-a22T <- soil_moisture_dfs$`Cam15-16Jan2017-1514.csv`$`5TM_P15_A7 °C Temp`
-a7T <- soil_moisture_dfs$`Cam15-16Jan2017-1514.csv`$`5TM_P15_A22 °C Temp`
-soil_moisture_dfs$`Cam15-16Jan2017-1514.csv`$`5TM_P15_A7 m³/m³ VWC` <- a7VWC
-soil_moisture_dfs$`Cam15-16Jan2017-1514.csv`$`5TM_P15_A22 m³/m³ VWC` <- a22VWC
-soil_moisture_dfs$`Cam15-16Jan2017-1514.csv`$`5TM_P15_A7 °C Temp` <- a7T
-soil_moisture_dfs$`Cam15-16Jan2017-1514.csv`$`5TM_P15_A22 °C Temp` <- a22T
+#switch A7 sensor with A22 sensor data for location 15 (updated for April 2017 download)
+a22VWC <- soil_moisture_dfs$`Cam15-10Apr2017-1241.csv`$`5TM_P15_A7 m³/m³ VWC`
+a7VWC <- soil_moisture_dfs$`Cam15-10Apr2017-1241.csv`$`5TM_P15_A22 m³/m³ VWC`
+a22T <- soil_moisture_dfs$`Cam15-10Apr2017-1241.csv`$`5TM_P15_A7 °C Temp`
+a7T <- soil_moisture_dfs$`Cam15-10Apr2017-1241.csv`$`5TM_P15_A22 °C Temp`
+soil_moisture_dfs$`Cam15-10Apr2017-1241.csv`$`5TM_P15_A7 m³/m³ VWC` <- a7VWC
+soil_moisture_dfs$`Cam15-10Apr2017-1241.csv`$`5TM_P15_A22 m³/m³ VWC` <- a22VWC
+soil_moisture_dfs$`Cam15-10Apr2017-1241.csv`$`5TM_P15_A7 °C Temp` <- a7T
+soil_moisture_dfs$`Cam15-10Apr2017-1241.csv`$`5TM_P15_A22 °C Temp` <- a22T
 
 #merge terrain characteristics with soil_moisture_dfs (can do in a loop, trying merge at each iteration)
 for (i in 1:length(soil_moisture_dfs)){
@@ -217,9 +222,6 @@ for (i in 1:length(sensor_codes)) {
   axis.Date(side = 1, labDates, at=labDates, format = '%m/%d')
   #plot(by_sensor$Date_Calendar, by_sensor$MaxVWC, type='b')
 }
-
-
-
 
 #made spatial points object from scratch as above
 #coordinate data from Grace 2/2/17 (from 1/16/17 trip)
