@@ -3,7 +3,8 @@
 #sensor A at point 14 at 7 cm depth was replaced on 1/16/17, because it was giving NA up to that point
 #sensor B at point 9 at 22 cm depth has data gap in early March (569 NAs); sensor A closely tracks so not really a problem
 #point 13 datalogger stopped working on 3/16/17; however on 3/10/17; both sensors at 22 cm depth suddenly reported a 0.1 VWC drop at 1 PM, which must be erroneous
-#to-do 5/3/17 (1)add elevation to terrain characteristics (2) check to see if higher resolution DEM is available
+#to-do 5/3/17 (1) add elevation to terrain characteristics; (2) check to see if higher resolution DEM is available; (3)solar radiation--beam radiance; (4) elevation above a channel; (5) distance from a ridge; (6) temporal stability of soil; (7) soil water 
+
 library(rgdal)
 library(raster)
 options(digits = 10)
@@ -24,6 +25,7 @@ mainDir <- 'C:/Users/smdevine/Desktop/rangeland project/soilmoisture/apr2017/csv
 spatialDir <- 'C:/Users/smdevine/Desktop/rangeland project/soilmoisture/sensor_coordinates'
 terrainDir <- 'C:/Users/smdevine/Desktop/rangeland project/terrain_analysis_r'
 results <- 'C:/Users/smdevine/Desktop/rangeland project/results'
+
 #read-in coordinate data; not necessary to rerun this now
 plotDir <- 'C:/Users/smdevine/Desktop/rangeland project/study_plots'
 elevDir <- 'C:/Users/smdevine/Desktop/rangeland project/elevation_NED10M_studysite/elevation'
@@ -53,7 +55,6 @@ aspect_clip <- crop(aspect, camatta)
 brks <- c(22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5)
 legend <- list(at=c(45, 90, 135, 180, 225, 270, 315, 355), labels=c('Northeast', 'East', 'Southeast', 'South', 'Southwest', 'West', 'Northwest', 'North'))
 plot(aspect_clip, main='Soil moisture sensor locations and aspect of Camatta catchment', breaks=brks, col=terrain.colors(8), axis.args=legend)
-
 
 #or, plot elevation
 setwd(elevDir)
@@ -140,7 +141,7 @@ soil_moisture_dfs$`Cam15-10Apr2017-1241.csv`$`5TM_P15_A22 °C Temp` <- a22T
 #merge terrain characteristics with soil_moisture_dfs 
 for (i in 1:length(soil_moisture_dfs)){
   location <- soil_moisture_dfs[[i]]$location[1]
-  rownum <- match(location, sensor_pts_df$dtlggr_)
+  rownum <- match(location, sensor_pts_df$datalogger_no)
   land_position_data <- sensor_pts_df[rownum, ]
   soil_moisture_dfs[[i]] <- merge(soil_moisture_dfs[[i]], land_position_data)
 }
@@ -150,6 +151,12 @@ setwd(file.path(results, 'processed_soil_moisture/Apr2017'))
 for (i in 1:length(soil_moisture_dfs)) {
   write.csv(soil_moisture_dfs[[i]], paste(sub('.csv', '', names(soil_moisture_dfs)[i]), 'processed', format(Sys.Date(), "%F"), '.csv', sep = ''), row.names = FALSE)
 }
+
+#read in merged data
+setwd(file.path(results, 'processed_soil_moisture/Apr2017'))
+soil_moisture_fnames <- list.files(pattern = glob2rx('*.csv'))
+soil_moisture_dfs <- lapply(soil_moisture_fnames, read.csv, stringsAsFactors=FALSE)
+names(soil_moisture_dfs) <- soil_moisture_fnames
 
 #write function to plot raw data by sensor
 #need to work on scaling because if scale for Sensor A differs from Sensor B, it will not plot correctly - problem with Point 11 at 22 cm depth
@@ -196,52 +203,52 @@ for (i in 2:length(soil_moisture_dfs)) {
   lines.default(soil_moisture_dfs[[i]][ ,1], rowMeans(soil_moisture_dfs[[i]][ ,c(2,6)], na.rm = TRUE), col=i+1)
 }
 
-#write function to take raw data and produce daily average at each depth and overall at each point
-daily_dataVWC <- as.data.frame(matrix(ncol = 8))
-names(daily_dataVWC) <- c("Date", "Location", "Depth", "SubsampleID", "MeanVWC", "MaxVWC", "MinVWC", "DeltaVWC_day")
-dates <- unique(soil_moisture_dfs[[1]]$date)
-#extract mean, max, and min at 7 cm (column 2)
-#i <- 1
-#j <- 2
-for (j in c(2, 4, 6, 8)) { #this refers to columns with VWC data
-#replace 2 with j in column indexing
-  for (i in 1:16) {
-    i <- 1
-    j <- 2
+#write function to take raw data and produce daily statistics for each sensor
+for (i in 1:length(soil_moisture_dfs)) {
+  for (j in c(2, 4, 6, 8)) { #this refers to columns with VWC data
     VWC <- as.data.frame(tapply(soil_moisture_dfs[[i]][ ,j], soil_moisture_dfs[[i]]$date, mean, na.rm=TRUE))
     colnames(VWC) <- 'MeanVWC'
+    VWC$MedianVWC <- as.numeric(tapply(soil_moisture_dfs[[i]][ ,j], soil_moisture_dfs[[i]]$date, median, na.rm=TRUE))
     VWC$MaxVWC <- as.numeric(tapply(soil_moisture_dfs[[i]][ ,j], soil_moisture_dfs[[i]]$date, max_modified))
     VWC$MinVWC <- as.numeric(tapply(soil_moisture_dfs[[i]][ ,j], soil_moisture_dfs[[i]]$date, min_modified))
     VWC$Date <- rownames(VWC)
     rownames(VWC) <- NULL
     VWC$Location <- soil_moisture_dfs[[i]]$location[1]
     VWC$Depth <- substr(colnames(soil_moisture_dfs[[i]])[j], 9, 11)
-    VWC$Depth <- gsub('[A, B, m]', '', VWC$Depth)
+    VWC$Depth <- gsub('[A, B, m, .]', '', VWC$Depth)
     VWC$Depth <- gsub(' ', '', VWC$Depth)
     VWC$SubsampleID <-substr(colnames(soil_moisture_dfs[[i]])[j], 8, 9)
-    VWC$SubsampleID <- gsub('[7, 2, _]', '', VWC$Subsample)
-    #ok up to this point
-    VWC <- VWC[ ,c(4, 5, 6, 7, 1, 2, 3)]
-    for (k in 1:length(dates)) {
-      t <- which(soil_moisture_dfs[[i]]$date==dates[k])
-      VWC_init <- soil_moisture_dfs[[i]][t[1], j]
-      VWC_final <- soil_moisture_dfs[[i]][t[length(t)], j]
-      VWC$DeltaVWC_day[k] <- VWC_final - VWC_init
+    VWC$SubsampleID <- gsub('[7, 2, _, .]', '', VWC$Subsample)
+    VWC$Nrt_10N <- soil_moisture_dfs[[i]]$Nrt_10N[1]
+    VWC$Est_10N <- soil_moisture_dfs[[i]]$Est_10N[1]
+    VWC$slope <- soil_moisture_dfs[[i]]$slope[1]
+    VWC$aspect_deg <- soil_moisture_dfs[[i]]$aspect[1]
+    VWC$cti <- soil_moisture_dfs[[i]]$cti[1] #see raster package, terrain function for definition
+    VWC$mean_curv <- soil_moisture_dfs[[i]]$mean_curv[1]
+    VWC$aspect_cardinal <- soil_moisture_dfs[[i]]$aspect_cardinal[1]
+    if (i==1 & j==2) {
+      daily_dataVWC <- VWC
+      next
     }
-    if (i==1 & j==2) {daily_dataVWC <- VWC} else{daily_dataVWC <- rbind(daily_dataVWC, VWC)}
+    daily_dataVWC <- rbind(daily_dataVWC, VWC)
   }
 }
 #add sensor code column
 daily_dataVWC$sensor_code <- paste(daily_dataVWC$Location, '-', daily_dataVWC$Depth, '-', daily_dataVWC$SubsampleID, sep='')
 #add time column
 daily_dataVWC$Date_Calendar <- as.Date(daily_dataVWC$Date, format='%Y%m%d')
+#save daily summary for each sensor
+setwd(file.path(results, 'processed_soil_moisture/Apr2017/daily_by_sensor'))
+write.csv(daily_dataVWC, paste('daily_by_sensor_summary', 'processed', format(Sys.Date(), "%F"), '.csv', sep = ''), row.names=FALSE)
+
+
+
+
+
 #sort the dataframe, but first change Location and Depth from character to integer class
 daily_dataVWC$Location <- as.integer(daily_dataVWC$Location)
 daily_dataVWC$Depth <- as.integer(daily_dataVWC$Depth)
 daily_dataVWC <- daily_dataVWC[with(daily_dataVWC, order(Location, Depth, SubsampleID, Date_Calendar)), ]
-
-#find max by day for each sensor location
-tapply(daily_dataVWC$MaxVWC, daily_dataVWC$sensor_code, max_modified)
 
 #plotting daily data
 sensor_codes <- unique(daily_dataVWC$sensor_code)
@@ -253,8 +260,20 @@ for (i in 1:length(sensor_codes)) {
   #plot(by_sensor$Date_Calendar, by_sensor$MaxVWC, type='b')
 }
 
+
+
+#extra code
+#to determine change from beginning to end of each day
+for (k in 1:length(dates)) {
+  t <- which(soil_moisture_dfs[[i]]$date==dates[k])
+  VWC_init <- soil_moisture_dfs[[i]][t[1], j]
+  VWC_final <- soil_moisture_dfs[[i]][t[length(t)], j]
+  VWC$DeltaVWC_day[k] <- VWC_final - VWC_init
+}
+
+
 #made spatial points object from scratch as above
-#coordinate data from Grace 2/2/17 (from 1/16/17 trip)
+#coordinate data from Grace 2/2/17 (from 1/16/17 trip). these are the coordinates for the mid-point between each pair of sensors at each location (datalogger)
 setwd(spatialDir)
 coordinates <- shapefile('Point_ge.shp')
 coordinates_df <- data.frame(coordinates)
