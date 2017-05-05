@@ -211,13 +211,17 @@ for (i in 1:length(soil_moisture_dfs)) {
     VWC$MedianVWC <- as.numeric(tapply(soil_moisture_dfs[[i]][ ,j], soil_moisture_dfs[[i]]$date, median, na.rm=TRUE))
     VWC$MaxVWC <- as.numeric(tapply(soil_moisture_dfs[[i]][ ,j], soil_moisture_dfs[[i]]$date, max_modified))
     VWC$MinVWC <- as.numeric(tapply(soil_moisture_dfs[[i]][ ,j], soil_moisture_dfs[[i]]$date, min_modified))
+    VWC$MeanT <- as.numeric(tapply(soil_moisture_dfs[[i]][ ,j+1], soil_moisture_dfs[[i]]$date, mean, na.rm=TRUE))
+    VWC$MedianT <- as.numeric(tapply(soil_moisture_dfs[[i]][ ,j+1], soil_moisture_dfs[[i]]$date, median, na.rm=TRUE))
+    VWC$MinT <- as.numeric(tapply(soil_moisture_dfs[[i]][ ,j+1], soil_moisture_dfs[[i]]$date, min_modified))
+    VWC$MaxT <- as.numeric(tapply(soil_moisture_dfs[[i]][ ,j+1], soil_moisture_dfs[[i]]$date, max_modified))
     VWC$Date <- rownames(VWC)
     rownames(VWC) <- NULL
     VWC$Location <- soil_moisture_dfs[[i]]$location[1]
-    VWC$Depth <- substr(colnames(soil_moisture_dfs[[i]])[j], 9, 11)
+    VWC$Depth <- substr(colnames(soil_moisture_dfs[[i]])[j], 10, 12)
     VWC$Depth <- gsub('[A, B, m, .]', '', VWC$Depth)
-    VWC$Depth <- gsub(' ', '', VWC$Depth)
-    VWC$SubsampleID <-substr(colnames(soil_moisture_dfs[[i]])[j], 8, 9)
+    VWC$Depth <- as.integer(gsub(' ', '', VWC$Depth))
+    VWC$SubsampleID <-substr(colnames(soil_moisture_dfs[[i]])[j], 9, 10)
     VWC$SubsampleID <- gsub('[7, 2, _, .]', '', VWC$Subsample)
     VWC$Nrt_10N <- soil_moisture_dfs[[i]]$Nrt_10N[1]
     VWC$Est_10N <- soil_moisture_dfs[[i]]$Est_10N[1]
@@ -234,21 +238,35 @@ for (i in 1:length(soil_moisture_dfs)) {
   }
 }
 #add sensor code column
-daily_dataVWC$sensor_code <- paste(daily_dataVWC$Location, '-', daily_dataVWC$Depth, '-', daily_dataVWC$SubsampleID, sep='')
+daily_dataVWC$sensor_code <- paste(daily_dataVWC$Location, '-', daily_dataVWC$Depth, '-', daily_dataVWC$SubsampleID, sep='') #as Location(i.e. datalogger no)-Depth-Subsample ID
 #add time column
 daily_dataVWC$Date_Calendar <- as.Date(daily_dataVWC$Date, format='%Y%m%d')
+#order this by location, depth, subsampleID, and date
+daily_dataVWC <- daily_dataVWC[with(daily_dataVWC, order(Location, Depth, SubsampleID, Date_Calendar)), ]
 #save daily summary for each sensor
 setwd(file.path(results, 'processed_soil_moisture/Apr2017/daily_by_sensor'))
-write.csv(daily_dataVWC, paste('daily_by_sensor_summary', 'processed', format(Sys.Date(), "%F"), '.csv', sep = ''), row.names=FALSE)
+write.csv(daily_dataVWC, paste('daily_by_sensor_summary', 'processed', format(Sys.Date(), "%F"), '.csv', sep = ''), row.names=FALSE) #9052 rows for April 2017 data
+
+#read-in daily summary for each summary
+setwd(file.path(results, 'processed_soil_moisture/Apr2017/daily_by_sensor'))
+daily_fnames <- list.files()
+daily_fnames
+daily_dataVWC <- read.csv(daily_fnames[2], stringsAsFactors = FALSE)
+head(daily_dataVWC)
+
+#write loop to produce daily means by depth
+depth <- 7
+colnames(daily_dataVWC)
+daily_by_location <- function(depth, df, varname) {
+  a <- which(df$Depth==depth)
+  specific_depth <- df[a,]
+  depth_aggregated <- as.data.frame(tapply(specific_depth[[varname]], list(specific_depth$Location), mean, na.rm=TRUE))
+  depth_aggregated$date <- row.names(depth_aggregated)
+  row.names(depth_aggregated) <- NULL
+}
+test <- daily_by_location(7, daily_dataVWC, "MedianVWC")
 
 
-
-
-
-#sort the dataframe, but first change Location and Depth from character to integer class
-daily_dataVWC$Location <- as.integer(daily_dataVWC$Location)
-daily_dataVWC$Depth <- as.integer(daily_dataVWC$Depth)
-daily_dataVWC <- daily_dataVWC[with(daily_dataVWC, order(Location, Depth, SubsampleID, Date_Calendar)), ]
 
 #plotting daily data
 sensor_codes <- unique(daily_dataVWC$sensor_code)
