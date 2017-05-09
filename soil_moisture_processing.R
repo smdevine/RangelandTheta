@@ -3,7 +3,7 @@
 #sensor A at point 14 at 7 cm depth was replaced on 1/16/17, because it was giving NA up to that point
 #sensor B at point 9 at 22 cm depth has data gap in early March (569 NAs); sensor A closely tracks so not really a problem
 #point 13 datalogger stopped working on 3/16/17; however on 3/10/17; both sensors at 22 cm depth suddenly reported a 0.1 VWC drop at 1 PM, which must be erroneous
-#to-do 5/3/17 (1) add elevation to terrain characteristics; (2) check to see if higher resolution DEM is available; (3)solar radiation--beam radiance; (4) elevation above a channel; (5) distance from a ridge; (6) temporal stability of soil; (7) soil water 
+#to-do 5/3/17 (1) add elevation to terrain characteristics; (2) check to see if higher resolution DEM is available; (3)solar radiation--beam radiance calculation; (4) elevation above a channel; (5) distance from a ridge; (6) temporal stability of soil water 
 
 library(rgdal)
 library(raster)
@@ -59,13 +59,14 @@ plot(aspect_clip, main='Soil moisture sensor locations and aspect of Camatta cat
 #or, plot elevation
 setwd(elevDir)
 e <- raster('dem10m_combined.tif')
+plot(e)
 e_clip <- crop(e, camatta)
 plot(e_clip, main='Soil moisture sensor locations and elevation of Camatta catchment', col=terrain.colors(5))
 
 
 #and plot the sensor locations
 plot(sensor_pts, pch=17, col='blue', add=T)
-text(x=sensor_pts, labels=sensor_pts$dtlggr_, pos=1, cex=1.1, halo=T)
+text(x=sensor_pts, labels=sensor_pts$datalogger_no, pos=1, cex=1.1, halo=T)
 
 #read in terrain rasters from 10 m DEM analysis done in 'study_site_analysis.R" for slope, aspect, and TPI. CTI calc done in ArcGIS and exported to same folder as tif files.
 setwd(terrainDir)
@@ -243,28 +244,38 @@ daily_dataVWC$sensor_code <- paste(daily_dataVWC$Location, '-', daily_dataVWC$De
 daily_dataVWC$Date_Calendar <- as.Date(daily_dataVWC$Date, format='%Y%m%d')
 #order this by location, depth, subsampleID, and date
 daily_dataVWC <- daily_dataVWC[with(daily_dataVWC, order(Location, Depth, SubsampleID, Date_Calendar)), ]
+
 #save daily summary for each sensor
 setwd(file.path(results, 'processed_soil_moisture/Apr2017/daily_by_sensor'))
 write.csv(daily_dataVWC, paste('daily_by_sensor_summary', 'processed', format(Sys.Date(), "%F"), '.csv', sep = ''), row.names=FALSE) #9052 rows for April 2017 data
 
-#read-in daily summary for each summary
+#read-in daily summary for each location summary
 setwd(file.path(results, 'processed_soil_moisture/Apr2017/daily_by_sensor'))
 daily_fnames <- list.files()
 daily_fnames
 daily_dataVWC <- read.csv(daily_fnames[2], stringsAsFactors = FALSE)
 head(daily_dataVWC)
-
-#write loop to produce daily means by depth
-depth <- 7
 colnames(daily_dataVWC)
+
+#write function to produce daily means by depth for each pair of sensors for median, mean, max, and min daily data by sensor
+depth <- 7
+df <- daily_dataVWC
+varname <- 'MedianVWC'
 daily_by_location <- function(depth, df, varname) {
   a <- which(df$Depth==depth)
   specific_depth <- df[a,]
-  depth_aggregated <- as.data.frame(tapply(specific_depth[[varname]], list(specific_depth$Location), mean, na.rm=TRUE))
-  depth_aggregated$date <- row.names(depth_aggregated)
+  depth_aggregated <- as.data.frame(tapply(specific_depth[[varname]], list(specific_depth$Location, specific_depth$Date_Calendar), mean, na.rm=TRUE))
+  depth_aggregated$location <- as.integer(row.names(depth_aggregated))
   row.names(depth_aggregated) <- NULL
+  depth_aggregated <- depth_aggregated[ ,c(ncol(depth_aggregated), 1:(ncol(depth_aggregated)-1))]
+  setwd(results)
+  sensor_pts_df <- read.csv("sensor_terrain_characteristics5_3_17.csv", stringsAsFactors = FALSE) #this needs to be updated for additional terrain characteristics with higher res DEM
+  depth_aggregated <- merge.data.frame(depth_aggregated, sensor_pts_df, by='location')
+  
 }
+
 test <- daily_by_location(7, daily_dataVWC, "MedianVWC")
+
 
 
 
