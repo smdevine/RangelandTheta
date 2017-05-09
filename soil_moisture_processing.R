@@ -1,8 +1,8 @@
 #assume that sensor 7A and 22A crossed at location 15 in the datalogger ports (1 and 2); checked on 3/9/17, as labelled, sensors are in correct ports but could have been mislabeled. code to correct this is functional as of 5/3/17
 #large divergence at Location 11 at 22 cm depth (creates problem for plotting)
-#sensor A at point 14 at 7 cm depth was replaced on 1/16/17, because it was giving NA up to that point
-#sensor B at point 9 at 22 cm depth has data gap in early March (569 NAs); sensor A closely tracks so not really a problem
-#point 13 datalogger stopped working on 3/16/17; however on 3/10/17; both sensors at 22 cm depth suddenly reported a 0.1 VWC drop at 1 PM, which must be erroneous
+#sensor A at location 14 at 7 cm depth was replaced on 1/16/17, because it was giving NA up to that point
+#sensor B at location 9 at 22 cm depth has data gap in early March (569 NAs); sensor A closely tracks so not really a problem
+#location 13 datalogger stopped working on 3/16/17; however on 3/10/17; both sensors at 22 cm depth suddenly reported a 0.1 VWC drop at 1 PM, which must be erroneous
 #to-do 5/3/17 (1) add elevation to terrain characteristics; (2) check to see if higher resolution DEM is available; (3)solar radiation--beam radiance calculation; (4) elevation above a channel; (5) distance from a ridge; (6) temporal stability of soil water 
 
 library(rgdal)
@@ -257,11 +257,8 @@ daily_dataVWC <- read.csv(daily_fnames[2], stringsAsFactors = FALSE)
 head(daily_dataVWC)
 colnames(daily_dataVWC)
 
-#write function to produce daily means by depth for each pair of sensors for median, mean, max, and min daily data by sensor
-depth <- 7
-df <- daily_dataVWC
-varname <- 'MedianVWC'
-daily_by_location <- function(depth, df, varname) {
+#function to produce daily means by depth for each pair of sensors for median, mean, max, and min daily data by sensor and then merged with terrain characteristics by location (i.e. datalogger #)
+daily_by_location <- function(depth, df, varname, subdir) {
   a <- which(df$Depth==depth)
   specific_depth <- df[a,]
   depth_aggregated <- as.data.frame(tapply(specific_depth[[varname]], list(specific_depth$Location, specific_depth$Date_Calendar), mean, na.rm=TRUE))
@@ -271,15 +268,24 @@ daily_by_location <- function(depth, df, varname) {
   setwd(results)
   sensor_pts_df <- read.csv("sensor_terrain_characteristics5_3_17.csv", stringsAsFactors = FALSE) #this needs to be updated for additional terrain characteristics with higher res DEM
   depth_aggregated <- merge.data.frame(depth_aggregated, sensor_pts_df, by='location')
-  
+  setwd(file.path(results, 'processed_soil_moisture/Apr2017/daily_by_location', subdir))
+  write.csv(depth_aggregated, paste(varname, '_', as.character(depth), 'cm_dailymeans_by_location.csv', sep = ''), row.names = FALSE)
 }
 
-test <- daily_by_location(7, daily_dataVWC, "MedianVWC")
+daily_by_location(7, daily_dataVWC, 'MedianVWC', 'VWC')
+daily_by_location(22, daily_dataVWC, 'MedianVWC', 'VWC')
+daily_by_location(7, daily_dataVWC, 'MeanVWC', 'VWC')
+daily_by_location(22, daily_dataVWC, 'MeanVWC', 'VWC')
+daily_by_location(7, daily_dataVWC, 'MaxVWC', 'VWC')
+daily_by_location(22, daily_dataVWC, 'MaxVWC', 'VWC')
+daily_by_location(7, daily_dataVWC, 'MedianT', 'Temperature')
+daily_by_location(22, daily_dataVWC, 'MedianT', 'Temperature')
+daily_by_location(7, daily_dataVWC, 'MeanT', 'Temperature')
+daily_by_location(22, daily_dataVWC, 'MeanT', 'Temperature')
+daily_by_location(7, daily_dataVWC, 'MaxT', 'Temperature')
+daily_by_location(22, daily_dataVWC, 'MaxT', 'Temperature')
 
-
-
-
-#plotting daily data
+#plotting daily data (needs to be revised now)
 sensor_codes <- unique(daily_dataVWC$sensor_code)
 for (i in 1:length(sensor_codes)) {
   by_sensor <- daily_dataVWC[which(daily_dataVWC$sensor_code==sensor_codes[i]), ]
