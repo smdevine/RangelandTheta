@@ -2,9 +2,12 @@
 #was originally saved in Desktop/rangeland project/r scripts
 #mean curvature and topographic position index calculated in ArcGIS 
 dems <- 'C:/Users/smdevine/Desktop/rangeland project/elevation_NED10M_studysite/elevation'
+dem_fineres <- 'C:/Users/smdevine/Desktop/rangeland project/DEMs_10cm'
 terrainDir <- 'C:/Users/smdevine/Desktop/rangeland project/terrain_analysis_r_v2'
+sensorDir <- 'C:/Users/smdevine/Desktop/rangeland project/soilmoisture/sensor_coordinates'
 library(rgdal)
 library(raster)
+#library(dynatopmodel)
 options(digits = 10)
 setwd(dems)
 fnames <- list.files(dems, pattern = glob2rx('*.tif'))
@@ -15,14 +18,34 @@ crs(dem_1)
 dem_2 <- raster(fnames[3]) #verify "ned10m35120e3.tif"
 crs(dem_2)
 
+#re-do R terrain analysis based on 10 cm resolution DSM produced by Grace's drone flights.  She has six of these but only "camatta_11112016_dsm.tif" was geo-corrected
+setwd(dem_fineres)
+list.files()
+dem_10cm <- raster("camatta_11112016_dsm.tif")
+setwd(sensorDir)
+sensor_shp <- shapefile("5TM_sensor_locations_Camatta.shp")
+plot(dem_10cm)
+plot(sensor_shp, add=T, col='blue')
+slope_10cm <- terrain(dem_10cm, opt = 'slope', unit = 'degrees', neighbors = 8)
+plot(slope_10cm)
+dem_1m <- aggregate(dem_10cm, fact=10, fun=mean)
+setwd(dem_fineres)
+writeRaster(dem_1m, 'camatta_Nov2016_1m_dsm.tif', format='GTiff', options='TFW=yes')
+plot(dem_1m)
+
+
+#doesn't work
+cti <- upslope.area(dem_1m, atb = TRUE) #says  
+
 #re-do R terrain analysis based on a cropped version of "ned10m35120d3.tif" where soil moisture sensors are located
 dem_1
-new_ex <- extent(743682.5, 745682.5, 3930560, ymax(dem_1))
+new_ex <- extent(743682.5, 745682.5, 3930560, ymax(dem_1)) #manually defined an extent object +- 1000 m from the center of the catchment, execpt for ymax
 dem_cropped <- crop(dem_1, new_ex)
-writeRaster(dem_cropped, 'dem_cropped.tif', format='GTiff', options='TFW=yes', overwrite=TRUE)
+setwd(terrainDir)
+writeRaster(dem_cropped, 'dem_cropped.tif', format='GTiff', options='TFW=yes', NAflag = -9999, overwrite=TRUE) #will also work with this object in ArcGIS; options='TFW' creates a tfw file which ArcGIS can use for defining projection, etc.
 setwd(terrainDir)
 slope_neighbors4 <- terrain(dem_cropped, opt = 'slope', unit = 'degrees', neighbors = 4)
-writeRaster(slope_neighbors4, 'slope_neighbors4.tif', format='GTiff', overwrite=TRUE) #options='TFW=YES' creates a tfw file also; useful for ArcGIS
+writeRaster(slope_neighbors4, 'slope_neighbors4.tif', format='GTiff', overwrite=TRUE)
 slope_neighbors8 <- terrain(dem_cropped, opt = 'slope', unit = 'degrees', neighbors = 8)
 writeRaster(slope_neighbors8, 'slope_neighbors8.tif', format='GTiff', overwrite=TRUE)
 plot(slope_neighbors4 - slope_neighbors8)
@@ -42,7 +65,7 @@ writeRaster(roughness, 'roughness.tif', format='GTiff')
 #inspect origins. they need to be the same to perform a mosaic
 origin(dem_1)
 origin(dem_2)
-#origin(dem_2) <- origin(dem_1)  #is this an appropriate solution?
+#origin(dem_2) <- origin(dem_1)  #is this an appropriate solution?  why origin differs in these DEMs is a bit of a mystery to me, but a 'tolerance' below the default allows the mosaic function to work
 dem_combined <- mosaic(dem_1, dem_2, fun=mean, tolerance=0.06) #the default tolerance is 0.1 (see RasterOptions()) but fails unless tolerance is specified within mosaic function as >= 0.06
 #write the raster to a file
 writeRaster(dem_combined, 'dem10m_combined.tif', overwrite=TRUE)
