@@ -257,11 +257,20 @@ daily_dataVWC <- read.csv(daily_fnames[2], stringsAsFactors = FALSE)
 head(daily_dataVWC)
 colnames(daily_dataVWC)
 
+#test
+dates <- format.Date(daily_dataVWC$Date_Calendar, "%b_%d_%Y")
+test <- make.names(daily_dataVWC$Date_Calendar[1])
+format.Date(as.Date(gsub('[X, .]', '', test), format = '%Y%m%d'), '%b_%d_%Y')
+
 #function to produce daily means by depth for each pair of sensors for median, mean, max, and min daily data by sensor and then merged with terrain characteristics by location (i.e. datalogger #)
+df <- daily_dataVWC
+depth <- 7
+varname <- 'MedianVWC'
 daily_by_location <- function(depth, df, varname, subdir) {
   a <- which(df$Depth==depth)
   specific_depth <- df[a,]
   depth_aggregated <- as.data.frame(tapply(specific_depth[[varname]], list(specific_depth$Location, specific_depth$Date_Calendar), mean, na.rm=TRUE))
+  colnames(depth_aggregated) <- format.Date(as.Date(gsub('[-]', '', colnames(depth_aggregated)), format = '%Y%m%d'), '%b_%d_%Y') #this takes the original date (eg. "2016-11-19") and strips out the '/' (eg. "20161119") and then converts it to a column name ("Nov_19_2016") that would be coerced to "X2016.11.19" when reading the file back in as a data.frame
   depth_aggregated$location <- as.integer(row.names(depth_aggregated))
   row.names(depth_aggregated) <- NULL
   depth_aggregated <- depth_aggregated[ ,c(ncol(depth_aggregated), 1:(ncol(depth_aggregated)-1))]
