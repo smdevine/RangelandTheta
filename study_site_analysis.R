@@ -31,13 +31,12 @@ plot(slope_10cm)
 dem_1m <- aggregate(dem_10cm, fact=10, fun=mean)
 setwd(dem_fineres)
 writeRaster(dem_1m, 'camatta_Nov2016_1m_dsm.tif', format='GTiff', options='TFW=yes')
-plot(dem_1m)
+dem_2m <- aggregate(dem_10cm, fact=20, fun=mean)
+writeRaster(dem_2m, 'camatta_Nov2016_2m_dsm.tif', format='GTiff', options='TFW=yes')
+dem_3m <- aggregate(dem_10cm, fact=30, fun=mean)
+writeRaster(dem_3m, 'camatta_Nov2016_3m_dsm.tif', format='GTiff', options='TFW=yes')
 
-
-#doesn't work
-cti <- upslope.area(dem_1m, atb = TRUE) #says  
-
-#re-do R terrain analysis based on a cropped version of "ned10m35120d3.tif" where soil moisture sensors are located
+#R terrain analysis based on a cropped version of "ned10m35120d3.tif" where soil moisture sensors are located
 dem_1
 new_ex <- extent(743682.5, 745682.5, 3930560, ymax(dem_1)) #manually defined an extent object +- 1000 m from the center of the catchment, execpt for ymax
 dem_cropped <- crop(dem_1, new_ex)
@@ -61,7 +60,7 @@ writeRaster(tpi, 'topographic_position.tif', format='GTiff')
 roughness <- terrain(dem_cropped, opt = 'roughness')
 writeRaster(roughness, 'roughness.tif', format='GTiff')
 
-#old code based on investigating whether or not a larger catchment (ie. larger area of interest) would affect sampling of terrain characteristics.  ultimately, sensor locations were only in dem_1 and not in overlapping area between dem_1 and dem_2
+#Fall 2016 code based on investigating whether or not a larger catchment (ie. larger area of interest) would affect sampling of terrain characteristics.  ultimately, sensor locations were only in dem_1 and not in overlapping area between dem_1 and dem_2
 #inspect origins. they need to be the same to perform a mosaic
 origin(dem_1)
 origin(dem_2)
