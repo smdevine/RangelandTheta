@@ -191,19 +191,6 @@ for (i in 2:length(soil_moisture_dfs)) {
   lines.default(soil_moisture_dfs[[i]][ ,1], soil_moisture_dfs[[i]][ ,8], col=i+1)
 }
 
-#plot means by location at 22 cm depth. 
-plot(soil_moisture_dfs[[1]][ ,1], rowMeans(soil_moisture_dfs[[1]][ ,c(4,8)], na.rm = TRUE), type='l', xlab='Date', ylab='soil VWC', xaxt='n', col=1, main='VWC means by location at 22 cm depth', ylim=c(0.1, 0.45))
-axis.POSIXct(side = 1, labDates, at=labDates, format = '%m/%d')
-for (i in 2:length(soil_moisture_dfs)) {
-  lines.default(soil_moisture_dfs[[i]][ ,1], rowMeans(soil_moisture_dfs[[i]][ ,c(4,8)], na.rm = TRUE), col=i+1)
-}
-#plot means by location at 7 cm depth. 
-plot(soil_moisture_dfs[[1]][ ,1], rowMeans(soil_moisture_dfs[[1]][ ,c(2,6)], na.rm = TRUE), type='l', xlab='Date', ylab='soil VWC', xaxt='n', col=1, main='VWC means by location at 7 cm depth', ylim=c(0.1, 0.45))
-axis.POSIXct(side = 1, labDates, at=labDates, format = '%m/%d')
-for (i in 2:length(soil_moisture_dfs)) {
-  lines.default(soil_moisture_dfs[[i]][ ,1], rowMeans(soil_moisture_dfs[[i]][ ,c(2,6)], na.rm = TRUE), col=i+1)
-}
-
 #write function to take raw data and produce daily statistics for each sensor
 for (i in 1:length(soil_moisture_dfs)) {
   for (j in c(2, 4, 6, 8)) { #this refers to columns with VWC data
@@ -257,11 +244,6 @@ daily_dataVWC <- read.csv(daily_fnames[2], stringsAsFactors = FALSE)
 head(daily_dataVWC)
 colnames(daily_dataVWC)
 
-#test
-dates <- format.Date(daily_dataVWC$Date_Calendar, "%b_%d_%Y")
-test <- make.names(daily_dataVWC$Date_Calendar[1])
-format.Date(as.Date(gsub('[X, .]', '', test), format = '%Y%m%d'), '%b_%d_%Y')
-
 #function to produce daily means by depth for each pair of sensors for median, mean, max, and min daily data by sensor and then merged with terrain characteristics by location (i.e. datalogger #)
 df <- daily_dataVWC
 depth <- 7
@@ -294,16 +276,36 @@ daily_by_location(22, daily_dataVWC, 'MeanT', 'Temperature')
 daily_by_location(7, daily_dataVWC, 'MaxT', 'Temperature')
 daily_by_location(22, daily_dataVWC, 'MaxT', 'Temperature')
 
-#plotting daily data (needs to be revised now)
-sensor_codes <- unique(daily_dataVWC$sensor_code)
-for (i in 1:length(sensor_codes)) {
-  by_sensor <- daily_dataVWC[which(daily_dataVWC$sensor_code==sensor_codes[i]), ]
-  labDates <- seq(from=by_sensor$Date_Calendar[1], to=by_sensor$Date_Calendar[nrow(by_sensor)], by='week', format='%m/%d/%Y')
-  plot(by_sensor$Date_Calendar, by_sensor$MeanVWC, type='b', main=paste('sensor', sensor_codes[i]), xlab='Date', ylab='Mean VWC', xaxt='n')
-  axis.Date(side = 1, labDates, at=labDates, format = '%m/%d')
-  #plot(by_sensor$Date_Calendar, by_sensor$MaxVWC, type='b')
+#plotting daily data by location x depth location from summaries produced above
+data_name <- 'Temperature'
+setwd(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Apr2017/daily_by_location', data_name))
+list.files()
+vwc_data <- read.csv("MedianT_22cm_dailymeans_by_location.csv", stringsAsFactors = FALSE)
+dates <- seq.Date(as.Date('2016/11/19'), as.Date('2017/4/10'), by='day')
+weeks <- seq.Date(as.Date('2016/11/19'), as.Date('2017/4/10'), by='week')
+for (i in 1:nrow(vwc_data)) {
+  plot(dates, vwc_data[i, 2:144], type='b', xlab='Date', ylab='Daily Median T at 22 cm (mean of 2 sensors)', xaxt='n', main=paste('Location', vwc_data$location[i], ',', vwc_data$aspect_cardinal[i], 'aspect'))
+  axis.Date(side = 1, dates, at=weeks, format = '%m/%d')
+  text(x=dates[75], y=0.18, labels=paste(round(vwc_data$mean_curv[i], 2), 'mean curvature', ',', round(vwc_data$cti[i], 2), 'Compound Topographic Index'))
 }
 
+for (i in 1:nrow(vwc_data)) {
+  plot(vwc_data$, by_sensor$MeanVWC, type='b', main=paste('sensor', sensor_codes[i]), xlab='Date', ylab='Mean VWC', xaxt='n')
+  axis.Date(side = 1, dates, at=labDates, format = '%m/%d')
+}
+
+#plot means by location at 22 cm depth. 
+plot(soil_moisture_dfs[[1]][ ,1], rowMeans(soil_moisture_dfs[[1]][ ,c(4,8)], na.rm = TRUE), type='l', xlab='Date', ylab='soil VWC', xaxt='n', col=1, main='VWC means by location at 22 cm depth', ylim=c(0.1, 0.45))
+axis.POSIXct(side = 1, labDates, at=labDates, format = '%m/%d')
+for (i in 2:length(soil_moisture_dfs)) {
+  lines.default(soil_moisture_dfs[[i]][ ,1], rowMeans(soil_moisture_dfs[[i]][ ,c(4,8)], na.rm = TRUE), col=i+1)
+}
+#plot means by location at 7 cm depth. 
+plot(soil_moisture_dfs[[1]][ ,1], rowMeans(soil_moisture_dfs[[1]][ ,c(2,6)], na.rm = TRUE), type='l', xlab='Date', ylab='soil VWC', xaxt='n', col=1, main='VWC means by location at 7 cm depth', ylim=c(0.1, 0.45))
+axis.POSIXct(side = 1, labDates, at=labDates, format = '%m/%d')
+for (i in 2:length(soil_moisture_dfs)) {
+  lines.default(soil_moisture_dfs[[i]][ ,1], rowMeans(soil_moisture_dfs[[i]][ ,c(2,6)], na.rm = TRUE), col=i+1)
+}
 
 
 #extra code
