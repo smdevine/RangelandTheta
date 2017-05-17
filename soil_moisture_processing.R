@@ -4,7 +4,7 @@
 #sensor B at location 9 at 22 cm depth has data gap in early March (569 NAs); sensor A closely tracks so not really a problem
 #location 13 datalogger stopped working on 3/16/17; however on 3/10/17; both sensors at 22 cm depth suddenly reported a 0.1 VWC drop at 1 PM, which must be erroneous
 #to-do 5/3/17 (1) add elevation to terrain characteristics; (2) check to see if higher resolution DEM is available; (3)solar radiation--beam radiance calculation; (4) elevation above a channel; (5) distance from a ridge; (6) temporal stability of soil water 
-
+#library(readxl)
 library(rgdal)
 library(raster)
 options(digits = 10)
@@ -21,7 +21,7 @@ max_modified <- function(x) {
   }
   else {max(x, na.rm = TRUE)}
 }
-mainDir <- 'C:/Users/smdevine/Desktop/rangeland project/soilmoisture/apr2017/csv_files'
+mainDir <- 'C:/Users/smdevine/Desktop/rangeland project/soilmoisture/may2017/csv_files'
 spatialDir <- 'C:/Users/smdevine/Desktop/rangeland project/soilmoisture/sensor_coordinates'
 terrainDir <- 'C:/Users/smdevine/Desktop/rangeland project/terrain_analysis_r'
 results <- 'C:/Users/smdevine/Desktop/rangeland project/results'
@@ -103,20 +103,21 @@ setwd(mainDir)
 soil_moisture_fnames <- list.files(pattern = glob2rx('*.csv'))
 soil_moisture_dfs <- lapply(soil_moisture_fnames, read.csv, stringsAsFactors=FALSE, na.strings="***")
 names(soil_moisture_dfs) <- soil_moisture_fnames
-# test <- lapply(soil_moisture_dfs, function(x) {x[1, 1] <- ""}) #this didn't work0
+# test <- lapply(soil_moisture_dfs, function(x) {x[1, 1] <- ""}) #this didn't work
 
 #reformat each dataframe; need to check excel files exported from DataTrac that sensor names are included (e.g. 5TM_P16_A7)
 for (i in 1:length(soil_moisture_dfs)) {
-  soil_moisture_dfs[[i]][1, 1] <- ""
-  colnames(soil_moisture_dfs[[i]]) <- paste(soil_moisture_dfs[[i]][1, ], soil_moisture_dfs[[i]][2, ])
+  soil_moisture_dfs[[i]][1, 1] <- "" #gets rid of string 'n records' in 1,1 position
+  colnames(soil_moisture_dfs[[i]]) <- paste(soil_moisture_dfs[[i]][1, ], soil_moisture_dfs[[i]][2, ]) #create new column names by concatenating rows 1 and 2
+  colnames(soil_moisture_dfs[[i]])[1] <- "Measurement.Time" #make a proper column name 
   soil_moisture_dfs[[i]] <- soil_moisture_dfs[[i]][-1:-2, ]
   for (j in 2:9) {
     soil_moisture_dfs[[i]][ ,j] <- as.numeric(soil_moisture_dfs[[i]][ ,j])
   }
   soil_moisture_dfs[[i]]$location <- substr(colnames(soil_moisture_dfs[[i]])[2], 5, 7)
   soil_moisture_dfs[[i]]$location <- gsub('[P, _]', '', soil_moisture_dfs[[i]]$location)
-  soil_moisture_dfs[[i]]$` Measurement Time` <- strptime(soil_moisture_dfs[[i]]$` Measurement Time`, "%m/%d/%Y %I:%M:%S %p")
-  soil_moisture_dfs[[i]]$date <- format(soil_moisture_dfs[[i]]$` Measurement Time`, "%Y%m%d") #makes a specific time e.g. on 4/1/17 into just 20170401
+  soil_moisture_dfs[[i]]$Measurement.Time <- strptime(soil_moisture_dfs[[i]]$Measurement.Time, "%m/%d/%Y %I:%M:%S %p")
+  soil_moisture_dfs[[i]]$date <- format(soil_moisture_dfs[[i]]$Measurement.Time, "%Y%m%d") #makes a specific time e.g. on 4/1/17 into just 20170401
   k <- which(soil_moisture_dfs[[i]]$date=='20161118') #find the indices of rows when the date was 11/18/16
   soil_moisture_dfs[[i]] <- soil_moisture_dfs[[i]][-k, ] #then remove them
   #change point 14, sensor A at 7 cm depth to NA on 1/16/2017, which is when it was replaced (column 2 in the data.frame) 
@@ -129,71 +130,78 @@ for (i in 1:length(soil_moisture_dfs)) {
   print(paste("Location ", soil_moisture_dfs[[i]]$location[1], 'B at 7 cm depth has ', length(which(is.na(soil_moisture_dfs[[i]][ ,6]))), " NAs for VWC.", sep=''))
   print(paste("Location ", soil_moisture_dfs[[i]]$location[1], 'B at 22 cm depth has ', length(which(is.na(soil_moisture_dfs[[i]][ ,8]))), " NAs for VWC.", sep=''))
 }
-#switch A7 sensor with A22 sensor data for location 15 (updated for April 2017 download)
-a22VWC <- soil_moisture_dfs$`Cam15-10Apr2017-1241.csv`$`5TM_P15_A7 m³/m³ VWC`
-a7VWC <- soil_moisture_dfs$`Cam15-10Apr2017-1241.csv`$`5TM_P15_A22 m³/m³ VWC`
-a22T <- soil_moisture_dfs$`Cam15-10Apr2017-1241.csv`$`5TM_P15_A7 °C Temp`
-a7T <- soil_moisture_dfs$`Cam15-10Apr2017-1241.csv`$`5TM_P15_A22 °C Temp`
-soil_moisture_dfs$`Cam15-10Apr2017-1241.csv`$`5TM_P15_A7 m³/m³ VWC` <- a7VWC
-soil_moisture_dfs$`Cam15-10Apr2017-1241.csv`$`5TM_P15_A22 m³/m³ VWC` <- a22VWC
-soil_moisture_dfs$`Cam15-10Apr2017-1241.csv`$`5TM_P15_A7 °C Temp` <- a7T
-soil_moisture_dfs$`Cam15-10Apr2017-1241.csv`$`5TM_P15_A22 °C Temp` <- a22T
+
+#switch A7 sensor with A22 sensor data for location 15 (updated for May 1-3, 2017 download)
+a22VWC <- soil_moisture_dfs$`Cam15-01May2017-1507.csv`$`5TM_P15_A7 m³/m³ VWC`
+a7VWC <- soil_moisture_dfs$`Cam15-01May2017-1507.csv`$`5TM_P15_A22 m³/m³ VWC`
+a22T <- soil_moisture_dfs$`Cam15-01May2017-1507.csv`$`5TM_P15_A7 °C Temp`
+a7T <- soil_moisture_dfs$`Cam15-01May2017-1507.csv`$`5TM_P15_A22 °C Temp`
+soil_moisture_dfs$`Cam15-01May2017-1507.csv`$`5TM_P15_A7 m³/m³ VWC` <- a7VWC
+soil_moisture_dfs$`Cam15-01May2017-1507.csv`$`5TM_P15_A22 m³/m³ VWC` <- a22VWC
+soil_moisture_dfs$`Cam15-01May2017-1507.csv`$`5TM_P15_A7 °C Temp` <- a7T
+soil_moisture_dfs$`Cam15-01May2017-1507.csv`$`5TM_P15_A22 °C Temp` <- a22T
 
 #merge terrain characteristics with soil_moisture_dfs 
 for (i in 1:length(soil_moisture_dfs)){
-  location <- soil_moisture_dfs[[i]]$location[1]
-  rownum <- match(location, sensor_pts_df$datalogger_no)
+  location <- as.integer(soil_moisture_dfs[[i]]$location[1])
+  rownum <- match(location, sensor_pts_df$location) #column name was previously datalogger_no
   land_position_data <- sensor_pts_df[rownum, ]
   soil_moisture_dfs[[i]] <- merge(soil_moisture_dfs[[i]], land_position_data)
 }
 
 #write merged soil_moisture_dfs & terrain characteristics to results
-setwd(file.path(results, 'processed_soil_moisture/Apr2017'))
+setwd(file.path(results, 'processed_soil_moisture/May2017'))
 for (i in 1:length(soil_moisture_dfs)) {
   write.csv(soil_moisture_dfs[[i]], paste(sub('.csv', '', names(soil_moisture_dfs)[i]), 'processed', format(Sys.Date(), "%F"), '.csv', sep = ''), row.names = FALSE)
 }
 
 #read in merged data
-setwd(file.path(results, 'processed_soil_moisture/Apr2017'))
+setwd(file.path(results, 'processed_soil_moisture/May2017'))
 soil_moisture_fnames <- list.files(pattern = glob2rx('*.csv'))
 soil_moisture_dfs <- lapply(soil_moisture_fnames, read.csv, stringsAsFactors=FALSE)
 names(soil_moisture_dfs) <- soil_moisture_fnames
 
+#check column names
+for (i in 1:16) {
+  print(colnames(soil_moisture_dfs[[i]]))
+}
 #write function to plot raw data by sensor
 #need to work on scaling because if scale for Sensor A differs from Sensor B, it will not plot correctly - problem with Point 11 at 22 cm depth
+#had to update column indexing for May 2017 files because location is now inserted into column 1
 for (i in 1:length(soil_moisture_dfs)) {
-  labDates <- seq(from=soil_moisture_dfs[[i]][ ,1][1], to=soil_moisture_dfs[[i]][ ,1][nrow(soil_moisture_dfs[[i]])], by='week', format='%m/%d/%Y')
-  plot(soil_moisture_dfs[[i]][ ,1], soil_moisture_dfs[[i]][ ,2], type='l', xlab='Date', ylab='soil VWC', xaxt='n', col='Blue', main=paste('Point', soil_moisture_dfs[[i]]$location[1], 'at 7 cm depth'))
+  labDates <- seq(from=soil_moisture_dfs[[i]]$Measurement.Time[1], to=soil_moisture_dfs[[i]]$Measurement.Time[nrow(soil_moisture_dfs[[i]])], by='week', format='%m/%d/%Y')
+  plot(soil_moisture_dfs[[i]]$Measurement.Time, soil_moisture_dfs[[i]][ ,3], type='l', xlab='Date', ylab='soil VWC', xaxt='n', col='Blue', main=paste('Point', soil_moisture_dfs[[i]]$location[1], 'at 7 cm depth'))
   axis.POSIXct(side = 1, labDates, at=labDates, format = '%m/%d')
-  lines.default(soil_moisture_dfs[[i]][ ,1], soil_moisture_dfs[[i]][ ,6], type='l', col='Red')
+  lines.default(soil_moisture_dfs[[i]]$Measurement.Time, soil_moisture_dfs[[i]][ ,7], type='l', col='Red')
   legend("bottomright", legend=(c('sensor A', 'sensor B')), lty=1, col = c( 'blue', 'red'))
-  plot(soil_moisture_dfs[[i]][ ,1], soil_moisture_dfs[[i]][ ,4], type='l', xlab='Date', ylab='soil VWC', xaxt='n', col='Blue', main=paste('Point', soil_moisture_dfs[[i]]$location[1], 'at 22 cm depth'))
+  plot(soil_moisture_dfs[[i]]$Measurement.Time, soil_moisture_dfs[[i]][ ,5], type='l', xlab='Date', ylab='soil VWC', xaxt='n', col='Blue', main=paste('Point', soil_moisture_dfs[[i]]$location[1], 'at 22 cm depth'))
   axis.POSIXct(side = 1, labDates, at=labDates, format = '%m/%d')
-  lines.default(soil_moisture_dfs[[i]][ ,1], soil_moisture_dfs[[i]][ ,8], type='l', col='Red')
+  lines.default(soil_moisture_dfs[[i]]$Measurement.Time, soil_moisture_dfs[[i]][ ,9], type='l', col='Red')
   legend("bottomright", legend=(c('sensor A', 'sensor B')), lty=1, col = c( 'blue', 'red'))
 }
 
 #plot all on one graph at 7 cm depth 
-plot(soil_moisture_dfs[[1]][ ,1], soil_moisture_dfs[[1]][ ,2], type='l', xlab='Date', ylab='soil VWC', xaxt='n', col=1, main='All sensors at 7 cm', ylim=c(0.1, 0.45))
+plot(soil_moisture_dfs[[1]]$Measurement.Time, soil_moisture_dfs[[1]][ ,3], type='l', xlab='Date', ylab='soil VWC', xaxt='n', col=1, main='All sensors at 7 cm', ylim=c(0.1, 0.45))
 axis.POSIXct(side = 1, labDates, at=labDates, format = '%m/%d')
-lines.default(soil_moisture_dfs[[1]][ ,1], soil_moisture_dfs[[1]][ ,6], type='l', col=1)
+lines.default(soil_moisture_dfs[[1]]$Measurement.Time, soil_moisture_dfs[[1]][ ,7], type='l', col=1)
 for (i in 2:length(soil_moisture_dfs)) {
-  lines.default(soil_moisture_dfs[[i]][ ,1], soil_moisture_dfs[[i]][ ,2], col=i+1)
-  lines.default(soil_moisture_dfs[[i]][ ,1], soil_moisture_dfs[[i]][ ,6], col=i+1)
+  lines.default(soil_moisture_dfs[[i]]$Measurement.Time, soil_moisture_dfs[[i]][ ,3], col=i+1)
+  lines.default(soil_moisture_dfs[[i]]$Measurement.Time, soil_moisture_dfs[[i]][ ,7], col=i+1)
 }
 
 #plot all on one graph at 22 cm depth 
-plot(soil_moisture_dfs[[1]][ ,1], soil_moisture_dfs[[1]][ ,4], type='l', xlab='Date', ylab='soil VWC', xaxt='n', col=1, main='All sensors at 22 cm', ylim=c(0.1, 0.45))
+plot(soil_moisture_dfs[[1]]$Measurement.Time, soil_moisture_dfs[[1]][ ,5], type='l', xlab='Date', ylab='soil VWC', xaxt='n', col=1, main='All sensors at 22 cm', ylim=c(0.1, 0.45))
 axis.POSIXct(side = 1, labDates, at=labDates, format = '%m/%d')
-lines.default(soil_moisture_dfs[[1]][ ,1], soil_moisture_dfs[[1]][ ,8], type='l', col=1)
+lines.default(soil_moisture_dfs[[1]]$Measurement.Time, soil_moisture_dfs[[1]][ ,9], type='l', col=1)
 for (i in 2:length(soil_moisture_dfs)) {
-  lines.default(soil_moisture_dfs[[i]][ ,1], soil_moisture_dfs[[i]][ ,4], col=i+1)
-  lines.default(soil_moisture_dfs[[i]][ ,1], soil_moisture_dfs[[i]][ ,8], col=i+1)
+  lines.default(soil_moisture_dfs[[i]]$Measurement.Time, soil_moisture_dfs[[i]][ ,5], col=i+1)
+  lines.default(soil_moisture_dfs[[i]]$Measurement.Time, soil_moisture_dfs[[i]][ ,9], col=i+1)
 }
 
 #write function to take raw data and produce daily statistics for each sensor
+#will only work after reading in processed soil moisture files from this directory -- file.path(results, 'processed_soil_moisture/May2017'), line 159 above
 for (i in 1:length(soil_moisture_dfs)) {
-  for (j in c(2, 4, 6, 8)) { #this refers to columns with VWC data
+  for (j in c(3, 5, 7, 9)) { #this refers to columns with VWC data (updated for May2017 processed data)
     VWC <- as.data.frame(tapply(soil_moisture_dfs[[i]][ ,j], soil_moisture_dfs[[i]]$date, mean, na.rm=TRUE))
     colnames(VWC) <- 'MeanVWC'
     VWC$MedianVWC <- as.numeric(tapply(soil_moisture_dfs[[i]][ ,j], soil_moisture_dfs[[i]]$date, median, na.rm=TRUE))
@@ -218,7 +226,7 @@ for (i in 1:length(soil_moisture_dfs)) {
     VWC$cti <- soil_moisture_dfs[[i]]$cti[1] #see raster package, terrain function for definition
     VWC$mean_curv <- soil_moisture_dfs[[i]]$mean_curv[1]
     VWC$aspect_cardinal <- soil_moisture_dfs[[i]]$aspect_cardinal[1]
-    if (i==1 & j==2) {
+    if (i==1 & j==3) {
       daily_dataVWC <- VWC
       next
     }
@@ -232,22 +240,22 @@ daily_dataVWC$Date_Calendar <- as.Date(daily_dataVWC$Date, format='%Y%m%d')
 #order this by location, depth, subsampleID, and date
 daily_dataVWC <- daily_dataVWC[with(daily_dataVWC, order(Location, Depth, SubsampleID, Date_Calendar)), ]
 
-#save daily summary for each sensor
-setwd(file.path(results, 'processed_soil_moisture/Apr2017/daily_by_sensor'))
+#save daily summary for each sensor (updated for May 2017 results)
+setwd(file.path(results, 'processed_soil_moisture/May2017/daily_by_sensor'))
 write.csv(daily_dataVWC, paste('daily_by_sensor_summary', 'processed', format(Sys.Date(), "%F"), '.csv', sep = ''), row.names=FALSE) #9052 rows for April 2017 data
 
 #read-in daily summary for each location summary
-setwd(file.path(results, 'processed_soil_moisture/Apr2017/daily_by_sensor'))
+setwd(file.path(results, 'processed_soil_moisture/May2017/daily_by_sensor'))
 daily_fnames <- list.files()
 daily_fnames
-daily_dataVWC <- read.csv(daily_fnames[2], stringsAsFactors = FALSE)
+daily_dataVWC <- read.csv(daily_fnames[1], stringsAsFactors = FALSE)
 head(daily_dataVWC)
 colnames(daily_dataVWC)
 
 #function to produce daily means by depth for each pair of sensors for median, mean, max, and min daily data by sensor and then merged with terrain characteristics by location (i.e. datalogger #)
-df <- daily_dataVWC
-depth <- 7
-varname <- 'MedianVWC'
+# df <- daily_dataVWC
+# depth <- 7
+# varname <- 'MedianVWC'
 daily_by_location <- function(depth, df, varname, subdir) {
   a <- which(df$Depth==depth)
   specific_depth <- df[a,]
@@ -259,7 +267,7 @@ daily_by_location <- function(depth, df, varname, subdir) {
   setwd(results)
   sensor_pts_df <- read.csv("sensor_terrain_characteristics5_3_17.csv", stringsAsFactors = FALSE) #this needs to be updated for additional terrain characteristics with higher res DEM
   depth_aggregated <- merge.data.frame(depth_aggregated, sensor_pts_df, by='location')
-  setwd(file.path(results, 'processed_soil_moisture/Apr2017/daily_by_location', subdir))
+  setwd(file.path(results, 'processed_soil_moisture/May2017/daily_by_location', subdir))
   write.csv(depth_aggregated, paste(varname, '_', as.character(depth), 'cm_dailymeans_by_location.csv', sep = ''), row.names = FALSE)
 }
 
@@ -278,7 +286,7 @@ daily_by_location(22, daily_dataVWC, 'MaxT', 'Temperature')
 
 #plotting daily data by location x depth location from summaries produced above
 data_name <- 'Temperature'
-setwd(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Apr2017/daily_by_location', data_name))
+setwd(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/May2017/daily_by_location', data_name))
 list.files()
 vwc_data <- read.csv("MedianT_22cm_dailymeans_by_location.csv", stringsAsFactors = FALSE)
 dates <- seq.Date(as.Date('2016/11/19'), as.Date('2017/4/10'), by='day')
