@@ -2,7 +2,7 @@
 #large divergence at Location 11 at 22 cm depth (creates problem for plotting)
 #sensor A at location 14 at 7 cm depth was replaced on 1/16/17, because it was giving NA up to that point
 #sensor B at location 9 at 22 cm depth has data gap in early March (569 NAs); sensor A closely tracks so not really a problem
-#location 13 datalogger stopped working on 3/16/17; however on 3/10/17; both sensors at 22 cm depth suddenly reported a 0.1 VWC drop at 1 PM, which must be erroneous
+#location 13 datalogger stopped working on 3/16/17; however on 3/10/17; both sensors at 22 cm depth suddenly reported a 0.1 VWC drop at 1 PM, which must be erroneous; on 3/10/17, both sensors at 7 cm reported a sudden drop of 0.02 VWC 
 #to-do 5/3/17 (1) add elevation to terrain characteristics; (2) check to see if higher resolution DEM is available; (3)solar radiation--beam radiance calculation; (4) elevation above a channel; (5) distance from a ridge; (6) temporal stability of soil water 
 #moved mapping code to 'general_mapping.R' on 5/22/17
 #library(readxl)
@@ -218,14 +218,15 @@ daily_by_location(7, daily_dataVWC, 'MaxT', 'Temperature')
 daily_by_location(22, daily_dataVWC, 'MaxT', 'Temperature')
 
 #plotting daily data by location x depth location from summaries produced above
-data_name <- 'Temperature'
+data_name <- 'VWC'
 setwd(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/May2017/daily_by_location', data_name))
 list.files()
-vwc_data <- read.csv("MedianT_22cm_dailymeans_by_location.csv", stringsAsFactors = FALSE)
-dates <- seq.Date(as.Date('2016/11/19'), as.Date('2017/4/10'), by='day')
-weeks <- seq.Date(as.Date('2016/11/19'), as.Date('2017/4/10'), by='week')
+vwc_data <- read.csv("MedianVWC_22cm_dailymeans_by_location.csv", stringsAsFactors = FALSE)
+endcol <- which(colnames(vwc_data)=='May_03_2017')
+dates <- seq.Date(as.Date('2016/11/19'), as.Date('2017/5/3'), by='day')
+weeks <- seq.Date(as.Date('2016/11/19'), as.Date('2017/5/3'), by='week')
 for (i in 1:nrow(vwc_data)) {
-  plot(dates, vwc_data[i, 2:144], type='b', xlab='Date', ylab='Daily Median T at 22 cm (mean of 2 sensors)', xaxt='n', main=paste('Location', vwc_data$location[i], ',', vwc_data$aspect_cardinal[i], 'aspect'))
+  plot(dates, vwc_data[i, 2:endcol], type='b', xlab='Date', ylab='Daily Median VWC at 7 cm (mean of 2 sensors)', xaxt='n', main=paste('Location', vwc_data$location[i], ',', vwc_data$aspect_cardinal[i], 'aspect'))
   axis.Date(side = 1, dates, at=weeks, format = '%m/%d')
   text(x=dates[75], y=0.18, labels=paste(round(vwc_data$mean_curv[i], 2), 'mean curvature', ',', round(vwc_data$cti[i], 2), 'Compound Topographic Index'))
 }
