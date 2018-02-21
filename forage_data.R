@@ -171,7 +171,7 @@ for (i in 1:16) {
 }
 #test relationship between forage growth and soil VWC drydown at 7 cm (period 1)
 summary(lm(sensor_forage_sp$gain_period1 ~ sensor_forage_sp$VWC7cmslope_period1))
-plot(sensor_forage_sp$gain_period1 ~ sensor_forage_sp$VWC7cmslope_period1, ylim=c(0,70))
+plot(sensor_forage_sp$gain_period1 ~ sensor_forage_sp$VWC7cmslope_period1, ylim=c(0,60))
 #test relationship between forage growth and soil VWC drydown at 7 cm(period 2)
 summary(lm(sensor_forage_sp$gain_period2 ~ sensor_forage_sp$VWC7cmslope_period2))
 plot(sensor_forage_sp$gain_period2 ~ sensor_forage_sp$VWC7cmslope_period2)
@@ -224,8 +224,6 @@ plot(sensor_forage_sp$gain_period1 ~ sensor_forage_sp$VWC22cmslope_period1, ylim
 #test relationship between forage growth and soil VWC drydown at 22 cm(period 2)
 summary(lm(sensor_forage_sp$gain_period2 ~ sensor_forage_sp$VWC22cmslope_period2))
 plot(sensor_forage_sp$gain_period2 ~ sensor_forage_sp$VWC22cmslope_period2)
-
-
 
 
 #read in 1, 2, and 3 m DEM and calculate slope and aspect to compare deltas relative to scale
