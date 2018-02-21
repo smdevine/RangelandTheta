@@ -11,6 +11,7 @@ soil_VWCdata <- 'C:/Users/smdevine/Desktop/rangeland project/results/processed_s
 soil_temperatureData <- 'C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/May2017/daily_by_location/Temperature'
 dem_fineres <- 'C:/Users/smdevine/Desktop/rangeland project/DEMs_10cm'
 plot_results <- 'C:/Users/smdevine/Desktop/rangeland project/results/plots/May2017'
+options(digits = 10)
 
 #test for autocorrelation using spdep package (create function out of this later)
 data_dir <- soil_VWCdata #define working directory manually, either soil_VWCdata or soil_temperatureData
