@@ -50,7 +50,7 @@ for (j in 1:6) {
 setwd(soil_VWCdata)
 vwc_files <- list.files(pattern = glob2rx('*.csv'))
 vwc_files #6 is median value at 7 cm depth; 5 is median value at 22 cm depth
-j <- 5
+j <- 6
 vwc_data <- read.csv(vwc_files[j], stringsAsFactors = FALSE)
 coords <- vwc_data[ ,c('Est_10N', 'Nrt_10N')]
 vwc_data_sp <- SpatialPointsDataFrame(coords=coords, proj4string = crs('+proj=utm +zone=10 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0'), data=vwc_data)
@@ -84,6 +84,41 @@ setwd(file.path(plot_results, 'forage'))
 png_fnames <- list.files(pattern = glob2rx('*.png'))
 ani.options(convert="C:/PROGRA~1/ImageMagick/convert.exe", loop=1, interval=3, ani.width=700, ani.height=500) #see http://stackoverflow.com/questions/24904945/command-prompt-error-c-program-is-not-recognized-as-an-internal-or-external-c for why this path does not work -- "C:/Program Files/ImageMagick/convert.exe"
 im.convert(png_fnames, output = "Camatta_forage2017.gif")
+
+#test for autocorrelation on normalized soil moisture [previously done on absolute values] using spdep package (create function out of this later)
+data_dir <- soil_VWCdata #define working directory manually, either soil_VWCdata or soil_temperatureData
+setwd(data_dir)
+vwc_files <- list.files(pattern = glob2rx('*.csv')) #vwc_files can be taken to mean
+#set j manually from 1 to 6
+for (j in 1:6) {
+  setwd(data_dir)
+  vwc_data <- read.csv(vwc_files[j], stringsAsFactors = FALSE)
+  vwc_data_normalized <- vwc_data[,2:(length(seq.Date(as.Date('2016/11/19'), as.Date('2017/5/1'), by='day')) + 1)]
+  vwc_data_normalized <- (vwc_data_normalized - rowMeans(vwc_data_normalized)) / apply(vwc_data_normalized, 1, sd)
+  coords <- vwc_data[ ,c('Est_10N', 'Nrt_10N')]
+  vwc_data_sp <- SpatialPointsDataFrame(coords=coords, proj4string = crs('+proj=utm +zone=10 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0'), data=vwc_data_normalized)
+  #delete point 13 since missing data after 3/17/16; could be gap filled based on new data
+  vwc_data_sp <- vwc_data_sp[-13, ]
+  vwc_data_normalized <- vwc_data_normalized[-13, ]
+  #then, make an inverse distance weighted matrix
+  idw <- 1/pointDistance(vwc_data_sp, latlon=FALSE)  #equivalent to 1/as.matrix(dist(coordinates(vwc_data_sp))), see GEO200CN lab 14
+  diag(idw) <- 0 #set Inf back to zero
+  idw_list <- mat2listw(idw)
+  dates <- seq.Date(as.Date('2016/11/19'), as.Date('2017/5/1'), by='day')
+  dates <- format.Date(as.Date(dates, format = '%Y%m%d'), '%b_%d_%Y')
+  for (i in 1:length(dates)) {
+    result <- moran.mc(vwc_data_normalized[[dates[i]]], idw_list, nsim = 99)
+    if (i==1) {
+      results <- matrix(c(dates[i], result$statistic, result$p.value), nrow=1, ncol=3, byrow=TRUE)
+      next
+    }
+    results <- rbind(results, c(dates[i], result$statistic, result$p.value))
+  }
+  results <- as.data.frame(results)
+  colnames(results) <- c('date', 'Moran I statistic', 'p_value')
+  setwd(file.path(data_dir, 'autocorrelation_test_normalized'))
+  write.csv(results, paste('autocorr_test', vwc_files[j], sep = ''), row.names = FALSE)
+}
 
 #playing around with semivariograms without invoking gstat, plotting all the pairs (120 total), as guided by lab 14 from Dr. Hijmans GEO200CN Spring 2016 course
 distance_pairs <- pointDistance(medianVWC7cm_sp, latlon=FALSE) #produces 2x + 16 the unique number of pairs
