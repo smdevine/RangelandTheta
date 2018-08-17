@@ -6,6 +6,9 @@
 #to-do 5/3/17 (1) add elevation to terrain characteristics; (2) check to see if higher resolution DEM is available; (3)solar radiation--beam radiance calculation; (4) elevation above a channel; (5) distance from a ridge; (6) temporal stability of soil water 
 #moved mapping code to 'general_mapping.R' on 5/22/17
 #library(readxl)
+library(extrafont)
+library(extrafontdb)
+loadfonts()
 library(rgdal)
 library(raster)
 options(digits = 10)
@@ -26,6 +29,9 @@ mainDir <- 'C:/Users/smdevine/Desktop/rangeland project/soilmoisture/may2017/csv
 spatialDir <- 'C:/Users/smdevine/Desktop/rangeland project/soilmoisture/sensor_coordinates'
 terrainDir <- 'C:/Users/smdevine/Desktop/rangeland project/terrain_analysis_r'
 results <- 'C:/Users/smdevine/Desktop/rangeland project/results'
+dem_fineres <- 'C:/Users/smdevine/Desktop/rangeland project/DEMs_10cm'
+plot_results <- 'C:/Users/smdevine/Desktop/rangeland project/results/plots/May2017_normalized'
+forage_data <- 'C:/Users/smdevine/Desktop/rangeland project/clip_plots'
 
 #read in terrain char for each sensor location
 setwd(results)
@@ -98,6 +104,8 @@ names(soil_moisture_dfs) <- soil_moisture_fnames
 for (i in 1:16) {
   print(colnames(soil_moisture_dfs[[i]]))
 }
+
+
 #write function to plot raw data by sensor
 #need to work on scaling because if scale for Sensor A differs from Sensor B, it will not plot correctly - problem with Point 11 at 22 cm depth
 #had to update column indexing for May 2017 files because location is now inserted into column 1
@@ -219,9 +227,8 @@ daily_by_location(22, daily_dataVWC, 'MaxT', 'Temperature')
 
 #plotting daily data by location x depth location from summaries produced above
 data_name <- 'VWC'
-setwd(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/May2017/daily_by_location', data_name))
-list.files()
-vwc_data <- read.csv("MedianVWC_22cm_dailymeans_by_location.csv", stringsAsFactors = FALSE)
+depth <- '7'
+vwc_data <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/May2017/daily_by_location', data_name, paste0('MedianVWC_', depth, 'cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
 endcol <- which(colnames(vwc_data)=='May_03_2017')
 dates <- seq.Date(as.Date('2016/11/19'), as.Date('2017/5/3'), by='day')
 weeks <- seq.Date(as.Date('2016/11/19'), as.Date('2017/5/3'), by='week')
@@ -231,10 +238,127 @@ for (i in 1:nrow(vwc_data)) {
   text(x=dates[75], y=0.18, labels=paste(round(vwc_data$mean_curv[i], 2), 'mean curvature', ',', round(vwc_data$cti[i], 2), 'Compound Topographic Index'))
 }
 
+
 for (i in 1:nrow(vwc_data)) {
-  plot(vwc_data$, by_sensor$MeanVWC, type='b', main=paste('sensor', sensor_codes[i]), xlab='Date', ylab='Mean VWC', xaxt='n')
-  axis.Date(side = 1, dates, at=labDates, format = '%m/%d')
+  if (i == 1) {
+    plot(dates, vwc_data[i, 2:endcol], type='l', xaxt='n', col=i+1, ylim=c(min(vwc_data[,2:endcol], na.rm=TRUE), max(vwc_data[,2:endcol], na.rm=TRUE)))
+    text(x=dates[length(dates)-50], y=vwc_data[i, endcol-50], labels=vwc_data[i, 1], cex=0.7)
+  } else {
+      lines.default(dates, vwc_data[i, 2:endcol], xaxt='n', col=i+1)
+      text(x=dates[length(dates)- 50], y=vwc_data[i, (endcol- 50)], labels=vwc_data[i, 1], cex=0.7)
+    }
 }
+axis.Date(side = 1, dates, at=weeks, format = '%m/%d')
+
+#normalize vwc_data
+vwc_data_normalized <- vwc_data
+vwc_data_normalized[ ,2:endcol] <- (vwc_data_normalized[ ,2:endcol] - rowMeans(vwc_data_normalized[ ,2:endcol], na.rm = TRUE)) / apply(vwc_data_normalized[ ,2:endcol], 1, sd, na.rm=TRUE)
+
+#and then plot as above
+for (i in 1:nrow(vwc_data_normalized)) {
+  if (i == 1) {
+    plot(dates[5:length(dates)], vwc_data_normalized[i, 6:endcol], type='l', xaxt='n', col=i+1, ylim=c(min(vwc_data_normalized[,6:endcol], na.rm=TRUE), max(vwc_data_normalized[,6:endcol], na.rm=TRUE)), xlab = 'Dates', ylab='Std Deviations by Location')
+    text(x=dates[25], y=vwc_data_normalized[i, 25], labels=vwc_data_normalized[i, 1], cex=0.7)
+  } else {
+    lines.default(dates[5:length(dates)], vwc_data_normalized[i, 6:endcol], xaxt='n', col=i+1)
+    text(x=dates[25], y=vwc_data_normalized[i, 25], labels=vwc_data_normalized[i, 1], cex=0.7)
+  }
+}
+axis.Date(side = 1, dates, at=weeks, format = '%m/%d')
+
+#now plot normalized data as points on map [modified from mapping_soil_moisture_temperature.R]
+magfactor <- function(x) {((x + 4) / 4)}
+dem_1m <- raster(file.path(dem_fineres, 'camatta_Nov2016_1m_dsm.tif'))
+hillshade_1m <- hillShade(terrain(dem_1m, opt='aspect'), terrain(dem_1m, opt='slope'), angle=45, direction=315)
+coords <- coords <- vwc_data_normalized[ ,c('Est_10N', 'Nrt_10N')]
+vwc_data_sp <- SpatialPointsDataFrame(coords=coords, proj4string = crs('+proj=utm +zone=10 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0'), data=vwc_data_normalized)
+
+for (i in 2:which(colnames(vwc_data_normalized)=='May_01_2017')) {
+  png(file = file.path(plot_results, '7cm_depth', paste(format(as.Date(names(vwc_data_sp)[i], format = '%b_%d_%Y'), '%Y%m%d'), '_daily_normalized_7cm.png', sep = '')), family = 'Book Antiqua', width = 700, height = 500, units = 'px', res=100)
+  par(mar=c(2, 2, 2, 3)) #does not affect right side I think because plotting a raster creates a space on the right even if if legend=FALSE
+  plot(hillshade_1m, main=paste(gsub('_', ' ', names(vwc_data_sp)[i]), 'normalized soil moisture at 7 cm'), col=gray(30:80/100), legend=FALSE, axes=FALSE)
+  plot(dem_1m, col=terrain.colors(255, alpha=0.35), add=T)
+  #mtext(text='Elevation (m)', side=1, line=1, at=744800)
+  points(vwc_data_sp, cex=magfactor(vwc_data_normalized[,i]), col='blue', pch=19)
+  #text(vwc_data_sp, labels=vwc_data_sp$location, pos=1, cex=1.1, halo=T)
+  legend(x=744875, y=3931450, legend=c('-2 sd', 'mean', '+2 sd'), col='blue', pch=19, pt.cex=c(magfactor(-2), magfactor(0), magfactor(2)), x.intersp = 2, y.intersp = 1.9, bty="n")
+  text(x=744895, y=3931452, labels='soil VWC', font=2, offset=0)
+  dev.off()
+}
+
+#read in forage data
+setwd(file.path(forage_data, 'results'))
+list.files(pattern = glob2rx('*.shp'))
+sensor_forage_sp <- shapefile("sensor_forage2017.shp")
+#and then add normalized moisture data for clipping dates
+sensor_forage <- as.data.frame(sensor_forage_sp)
+colnames(sensor_forage)
+sensor_forage_comp <- cbind(sensor_forage, vwc_data_normalized[ ,c(which(colnames(vwc_data_normalized)=='Feb_15_2017'), which(colnames(vwc_data_normalized)=='Mar_14_2017'), which(colnames(vwc_data_normalized)=='Apr_10_2017'), which(colnames(vwc_data_normalized)=='May_01_2017'))])
+plot(sensor_forage_comp$Feb_15_2017, sensor_forage_comp$clp021517)
+summary(lm(clp021517 ~ Feb_15_2017, data = sensor_forage_comp))
+plot(sensor_forage_comp$Mar_14_2017, sensor_forage_comp$clp031417)
+summary(lm(clp031417 ~ Mar_14_2017, data = sensor_forage_comp))
+plot(sensor_forage_comp$Apr_10_2017, sensor_forage_comp$clp041017)
+plot(sensor_forage_comp$May_01_2017, sensor_forage_comp$clp050117)
+
+#relative soil moisture minima occurs Jan 18, 2017, Feb 3, 2017 and Mar 23, 2017
+plot(vwc_data_normalized$Feb_03_2017, sensor_forage_comp$clp041017)
+test <- summary(lm(sensor_forage_comp$clp041017 ~ vwc_data_normalized$Nov_19_2016))
+plot(vwc_data_normalized$Nov_19_2016, sensor_forage_comp$clp041017)
+summary(lm(sensor_forage_comp$clp041017 ~ vwc_data_normalized$Mar_23_2017))
+
+
+#work through dates and find correlation between normalized soil moisture and April 10, 2017 biomass
+#note that some of these variables are defined above
+SM_vs_biomass_analysis <- data.frame(dates=dates, SMnorm.mean=apply(vwc_data_normalized[2:endcol], 2, mean, na.rm=TRUE), SMnorm.range=apply(vwc_data_normalized[2:endcol], 2, max, na.rm=TRUE) - apply(vwc_data_normalized[2:endcol], 2, min, na.rm=TRUE), slope=NA, p.value=NA, r2=NA)
+for (i in 2:endcol) {
+  lm.summary <- summary(lm(sensor_forage_comp$clp031417 ~ vwc_data_normalized[,i]))
+  SM_vs_biomass_analysis[i-1, 'slope'] <- lm.summary$coefficients[2, 1]
+  SM_vs_biomass_analysis[i-1, 'p.value'] <- lm.summary$coefficients[2, 4]
+  SM_vs_biomass_analysis[i-1, 'r2'] <- lm.summary$r.squared
+}
+#this shows very strong negative correlation Jan 31-Feb 5, ending Feb 6 with April 10th data.  Most variability explained Jan 17-18 and Feb 1-2 with some structure in data apparent as early as Dec 24-30.  For March 14 clippings, best correlation from mid-Dec to Jan 8 (peaks Dec 29)
+SM_vs_biomass_analysis
+plot(dates, SM_vs_biomass_analysis$r2)
+plot(dates, SM_vs_biomass_analysis$p.value)
+plot(SM_vs_biomass_analysis$r2, SM_vs_biomass_analysis$p.value)
+dates[SM_vs_biomass_analysis$p.value < 0.05]
+plot(vwc_data_normalized$Jan_18_2017, sensor_forage_comp$clp041017)
+text(x=vwc_data_normalized$Jan_18_2017, y=sensor_forage_comp$clp041017, labels=vwc_data_normalized$location, pos=1)
+plot(vwc_data_normalized$Feb_02_2017, sensor_forage_comp$clp041017)
+plot(vwc_data_normalized$Jan_18_2017, vwc_data_normalized$Feb_02_2017)
+plot(vwc_data_normalized$Jan_18_2017, sensor_forage_comp$clp031417)
+plot(vwc_data_normalized$Feb_02_2017, sensor_forage_comp$clp031417)
+plot(vwc_data_normalized$Dec_29_2016, sensor_forage_comp$clp031417)
+text(x=vwc_data_normalized$Dec_29_2016, y=sensor_forage_comp$clp031417, labels=vwc_data_normalized$location, pos=1, col=i+1)
+for (i in 1:16) {
+  if (i == 1) {
+    plot(as.Date(c('2017/02/15', '2017/03/14', '2017/04/10', '2017/05/01')), sensor_forage[i,2:5], type='b', col=i+1, ylim=c(min(sensor_forage[,2:5]), max(sensor_forage[,2:5])))
+  }
+  else {
+    lines.default(as.Date(c('2017/02/15', '2017/03/14', '2017/04/10', '2017/05/01')), sensor_forage[i,2:5], type='b', col=i+1)
+  }
+}
+
+#check correlations with non-normalized data
+#work through dates and find correlation between normalized soil moisture and April 10, 2017 biomass
+#note that some of these variables are defined above
+SMraw_vs_biomass_analysis <- data.frame(dates=dates, SM.mean=apply(vwc_data[2:endcol], 2, mean, na.rm=TRUE), SM.range=apply(vwc_data[2:endcol], 2, max, na.rm=TRUE) - apply(vwc_data[2:endcol], 2, min, na.rm=TRUE), slope=NA, p.value=NA, r2=NA)
+for (i in 2:endcol) {
+  lm.summary <- summary(lm(sensor_forage_comp$clp041017 ~ vwc_data[,i]))
+  SMraw_vs_biomass_analysis[i-1, 'slope'] <- lm.summary$coefficients[2, 1]
+  SMraw_vs_biomass_analysis[i-1, 'p.value'] <- lm.summary$coefficients[2, 4]
+  SMraw_vs_biomass_analysis[i-1, 'r2'] <- lm.summary$r.squared
+}
+SMraw_vs_biomass_analysis
+plot(dates, SMraw_vs_biomass_analysis$SM.mean)
+plot(dates, SMraw_vs_biomass_analysis$r2)
+plot(dates, SMraw_vs_biomass_analysis$slope)
+plot(SMraw_vs_biomass_analysis$p.value, SMraw_vs_biomass_analysis$r2)
+plot(vwc_data$Jan_18_2017, sensor_forage_comp$clp041017)
+plot(vwc_data$Feb_02_2017, sensor_forage_comp$clp041017)
+plot(vwc_data$Jan_18_2017, vwc_data$Feb_02_2017)
+#not sure about this code below [8/17/18]
 
 #plot means by location at 22 cm depth. 
 plot(soil_moisture_dfs[[1]][ ,1], rowMeans(soil_moisture_dfs[[1]][ ,c(4,8)], na.rm = TRUE), type='l', xlab='Date', ylab='soil VWC', xaxt='n', col=1, main='VWC means by location at 22 cm depth', ylim=c(0.1, 0.45))
