@@ -3,7 +3,7 @@ sensor_coords <- 'C:/Users/smdevine/Desktop/rangeland project/soilmoisture/senso
 dem_fineres <- 'C:/Users/smdevine/Desktop/rangeland project/DEMs_10cm'
 plot_results <- 'C:/Users/smdevine/Desktop/rangeland project/results/plots/May2017'
 additional_waypoints <- 'C:/Users/smdevine/Desktop/rangeland project/clip_plots/coordinates_waypoints'
-forage_data <- 'C:/Users/smdevine/Desktop/rangeland project/clip_plots'
+forageDir <- 'C:/Users/smdevine/Desktop/rangeland project/clip_plots' #previously called forage_data
 soil_VWCdata <- 'C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/May2017/daily_by_location/VWC'
 options(digits = 10)
 options(stringsAsFactors = FALSE)
@@ -28,7 +28,7 @@ boxplot(by_plot[,2:5])
 write.csv(by_plot, file.path(forage_data, 'summaries', 'forage2017.by.sensor.csv'), row.names = FALSE)
 
 #read-in 2018 data and merge with 2017 data
-forage2018 <- read.csv(file.path(forage_data, "Camatta BioMass Production 2018 all dates.csv"), stringsAsFactors = FALSE)
+forage2018 <- read.csv(file.path(forageDir, "Camatta BioMass Production 2018 all dates.csv"), stringsAsFactors = FALSE)
 colnames(forage2018)[2] <- 'biomass.kg.ha'
 forage2018$location <- as.integer(gsub('A|B', '', forage2018$ID))
 by_plot2018 <- as.data.frame(tapply(forage2018$biomass.kg.ha, list(forage2018$location, forage2018$Date), mean))
@@ -42,10 +42,29 @@ colnames(by_plot_all)
 colnames(by_plot_all)[2:9] <- c('clp021517', 'clp031417', 'clp041017', 'clp050117', 'clp011618', 'clp021518', 'clp032218', 'clp041518')
 boxplot(by_plot_all[,2:9])
 plot(by_plot_all$clp041017, by_plot_all$clp041518)
+lm_Mar_forage <- summary(lm(clp032218 ~ clp031417, data = by_plot_all))
+png(file = file.path(results, 'figures', 'WY2017Mar.forage.vs.WY2018Mar.forage.png', sep = ''), family = 'Book Antiqua', width = 800, height = 600, units = 'px', res=100)
+par(mar=c(4.5, 4.5, 2, 2))
+plot(by_plot_all$clp031417, by_plot_all$clp032218, xlab='Mar 14, 2017 biomass (kg / ha)', ylab='Mar 22, 2018 biomass (kg / ha)', main='Relationship between 2017 and 2018 standing forage in March, Camatta catchment', cex.main = 1.2, cex.lab = 1.2, cex.axis = 1.1)
+abline(a=lm_Mar_forage$coefficients[1], b=lm_Mar_forage$coefficients[2], lty = 2)
+text(x=by_plot_all$clp031417, y=by_plot_all$clp032218, labels = by_plot_all$location, pos = 1, offset = 0.3)
+dev.off()
+lm_Apr_forage <- summary(lm(clp041518 ~ clp041017, data = by_plot_all))
+png(file = file.path(results, 'figures', 'WY2017Apr.forage.vs.WY2018Apr.forage.png', sep = ''), family = 'Book Antiqua', width = 800, height = 600, units = 'px', res=100)
+par(mar=c(4.5, 4.5, 2, 2))
+plot(by_plot_all$clp041017, by_plot_all$clp041518, xlab = 'Apr 10, 2017 biomass (kg / ha)', ylab ='Apr 15, 2018 biomass (kg / ha)', main='Relationship between 2017 and 2018 standing forage in April, Camatta catchment', cex.main = 1.2, cex.lab = 1.2, cex.axis = 1.1)
+abline(a=lm_Apr_forage$coefficients[1], lm_Apr_forage$coefficients[2], lty = 2)
+text(x=by_plot_all$clp041017, y=by_plot_all$clp041518, labels = by_plot_all$location, pos = 1, offset = 0.3)
+dev.off()
+
+plot(by_plot_all$clp031417, by_plot_all$clp041518)
 summary(lm(clp041518 ~ clp041017, data = by_plot_all))
 summary(lm(clp041518 ~ clp031417, data = by_plot_all))
 summary(lm(clp041518 ~ clp021517, data = by_plot_all))
 write.csv(by_plot_all, file.path(forage_data, 'summaries', 'forage2017_2018.by.sensor.csv'), row.names = FALSE)
+
+by_plot_all <- read.csv(file.path(forageDir, 'summaries', 'forage2017_2018.by.sensor.csv'), stringsAsFactors = FALSE)
+
 
 #merge with spatial coordinates
 sensor_pts <- read.csv(file.path(spatial_data, "sensor_terrain_characteristics5_3_17.csv"), stringsAsFactors = FALSE) #how were terrain characteristics derived?
