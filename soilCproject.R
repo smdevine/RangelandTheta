@@ -1,13 +1,14 @@
-#TO-DO correct for bag weights, 
+#TO-DO correct for bag weights [DONE]
 #double-check entered data [DONE]
-#working up of bulk density data
-vol_0_10cm <- 179.450914
+#working up of bulk density data [DONE]
+vol_0_10cm <- 173.4944543 #id of soil core liner was 47 mm
 vol_10_30cm <- 2*vol_0_10cm
 BD_data <- read.csv(file.path('C:/Users/smdevine/Desktop/RangelandProject/soils_data', 'soils_datasheet.7.23.18.csv'), stringsAsFactors = FALSE)
+BD_data$sample_code
 summary(BD_data$frags_g[BD_data$frags_g > 0 & !is.na(BD_data$frags_mL)] / BD_data$frags_mL[BD_data$frags_g > 0 & !is.na(BD_data$frags_mL)])
 avgBD_frags <- mean(BD_data$frags_g[BD_data$frags_g > 0] / BD_data$frags_mL[BD_data$frags_g > 0], na.rm = TRUE)
 BD_data$frags_mL[is.na(BD_data$frags_mL) & BD_data$frags_g > 0] <- BD_data$frags_g[is.na(BD_data$frags_mL) & BD_data$frags_g > 0] / avgBD_frags
-BD_data$bag_weight <- ifelse(BD_data$bag_type==1, 4.8, ifelse(BD_data$bag_type==2, 3.9, ifelse(BD_data$bag_type==3, 6.2 , 6.4))) #bag type 4 was 6.4 g
+BD_data$bag_weight <- ifelse(BD_data$bag_type==1, 4.8, ifelse(BD_data$bag_type==2, 3.9, ifelse(BD_data$bag_type==3, 6.2, 6.4))) #bag type 4 was 6.4 g
 BD_data$fines_g <- BD_data$dry_wt_g - BD_data$frags_g - BD_data$bag_weight #subtract out frag and bag mass
 BD_data$fines_mL <- ifelse(BD_data$depth_code==1, vol_0_10cm, vol_10_30cm) - BD_data$frags_mL
 #need to correct samples 2-1 and 3-1 because they were only 0-5 cm samples
@@ -24,6 +25,13 @@ summary(BD_data$frags_vol_perc)
 BD_data$g_H2O <- BD_data$moist_wt_g - BD_data$dry_wt_g 
 summary(BD_data$g_H2O)
 hist(BD_data$g_H2O)
+head(BD_data)
+
+#read in oven-dry moisture measurements before calculating volumetric moisture
+OD_data <- read.csv(file.path('C:/Users/smdevine/Desktop/RangelandProject/soils_data', 'airdry_soilmoisture.csv'), stringsAsFactors = FALSE)
+OD_data$sample_code <- gsub('-1', '_1', OD_data$sample_code)
+#test <- merge(BD_data, OD_data, by = 'sample_code')
+
 BD_data$H2O_gravimetric <- (BD_data$g_H2O + 0.025 * BD_data$fines_g) / (BD_data$dry_wt_g - BD_data$bag_weight) #assume 2.5% air-dry moisture for all samples now
 BD_data$H2O_volumetric <- (BD_data$g_H2O + 0.025 * BD_data$fines_g) / BD_data$fines_mL
 summary(BD_data$H2O_gravimetric)
@@ -32,6 +40,12 @@ hist(BD_data$H2O_volumetric)
 BD_data_0_10cm <- BD_data[BD_data$depth_code==1,]
 BD_data_10_30cm <- BD_data[BD_data$depth_code==2,]
 
+#temp fix until for % gravimetric and volumetric moisture until 10-30 cm OD data is obtained
+BD_data_0_10cm <- merge(BD_data_0_10cm, OD_data, by = 'sample_code')
+BD_data_0_10cm$H2O_gravimetric <- (BD_data_0_10cm$g_H2O + (BD_data_0_10cm$OD.H2O.perc / 100)  * BD_data_0_10cm$fines_g) / (BD_data_0_10cm$dry_wt_g - BD_data_0_10cm$bag_weight - (BD_data_0_10cm$OD.H2O.perc / 100)  * BD_data_0_10cm$fines_g) #OD.H2O.perc is the percentage of air-dry moisture on an air-dry basis after drying at 100 C for 24 hrs
+BD_data_0_10cm$H2O_volumetric <- (BD_data_0_10cm$g_H2O + (BD_data_0_10cm$OD.H2O.perc / 100)  * BD_data_0_10cm$fines_g) / vol_0_10cm
+hist(BD_data_0_10cm$H2O_gravimetric)
+hist(BD_data_0_10cm$H2O_volumetric)
 #read in shapefile of points and merge with two dataframes above
 library(raster)
 sampling_pts <- shapefile(file.path('C:/Users/smdevine/Desktop/RangelandProject/sampling points 2018', 'soil_sampling_points.shp'))
@@ -47,12 +61,16 @@ plot(point_data_0_10cm, cex=point_data_0_10cm$Apr2017biomass/1000, pch=1)
 plot(point_data_0_10cm, cex=1.5 * point_data_0_10cm$bulk_density_g_cm3, pch=1)
 plot(point_data_0_10cm, cex=point_data_0_10cm$frags_vol_perc / 3, pch=1)
 plot(point_data_0_10cm, cex=point_data_0_10cm$H2O_volumetric * 20, pch=1)
+plot(point_data_0_10cm$OD.H2O.perc, point_data_0_10cm$Apr2017biomass)
 plot(point_data_0_10cm$bulk_density_g_cm3, point_data_0_10cm$Apr2017biomass)
 plot(point_data_0_10cm$frags_vol_perc, point_data_0_10cm$Apr2017biomass)
-plot(point_data_0_10cm$H2O_volumetric, point_data_0_10cm$Apr2017biomass) #should be done against 2018 biomass
+plot(point_data_0_10cm$H2O_volumetric, point_data_0_10cm$Apr2017biomass) #all this should be done against 2018 biomass
 summary(lm(Apr2017biomass ~ bulk_density_g_cm3, data = point_data_0_10cm))
 summary(lm(Apr2017biomass ~ H2O_volumetric, data = point_data_0_10cm)) #should be done against 2018 biomass
 summary(lm(Apr2017biomass ~ frags_vol_perc, data = point_data_0_10cm))
+summary(lm(Apr2017biomass ~ OD.H2O.perc, data = point_data_0_10cm))
+plot(point_data_0_10cm$frags_vol_perc, point_data_0_10cm$H2O_volumetric)
+plot(point_data_0_10cm$frags_vol_perc, point_data_0_10cm$OD.H2O.perc)
 
 #now the 10-30 cm data
 point_data_10_30cm <- merge(sampling_pts, BD_data_10_30cm, 'point_no')
@@ -70,6 +88,7 @@ summary(lm(Apr2017biomass ~ H2O_volumetric, data = point_data_10_30cm)) #should 
 #multiple linear regression
 summary(lm(Apr2017biomass ~ bulk_density_g_cm3 + frags_vol_perc + H2O_volumetric, data = point_data_10_30cm))
 summary(lm(Apr2017biomass ~ bulk_density_g_cm3 + frags_vol_perc + H2O_volumetric, data = point_data_0_10cm))
+summary(lm(Apr2017biomass ~ OD.H2O.perc + frags_vol_perc, data = point_data_0_10cm))
 
 #write to shapefiles
 fname <- file.path('C:/Users/smdevine/Desktop/RangelandProject/sampling points 2018', 'soil_data_0_10cm.shp')
