@@ -4,6 +4,8 @@
 dem_fineres <- 'C:/Users/smdevine/Desktop/rangeland project/DEM_S_Hogan/Camatta_Mar_2017/Rasters'
 terrainDir <- 'C:/Users/smdevine/Desktop/rangeland project/terrain_analysis_r_v3'
 sensorDir <- 'C:/Users/smdevine/Desktop/rangeland project/soilmoisture/sensor_coordinates'
+results <- 'C:/Users/smdevine/Desktop/rangeland project/results'
+results <- 
 library(rgdal)
 library(raster)
 #library(dynatopmodel)
@@ -42,7 +44,14 @@ plot(roughness_1m)
 plot(roughness_30cm)
 
 #merge with sensors
+list.files(terrainDir)
+stack_30cm <- stack(file.path(terrainDir, 'dem30cm.tif'), file.path(terrainDir, 'aspect_30cm.tif'), file.path(terrainDir, 'slope_30cm.tif'), file.path(terrainDir, 'roughness_30cm.tif'), file.path(terrainDir, 'terrain_ruggedness30cm.tif'), file.path(terrainDir, 'topographic_position30cm.tif'), file.path(terrainDir, 'curvature_mean30cm.tif'), file.path(terrainDir, 'compound_topo_index30cm.tif'))
+names(stack_30cm) <- c('elevation', 'aspect', 'slope', 'roughness', 'TRI', 'TPI', 'curvature_mean', 'CTI')
 setwd(sensorDir)
-sensor_shp <- shapefile("5TM_sensor_locations_Camatta.shp")
-plot(sensor_shp, add=T, col='blue')
-
+sensor_shp <- shapefile(file.path(sensorDir, "5TM_sensor_locations_Camatta.shp"))
+plot(sensor_shp, col='blue')
+sensor_terrain_summary <- extract(stack_30cm, sensor_shp, buffer=1.5, fun=mean)
+sensor_terrain_summary <- as.data.frame(sensor_terrain_summary)
+sensor_terrain_summary
+sensor_terrain_summary$aspect_class <- ifelse(sensor_terrain_summary$aspect >= 45 & sensor_terrain_summary$aspect < 135, 'east', ifelse(sensor_terrain_summary$aspect >= 135 & sensor_terrain_summary$aspect < 225, 'south', ifelse(sensor_terrain_summary$aspect >= 225 & sensor_terrain_summary$aspect < 315, 'west', 'north')))
+write.csv(sensor_terrain_summary, file.path(results, 'terrain_characteristics', 'sensor_Rterrain30cm_summary.csv')) #used 30 cm res data and 1.5 m buffer around points to calculate
