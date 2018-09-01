@@ -36,7 +36,8 @@ forageDir <- 'C:/Users/smdevine/Desktop/rangeland project/clip_plots'
 
 #read in terrain char for each sensor location
 #to be updated
-terrain_chars <- read.csv(file.path(results, 'terrain_characteristics', "sensor_Rterrain30cm_summary.csv"), stringsAsFactors = FALSE)
+list.files(file.path(results, 'terrain_characteristics'))
+terrain_chars <- read.csv(file.path(results, 'terrain_characteristics', "sensor_Rterrain30cmfilled_summary.csv"), stringsAsFactors = FALSE)
 colnames(terrain_chars)[1] <- 'location'
 terrain_chars
 
@@ -397,24 +398,42 @@ plot(as.Date(precip_WY2017$Date, format = '%m/%d/%Y'), precip_WY2017$Rainfall..m
 sum(precip_WY2017$Rainfall..mm.) #303.276 mm
 plot(as.Date(precip_WY2018$Date, format = '%m/%d/%Y'), precip_WY2018$Rainfall..mm., type='h')
 sum(precip_WY2018$Rainfall..mm.) #136.8 mm
-#plotting 2017 daily data by location x depth location from summaries produced above
+
+#plotting 2017 VWC daily data by location x depth location from summaries produced above
 data_name <- 'VWC'
 depth <- '7'
 yr <- '2017'
-#vwc_data_2017 <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/May2017/daily_by_location', data_name, paste0('MedianVWC_', depth, 'cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
-#vwc_data_2017 <- vwc_data_2017[,c(1:165)]
 vwc_data_2017 <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location', yr, data_name, paste0('MedianVWC_', depth, 'cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
 colnames(vwc_data_2017)
 #endcol <- ncol(vwc_data_2017)
 dates2017 <- seq.Date(as.Date(colnames(vwc_data_2017)[2], '%b_%d_%Y'), as.Date(colnames(vwc_data_2017)[ncol(vwc_data_2017)], '%b_%d_%Y'), by='day')
 weeks2017 <- seq.Date(as.Date(colnames(vwc_data_2017)[2], '%b_%d_%Y'), as.Date(colnames(vwc_data_2017)[ncol(vwc_data_2017)], '%b_%d_%Y'), by='week')
+#normalize 2017 vwc_data
+#vwc_data_normalized_2017 <- vwc_data_2017[,1:165] #end May 1
+vwc_data_normalized_2017 <- vwc_data_2017
+vwc_data_normalized_2017[ ,2:ncol(vwc_data_normalized_2017)] <- (vwc_data_normalized_2017[ ,2:ncol(vwc_data_normalized_2017)] - rowMeans(vwc_data_normalized_2017[ ,2:ncol(vwc_data_normalized_2017)], na.rm = TRUE)) / apply(vwc_data_normalized_2017[ ,2:ncol(vwc_data_normalized_2017)], 1, sd, na.rm=TRUE)
+
+#plotting 2018 daily data by location x depth location from summaries produced above
+data_name <- 'VWC'
+depth <- '7'
+yr <- '2018'
+vwc_data_2018 <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location', yr, data_name, paste0('MedianVWC_', depth, 'cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
+colnames(vwc_data_2018)
+#endcol <- ncol(vwc_data_2018)
+dates2018 <- seq.Date(as.Date(colnames(vwc_data_2018)[2], '%b_%d_%Y'), as.Date(colnames(vwc_data_2018)[ncol(vwc_data_2018)], '%b_%d_%Y'), by='day')
+weeks2018 <- seq.Date(as.Date(colnames(vwc_data_2018)[2], '%b_%d_%Y'), as.Date(colnames(vwc_data_2018)[ncol(vwc_data_2018)], '%b_%d_%Y'), by='week')
+#normalize 2018 vwc_data
+vwc_data_normalized_2018 <- vwc_data_2018
+vwc_data_normalized_2018[ ,2:ncol(vwc_data_normalized_2018)] <- (vwc_data_normalized_2018[ ,2:ncol(vwc_data_normalized_2018)] - rowMeans(vwc_data_normalized_2018[ ,2:ncol(vwc_data_normalized_2018)], na.rm = TRUE)) / apply(vwc_data_normalized_2018[ ,2:ncol(vwc_data_normalized_2018)], 1, sd, na.rm=TRUE)
+
+#plot 2017 by location
 for (i in 1:nrow(vwc_data_2017)) {
   plot(dates2017, vwc_data_2017[i, 2:ncol(vwc_data_2017)], type='b', xlab='Date', ylab='Daily Median VWC at 7 cm (mean of 2 sensors)', xaxt='n', main=paste('Location', vwc_data_2017$location[i])) #, ',', vwc_data_2017$aspect_cardinal[i], 'aspect'))
   axis.Date(side = 1, dates2017, at=weeks2017, format = '%m/%d/%y')
   #text(x=dates2017[75], y=0.18, labels=paste(round(vwc_data_2017$mean_curv[i], 2), 'mean curvature', ',', round(vwc_data_2017$cti[i], 2), 'Compound Topographic Index'))
 }
 
-#plot all on one graph
+#plot all 2017 on one graph
 png(file = file.path(results, 'figures', paste0('WY2017soilmoisture', depth, '.cm.v2.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4, 2, 2))
 for (i in 1:nrow(vwc_data_2017)) {
@@ -432,12 +451,7 @@ dev.off()
 #axis(side = 4, at = c(0))
 #lines(as.Date(precip_WY2017$Date, format = '%m/%d/%Y'), precip_WY2017$Rainfall..mm. / 100, type='h')
 
-#normalize 2017 vwc_data
-#vwc_data_normalized_2017 <- vwc_data_2017[,1:165] #end May 1
-vwc_data_normalized_2017 <- vwc_data_2017
-vwc_data_normalized_2017[ ,2:ncol(vwc_data_normalized_2017)] <- (vwc_data_normalized_2017[ ,2:ncol(vwc_data_normalized_2017)] - rowMeans(vwc_data_normalized_2017[ ,2:ncol(vwc_data_normalized_2017)], na.rm = TRUE)) / apply(vwc_data_normalized_2017[ ,2:ncol(vwc_data_normalized_2017)], 1, sd, na.rm=TRUE)
-
-#and then plot normalized data
+#and then plot 2017 normalized data
 plotpos <- 102
 png(file = file.path(results, 'figures', paste0('WY2017soilmoisture.norm', depth, '.cm.v2.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4, 2, 2))
@@ -454,22 +468,14 @@ abline(0, 0, lty=2)
 axis.Date(side = 1, at=seq.Date(from = as.Date('2016/12/1'), to = as.Date('2017/7/1'), by='months'), format = '%m/%d/%y')
 dev.off()
 
-#plotting 2018 daily data by location x depth location from summaries produced above
-data_name <- 'VWC'
-depth <- '22'
-yr <- '2018'
-vwc_data_2018 <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location', yr, data_name, paste0('MedianVWC_', depth, 'cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
-colnames(vwc_data_2018)
-#endcol <- ncol(vwc_data_2018)
-dates2018 <- seq.Date(as.Date(colnames(vwc_data_2018)[2], '%b_%d_%Y'), as.Date(colnames(vwc_data_2018)[ncol(vwc_data_2018)], '%b_%d_%Y'), by='day')
-weeks2018 <- seq.Date(as.Date(colnames(vwc_data_2018)[2], '%b_%d_%Y'), as.Date(colnames(vwc_data_2018)[ncol(vwc_data_2018)], '%b_%d_%Y'), by='week')
+#plot 2018 by location
 for (i in 1:nrow(vwc_data_2018)) {
   plot(dates2018, vwc_data_2018[i, 2:ncol(vwc_data_2018)], type='b', xlab='Date', ylab='Daily Median VWC at 7 cm (mean of 2 sensors)', xaxt='n', main=paste('Location', vwc_data_2018$location[i])) #, ',', vwc_data_2018$aspect_cardinal[i], 'aspect'))
   axis.Date(side = 1, dates2018, at=weeks2018, format = '%m/%d/%y')
   #text(x=dates2018[75], y=0.18, labels=paste(round(vwc_data_2018$mean_curv[i], 2), 'mean curvature', ',', round(vwc_data_2018$cti[i], 2), 'Compound Topographic Index'))
 }
 
-#plot figure to file
+#plot 2018 figure to file
 png(file = file.path(results, 'figures', paste0('WY2018soilmoisture.', depth, 'cm.v2.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4, 2, 2))
 for (i in 1:nrow(vwc_data_2018)) {
@@ -484,12 +490,7 @@ for (i in 1:nrow(vwc_data_2018)) {
 axis.Date(side = 1, at=seq.Date(from = as.Date('2017/12/1'), to = as.Date('2018/7/1'), by='months'), format = '%m/%d/%y')
 dev.off()
 
-#normalize 2018 vwc_data
-vwc_data_normalized_2018 <- vwc_data_2018
-vwc_data_normalized_2018[ ,2:ncol(vwc_data_normalized_2018)] <- (vwc_data_normalized_2018[ ,2:ncol(vwc_data_normalized_2018)] - rowMeans(vwc_data_normalized_2018[ ,2:ncol(vwc_data_normalized_2018)], na.rm = TRUE)) / apply(vwc_data_normalized_2018[ ,2:ncol(vwc_data_normalized_2018)], 1, sd, na.rm=TRUE)
-
-#and then plot as above
-#or plot to file
+#plot 2018 normalized to file
   png(file = file.path(results, 'figures', paste0('WY2018soilmoisture.norm.', depth, 'cm.v2.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
   par(mar=c(2, 4, 2, 2))
   for (i in 1:nrow(vwc_data_normalized_2018)) {
@@ -576,74 +577,115 @@ forage_data <- read.csv(file.path(forageDir, 'summaries', 'forage2017_2018.by.se
 #combine with sensor characteristics
 forage_terrain <- merge(forage_data, terrain_chars, by='location')
 summary(lm(clp031417 ~ elevation, data = forage_terrain))
-summary(lm(clp031417 ~ aspect, data = forage_terrain)) #best model
+summary(lm(clp031417 ~ aspect, data = forage_terrain)) #best model: r2=0.39
 plot(forage_terrain$aspect, forage_terrain$clp031417)
 abline(lm(clp031417 ~ aspect, data = forage_terrain), lty=2)
 summary(lm(clp031417 ~ slope, data = forage_terrain))
-summary(lm(clp031417 ~ TPI, data = forage_terrain))
-summary(lm(clp031417 ~ TRI, data = forage_terrain))
-summary(lm(clp031417 ~ roughness, data = forage_terrain))
 summary(lm(clp031417 ~ curvature_mean, data = forage_terrain))
-summary(lm(clp031417 ~ CTI, data = forage_terrain))
-summary(lm(clp031417 ~  aspect + slope + TRI, data = forage_terrain)) #higher r^2 but slope and TRI are highly correlated and so their coefficients are offsetting in model
-summary(lm(clp031417 ~ aspect + slope, data = forage_terrain)) #NS for slope
-summary(lm(clp031417 ~ aspect + TRI, data = forage_terrain))
+summary(lm(clp031417 ~ curvature_plan, data = forage_terrain)) #r2=0.34
+summary(lm(clp031417 ~ curvature_profile, data = forage_terrain))
+summary(lm(clp031417 ~ CTI, data = forage_terrain)) #weakly sig
+summary(lm(clp031417 ~  aspect + slope, data = forage_terrain)) #higher r^2 but slope and TRI are highly correlated and so their coefficients are offsetting in model
 summary(lm(clp031417 ~ aspect + curvature_mean, data = forage_terrain))
-summary(lm(clp031417 ~ aspect + CTI, data = forage_terrain)) #0.61 r^2
+summary(lm(clp031417 ~ aspect + curvature_plan, data = forage_terrain)) #both sig r2=0.56
+summary(lm(clp031417 ~ aspect + CTI, data = forage_terrain)) #r2=0.55, both params sig
+summary(lm(clp031417 ~ aspect + CTI + curvature_plan, data = forage_terrain)) #r2=0.57, only aspect is sig
 lm_aspect_CTI <- lm(clp031417 ~ aspect + CTI, data = forage_terrain)
-plot(forage_terrain$aspect, forage_terrain$slope)
-plot(forage_terrain$aspect, forage_terrain$roughness)
+plot(forage_terrain$aspect, forage_terrain$curvature_plan)
 plot(forage_terrain$aspect, forage_terrain$CTI)
-plot(forage_terrain$slope, forage_terrain$TRI)
-summary(lm(forage_terrain$clp031417 ~ forage_terrain$CTI + vwc_data_normalized_2017$Feb_26_2017))
+plot(forage_terrain$curvature_plan, forage_terrain$CTI)
+summary(lm(forage_terrain$clp031417 ~ vwc_data_normalized_2017$Dec_24_2016)) #r2=0.66
+summary(lm(forage_terrain$clp031417 ~ vwc_data_normalized_2017$Dec_24_2016 + forage_terrain$CTI)) #r2=0.71
+summary(lm(forage_terrain$clp031417 ~ vwc_data_normalized_2017$Dec_24_2016 + forage_terrain$curvature_profile))
+summary(lm(forage_terrain$clp031417 ~ vwc_data_normalized_2017$Mar_01_2017))
+summary(lm(forage_terrain$clp031417 ~ vwc_data_normalized_2017$Mar_01_2017 + forage_terrain$CTI)) #r2=0.52, both params sig
+summary(lm(forage_terrain$clp031417 ~ forage_terrain$aspect + forage_terrain$CTI + vwc_data_normalized_2017$Mar_01_2017))
 
 #and look at correlation with Apr biomass
 summary(lm(clp041017 ~ elevation, data = forage_terrain))
-summary(lm(clp041017 ~ aspect, data = forage_terrain)) #best model
+summary(lm(clp041017 ~ aspect, data = forage_terrain)) #no longer significant
 plot(forage_terrain$aspect, forage_terrain$clp041017)
 abline(lm(clp041017 ~ aspect, data = forage_terrain), lty=2)
 summary(lm(clp041017 ~ slope, data = forage_terrain))
-summary(lm(clp041017 ~ TPI, data = forage_terrain))
-summary(lm(clp041017 ~ TRI, data = forage_terrain))
-summary(lm(clp041017 ~ roughness, data = forage_terrain))
 summary(lm(clp041017 ~ curvature_mean, data = forage_terrain))
-summary(lm(clp041017 ~ CTI, data = forage_terrain))
-summary(lm(clp041017 ~  aspect + slope + TRI, data = forage_terrain)) #higher r^2 but slope and TRI are highly correlated and so their coefficients are offsetting in model
-summary(lm(clp041017 ~ CTI + elevation, data = forage_terrain))
-summary(lm(clp041017 ~ CTI + curvature_mean, data = forage_terrain))
+summary(lm(clp041017 ~ CTI, data = forage_terrain)) #r2=0.23
+summary(lm(clp041017 ~ curvature_plan, data = forage_terrain)) #r2=0.34
+summary(lm(clp041017 ~ curvature_profile, data = forage_terrain)) 
+summary(lm(clp041017 ~ CTI + elevation, data = forage_terrain)) #both params non sign
+summary(lm(clp041017 ~ CTI + curvature_mean, data = forage_terrain)) #NS for mean curvature
+summary(lm(clp041017 ~ CTI + curvature_plan, data = forage_terrain)) #both NS but r2=0.34
+summary(lm(clp041017 ~ CTI + curvature_profile, data = forage_terrain)) #both NS
 summary(lm(clp041017 ~ CTI + slope, data = forage_terrain)) #NS for slope
-summary(lm(clp041017 ~ CTI + TRI, data = forage_terrain))
 summary(lm(clp041017 ~ aspect + curvature_mean, data = forage_terrain))
-summary(lm(clp041017 ~ aspect + CTI, data = forage_terrain)) #0.61 r^2
-lm_Apr2017_CTI <- lm(clp041017 ~ CTI, data = forage_terrain)
-lm_Apr2017_CTI_elev <- lm(clp041017 ~ CTI + elevation, data = forage_terrain) #best model
+summary(lm(clp041017 ~ aspect + CTI, data = forage_terrain)) #NS for aspect
+summary(lm(clp041017 ~ aspect + curvature_plan, data = forage_terrain))
+summary(lm(forage_terrain$clp041017 ~ forage_terrain$curvature_plan + vwc_data_normalized_2017$Mar_26_2017))
 
 #and look at correlation with May biomass
 summary(lm(clp050117 ~ elevation, data = forage_terrain))
-summary(lm(clp050117 ~ aspect, data = forage_terrain)) #best model
+summary(lm(clp050117 ~ aspect, data = forage_terrain))
 plot(forage_terrain$aspect, forage_terrain$clp050117)
 abline(lm(clp050117 ~ aspect, data = forage_terrain), lty=2)
 summary(lm(clp050117 ~ slope, data = forage_terrain))
-summary(lm(clp050117 ~ TPI, data = forage_terrain))
-summary(lm(clp050117 ~ TRI, data = forage_terrain))
-summary(lm(clp050117 ~ roughness, data = forage_terrain))
 summary(lm(clp050117 ~ curvature_mean, data = forage_terrain))
+summary(lm(clp050117 ~ curvature_plan, data = forage_terrain))
+summary(lm(clp050117 ~ curvature_profile, data = forage_terrain)) #now this is significant
 summary(lm(clp050117 ~ CTI, data = forage_terrain))
-summary(lm(clp050117 ~  CTI + slope + elevation + curvature_mean, data = forage_terrain)) #higher r^2 but slope and TRI are highly correlated and so their coefficients are offsetting in model
+summary(lm(clp050117 ~  CTI + slope + elevation + curvature_mean, data = forage_terrain))
 summary(lm(clp050117 ~ CTI + elevation, data = forage_terrain))
 summary(lm(clp050117 ~ CTI + curvature_mean, data = forage_terrain))
 summary(lm(clp050117 ~ CTI + slope, data = forage_terrain)) #NS for slope
-summary(lm(clp050117 ~ CTI + TRI, data = forage_terrain))
+summary(lm(clp050117 ~ CTI + curvature_profile, data = forage_terrain)) #r2=0.37
+summary(lm(clp050117 ~ CTI + curvature_plan, data = forage_terrain)) #r2=0.37
 summary(lm(clp050117 ~ aspect + curvature_mean, data = forage_terrain))
-summary(lm(clp050117 ~ aspect + CTI, data = forage_terrain)) #0.61 r^2
+summary(lm(clp050117 ~ aspect + CTI, data = forage_terrain)) #0.18 r^2
 lm_May2017_CTI <- lm(clp050117 ~ CTI, data = forage_terrain)
 lm_May2017_CTI_curv <- lm(clp050117 ~ CTI + curvature_mean, data = forage_terrain)
+
+#analyze March 2018 biomass
+summary(lm(clp032218 ~ elevation, data = forage_terrain))
+summary(lm(clp032218 ~ aspect, data = forage_terrain)) #best model: r2=0.39
+plot(forage_terrain$aspect, forage_terrain$clp032218)
+abline(lm(clp032218 ~ aspect, data = forage_terrain), lty=2)
+summary(lm(clp032218 ~ slope, data = forage_terrain))
+summary(lm(clp032218 ~ curvature_mean, data = forage_terrain))
+summary(lm(clp032218 ~ curvature_plan, data = forage_terrain))
+summary(lm(clp032218 ~ curvature_profile, data = forage_terrain))
+summary(lm(clp032218 ~ CTI, data = forage_terrain)) #weakly sig
+summary(lm(clp032218 ~  aspect + slope, data = forage_terrain)) #higher r^2 but slope and TRI are highly correlated and so their coefficients are offsetting in model
+summary(lm(clp032218 ~ aspect + curvature_mean, data = forage_terrain))
+summary(lm(clp032218 ~ aspect + curvature_plan, data = forage_terrain)) #both sig r2=0.38
+summary(lm(clp032218 ~ aspect + CTI, data = forage_terrain)) #both params sig r2=0.42
+summary(lm(clp032218 ~ aspect + CTI + curvature_plan, data = forage_terrain)) #r2=0.40, only aspect is sig
+
+#and look at correlation with Apr biomass
+summary(lm(clp041518 ~ elevation, data = forage_terrain))
+summary(lm(clp041518 ~ aspect, data = forage_terrain)) #no longer significant
+plot(forage_terrain$aspect, forage_terrain$clp041518)
+abline(lm(clp041518 ~ aspect, data = forage_terrain), lty=2)
+summary(lm(clp041518 ~ slope, data = forage_terrain))
+plot(forage_terrain$slope, forage_terrain$clp041518)
+abline(lm(clp041518 ~ slope, data = forage_terrain))
+summary(lm(clp041518 ~ curvature_mean, data = forage_terrain))
+summary(lm(clp041518 ~ CTI, data = forage_terrain)) #r2=0.23
+summary(lm(clp041518 ~ curvature_plan, data = forage_terrain)) #r2=0.34
+summary(lm(clp041518 ~ curvature_profile, data = forage_terrain)) 
+summary(lm(clp041518 ~ CTI + elevation, data = forage_terrain)) #both params non sign
+summary(lm(clp041518 ~ CTI + curvature_mean, data = forage_terrain)) #NS for mean curvature
+summary(lm(clp041518 ~ CTI + curvature_plan, data = forage_terrain)) #both NS but r2=0.34
+summary(lm(clp041518 ~ CTI + curvature_profile, data = forage_terrain)) #both NS
+summary(lm(clp041518 ~ CTI + slope, data = forage_terrain))
+summary(lm(clp041518 ~ curvature_profile + slope, data = forage_terrain))
+summary(lm(clp041518 ~ aspect + curvature_mean, data = forage_terrain))
+summary(lm(clp041518 ~ aspect + CTI, data = forage_terrain)) #NS for aspect
+summary(lm(clp041518 ~ aspect + curvature_plan, data = forage_terrain))
+summary(lm(forage_terrain$clp041518 ~ forage_terrain$curvature_plan + vwc_data_normalized_2017$Mar_26_2017))
 
 #work through dates and find correlation between normalized soil moisture and April 10, 2017 biomass
 #note that some of these variables are defined above
 SM_vs_biomass_analysis2017 <- data.frame(dates=dates2017, SMnorm.mean=apply(vwc_data_normalized_2017[2:ncol(vwc_data_normalized_2017)], 2, mean, na.rm=TRUE), SMnorm.range=apply(vwc_data_normalized_2017[2:ncol(vwc_data_normalized_2017)], 2, max, na.rm=TRUE) - apply(vwc_data_normalized_2017[2:ncol(vwc_data_normalized_2017)], 2, min, na.rm=TRUE), slope=NA, p.value=NA, r2=NA)
 for (i in 2:ncol(vwc_data_normalized_2017)) {
-  lm.summary <- summary(lm(forage_data$clp031417 ~ vwc_data_normalized_2017[,i]))
+  lm.summary <- summary(lm(forage_data$clp041017 ~ vwc_data_normalized_2017[,i]))
   SM_vs_biomass_analysis2017[i-1, 'slope'] <- lm.summary$coefficients[2, 1]
   SM_vs_biomass_analysis2017[i-1, 'p.value'] <- lm.summary$coefficients[2, 4]
   SM_vs_biomass_analysis2017[i-1, 'r2'] <- lm.summary$r.squared
@@ -812,41 +854,194 @@ for (i in 2:which(colnames(vwc_data_normalized)=='May_01_2017')) {
   dev.off()
 }
 
-#not sure about this code below [8/17/18]
+#soil temperature plotting
+data_name <- 'Temperature'
+depth <- '7'
+yr <- '2017'
+soilT_data_2017 <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location', yr, data_name, paste0('MedianT_', depth, 'cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
+colnames(soilT_data_2017)
+#endcol <- ncol(soilT_data_2017)
+dates2017 <- seq.Date(as.Date(colnames(soilT_data_2017)[2], '%b_%d_%Y'), as.Date(colnames(soilT_data_2017)[ncol(soilT_data_2017)], '%b_%d_%Y'), by='day')
+weeks2017 <- seq.Date(as.Date(colnames(soilT_data_2017)[2], '%b_%d_%Y'), as.Date(colnames(soilT_data_2017)[ncol(soilT_data_2017)], '%b_%d_%Y'), by='week')
+#normalize 2017 vwc_data
+#soilT_data_normalized_2017 <- soilT_data_2017[,1:165] #end May 1
+soilT_data_normalized_2017 <- soilT_data_2017
+soilT_data_normalized_2017[ ,2:ncol(soilT_data_normalized_2017)] <- (soilT_data_normalized_2017[ ,2:ncol(soilT_data_normalized_2017)] - rowMeans(soilT_data_normalized_2017[ ,2:ncol(soilT_data_normalized_2017)], na.rm = TRUE)) / apply(soilT_data_normalized_2017[ ,2:ncol(soilT_data_normalized_2017)], 1, sd, na.rm=TRUE)
 
-#plot means by location at 22 cm depth. 
-plot(soil_moisture_dfs[[1]][ ,1], rowMeans(soil_moisture_dfs[[1]][ ,c(4,8)], na.rm = TRUE), type='l', xlab='Date', ylab='soil VWC', xaxt='n', col=1, main='VWC means by location at 22 cm depth', ylim=c(0.1, 0.45))
-axis.POSIXct(side = 1, labDates, at=labDates, format = '%m/%d')
-for (i in 2:length(soil_moisture_dfs)) {
-  lines.default(soil_moisture_dfs[[i]][ ,1], rowMeans(soil_moisture_dfs[[i]][ ,c(4,8)], na.rm = TRUE), col=i+1)
-}
-#plot means by location at 7 cm depth. 
-plot(soil_moisture_dfs[[1]][ ,1], rowMeans(soil_moisture_dfs[[1]][ ,c(2,6)], na.rm = TRUE), type='l', xlab='Date', ylab='soil VWC', xaxt='n', col=1, main='VWC means by location at 7 cm depth', ylim=c(0.1, 0.45))
-axis.POSIXct(side = 1, labDates, at=labDates, format = '%m/%d')
-for (i in 2:length(soil_moisture_dfs)) {
-  lines.default(soil_moisture_dfs[[i]][ ,1], rowMeans(soil_moisture_dfs[[i]][ ,c(2,6)], na.rm = TRUE), col=i+1)
-}
-
-
-#extra code
-#to determine change from beginning to end of each day
-for (k in 1:length(dates)) {
-  t <- which(soil_moisture_dfs[[i]]$date==dates[k])
-  VWC_init <- soil_moisture_dfs[[i]][t[1], j]
-  VWC_final <- soil_moisture_dfs[[i]][t[length(t)], j]
-  VWC$DeltaVWC_day[k] <- VWC_final - VWC_init
+#plot by location
+for (i in 1:nrow(soilT_data_2017)) {
+  plot(dates2017, soilT_data_2017[i, 2:ncol(soilT_data_2017)], type='b', xlab='Date', ylab='Daily Median VWC at 7 cm (mean of 2 sensors)', xaxt='n', main=paste('Location', soilT_data_2017$location[i])) #, ',', soilT_data_2017$aspect_cardinal[i], 'aspect'))
+  axis.Date(side = 1, dates2017, at=weeks2017, format = '%m/%d/%y')
+  #text(x=dates2017[75], y=0.18, labels=paste(round(soilT_data_2017$mean_curv[i], 2), 'mean curvature', ',', round(soilT_data_2017$cti[i], 2), 'Compound Topographic Index'))
 }
 
+#plot all 2017 soil T on one graph
+png(file = file.path(results, 'figures', paste0('WY2017soiltemperature', depth, '.cm.v2.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+par(mar=c(2, 4, 2, 2))
+for (i in 1:nrow(soilT_data_2017)) {
+  if (i == 1) {
+    plot(dates2017, soilT_data_2017[i, 2:ncol(soilT_data_2017)], type='l', xaxt='n', col=i+1, ylim=c(min(soilT_data_2017[,2:ncol(soilT_data_2017)], na.rm=TRUE), max(soilT_data_2017[,2:ncol(soilT_data_2017)], na.rm=TRUE)), xlim=c(dates2017[7], dates2017[length(dates2017) - 7]), xlab = '', ylab = 'soil temperature (C)', xaxt = 'n', main = paste0('WY2017 soil temperature, ', depth, ' cm depth, Camatta catchment')) #previous min def: 
+    #text(x=dates2017[length(dates2017)-50], y=soilT_data_2017[i, ncol(soilT_data_2017)-50], labels=soilT_data_2017[i, 1], cex=0.7)
+  } else {
+    lines.default(dates2017, soilT_data_2017[i, 2:ncol(soilT_data_2017)], xaxt='n', col=i+1)
+    #text(x=dates2017[length(dates2017)- 50], y=soilT_data_2017[i, (ncol(soilT_data_2017)- 50)], labels=soilT_data_2017[i, 1], cex=0.7)
+  }
+}
+axis.Date(side = 1, at=seq.Date(from = as.Date('2016/12/1'), to = as.Date('2017/7/1'), by='months'), format = '%m/%d/%y')
+dev.off()
+#add precip
+#axis(side = 4, at = c(0))
+#lines(as.Date(precip_WY2017$Date, format = '%m/%d/%Y'), precip_WY2017$Rainfall..mm. / 100, type='h')
 
-#made spatial points object from scratch as above
-#coordinate data from Grace 2/2/17 (from 1/16/17 trip). these are the coordinates for the mid-point between each pair of sensors at each location (datalogger)
-setwd(spatialDir)
-coordinates <- shapefile('Point_ge.shp')
-coordinates_df <- data.frame(coordinates)
-print(coordinates_df, digits=10) #otherwise, not all of the coordinates will show up
-crs(coordinates)
-geom(coordinates)
+#and then plot normalized data
+plotpos <- 102
+png(file = file.path(results, 'figures', paste0('WY2017soiltemperature.norm', depth, '.cm.v2.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+par(mar=c(2, 4, 2, 2))
+for (i in 1:nrow(soilT_data_normalized_2017)) {
+  if (i == 1) {
+    plot(dates2017[3:length(dates2017)], soilT_data_normalized_2017[i, 4:ncol(soilT_data_normalized_2017)], type='l', xaxt='n', col=i+1, ylim=c(min(soilT_data_normalized_2017[ ,4:ncol(soilT_data_normalized_2017)], na.rm=TRUE), max(soilT_data_normalized_2017[ ,4:ncol(soilT_data_normalized_2017)], na.rm=TRUE)), xlim = c(dates2017[7], dates2017[length(dates2017)-7]), xlab = "", ylab='Std Deviations by Location', main = paste('WY2017 normalized soil temperature,', depth, 'cm depth, Camatta catchment'))
+    #text(x=dates2017[plotpos + i], y=soilT_data_normalized_2017[i, plotpos+ 1 + i ], labels=soilT_data_normalized_2017[i, 1], cex=0.6, pos = 1, offset = 0.1)
+  } else {
+    lines.default(dates2017[1:length(dates2017)], soilT_data_normalized_2017[i, 2:ncol(soilT_data_normalized_2017)], xaxt='n', col=i+1)
+    #text(x=dates2017[plotpos + i], y=soilT_data_normalized_2017[i, plotpos + 1 + i], labels=soilT_data_normalized_2017[i, 1], cex=0.6, pos = 1, offset = 0.1)
+  }
+}
+abline(0, 0, lty=2)
+axis.Date(side = 1, at=seq.Date(from = as.Date('2016/12/1'), to = as.Date('2017/7/1'), by='months'), format = '%m/%d/%y')
+dev.off()
 
-head(soil_moisture_dfs$`Cam1-16Jan2017-1508.csv`)
-class(soil_moisture_dfs$`Cam1-16Jan2017-1508.csv`$`5TM_P1_A7 m³/m³ VWC`)
+#WY2018 soil temperature
+data_name <- 'Temperature'
+depth <- '7'
+yr <- '2018'
+soilT_data_2018 <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location', yr, data_name, paste0('MedianT_', depth, 'cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
+colnames(soilT_data_2018)
+#endcol <- ncol(soilT_data_2018)
+dates2018 <- seq.Date(as.Date(colnames(soilT_data_2018)[2], '%b_%d_%Y'), as.Date(colnames(soilT_data_2018)[ncol(soilT_data_2018)], '%b_%d_%Y'), by='day')
+weeks2018 <- seq.Date(as.Date(colnames(soilT_data_2018)[2], '%b_%d_%Y'), as.Date(colnames(soilT_data_2018)[ncol(soilT_data_2018)], '%b_%d_%Y'), by='week')
+#normalize 2018 vwc_data
+#soilT_data_normalized_2018 <- soilT_data_2018[,1:165] #end May 1
+soilT_data_normalized_2018 <- soilT_data_2018
+soilT_data_normalized_2018[ ,2:ncol(soilT_data_normalized_2018)] <- (soilT_data_normalized_2018[ ,2:ncol(soilT_data_normalized_2018)] - rowMeans(soilT_data_normalized_2018[ ,2:ncol(soilT_data_normalized_2018)], na.rm = TRUE)) / apply(soilT_data_normalized_2018[ ,2:ncol(soilT_data_normalized_2018)], 1, sd, na.rm=TRUE)
+
+#plot by location
+for (i in 1:nrow(soilT_data_2018)) {
+  plot(dates2018, soilT_data_2018[i, 2:ncol(soilT_data_2018)], type='b', xlab='Date', ylab='Daily Median VWC at 7 cm (mean of 2 sensors)', xaxt='n', main=paste('Location', soilT_data_2018$location[i])) #, ',', soilT_data_2018$aspect_cardinal[i], 'aspect'))
+  axis.Date(side = 1, dates2018, at=weeks2018, format = '%m/%d/%y')
+  #text(x=dates2018[75], y=0.18, labels=paste(round(soilT_data_2018$mean_curv[i], 2), 'mean curvature', ',', round(soilT_data_2018$cti[i], 2), 'Compound Topographic Index'))
+}
+
+#plot all on one graph
+png(file = file.path(results, 'figures', paste0('WY2018soiltemperature', depth, '.cm.v2.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+par(mar=c(2, 4, 2, 2))
+for (i in 1:nrow(soilT_data_2018)) {
+  if (i == 1) {
+    plot(dates2018, soilT_data_2018[i, 2:ncol(soilT_data_2018)], type='l', xaxt='n', col=i+1, ylim=c(min(soilT_data_2018[,2:ncol(soilT_data_2018)], na.rm=TRUE), max(soilT_data_2018[,2:ncol(soilT_data_2018)], na.rm=TRUE)), xlim=c(dates2018[7], dates2018[length(dates2018) - 7]), xlab = '', ylab = 'soil temperature (C)', xaxt = 'n', main = paste0('WY2018 soil temperature, ', depth, ' cm depth, Camatta catchment')) #previous min def: 
+    #text(x=dates2018[length(dates2018)-50], y=soilT_data_2018[i, ncol(soilT_data_2018)-50], labels=soilT_data_2018[i, 1], cex=0.7)
+  } else {
+    lines.default(dates2018, soilT_data_2018[i, 2:ncol(soilT_data_2018)], xaxt='n', col=i+1)
+    #text(x=dates2018[length(dates2018)- 50], y=soilT_data_2018[i, (ncol(soilT_data_2018)- 50)], labels=soilT_data_2018[i, 1], cex=0.7)
+  }
+}
+axis.Date(side = 1, at=seq.Date(from = as.Date('2016/12/1'), to = as.Date('2018/7/1'), by='months'), format = '%m/%d/%y')
+dev.off()
+#add precip
+#axis(side = 4, at = c(0))
+#lines(as.Date(precip_WY2018$Date, format = '%m/%d/%Y'), precip_WY2018$Rainfall..mm. / 100, type='h')
+
+#and then plot normalized data
+plotpos <- 102
+png(file = file.path(results, 'figures', paste0('WY2018soiltemperature.norm', depth, '.cm.v2.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+par(mar=c(2, 4, 2, 2))
+for (i in 1:nrow(soilT_data_normalized_2018)) {
+  if (i == 1) {
+    plot(dates2018[3:length(dates2018)], soilT_data_normalized_2018[i, 4:ncol(soilT_data_normalized_2018)], type='l', xaxt='n', col=i+1, ylim=c(min(soilT_data_normalized_2018[ ,4:ncol(soilT_data_normalized_2018)], na.rm=TRUE), max(soilT_data_normalized_2018[ ,4:ncol(soilT_data_normalized_2018)], na.rm=TRUE)), xlim = c(dates2018[7], dates2018[length(dates2018)-7]), xlab = "", ylab='Std Deviations by Location', main = paste('WY2018 normalized soil temperature,', depth, 'cm depth, Camatta catchment'))
+    #text(x=dates2018[plotpos + i], y=soilT_data_normalized_2018[i, plotpos+ 1 + i ], labels=soilT_data_normalized_2018[i, 1], cex=0.6, pos = 1, offset = 0.1)
+  } else {
+    lines.default(dates2018[1:length(dates2018)], soilT_data_normalized_2018[i, 2:ncol(soilT_data_normalized_2018)], xaxt='n', col=i+1)
+    #text(x=dates2018[plotpos + i], y=soilT_data_normalized_2018[i, plotpos + 1 + i], labels=soilT_data_normalized_2018[i, 1], cex=0.6, pos = 1, offset = 0.1)
+  }
+}
+abline(0, 0, lty=2)
+axis.Date(side = 1, at=seq.Date(from = as.Date('2016/12/1'), to = as.Date('2018/7/1'), by='months'), format = '%m/%d/%y')
+dev.off()
+
+#model 2017 biomass as function of temperature
+T_vs_biomass_analysis2017 <- data.frame(dates=dates2017, T.mean=apply(soilT_data_2017[2:ncol(soilT_data_2017)], 2, mean, na.rm=TRUE), T.range=apply(soilT_data_2017[2:ncol(soilT_data_2017)], 2, max, na.rm=TRUE) - apply(soilT_data_2017[2:ncol(soilT_data_2017)], 2, min, na.rm=TRUE), slope=NA, p.value=NA, r2=NA)
+for (i in 2:ncol(soilT_data_2017)) {
+  lm.summary <- summary(lm(forage_data$clp041017 ~ soilT_data_2017[,i]))
+  T_vs_biomass_analysis2017[i-1, 'slope'] <- lm.summary$coefficients[2, 1]
+  T_vs_biomass_analysis2017[i-1, 'p.value'] <- lm.summary$coefficients[2, 4]
+  T_vs_biomass_analysis2017[i-1, 'r2'] <- lm.summary$r.squared
+}
+png(file = file.path(results, 'figures', 'WY2017soiltemperature7cm.vs.Apr.forage.png', sep = ''), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+par(mar=c(2, 4, 2, 2))
+plot(dates2017, T_vs_biomass_analysis2017$slope, xaxt='n', xlab = '', ylab='kg/ha effect of 1 deg soil T', main = paste('Relationship between', depth, 'cm soil temperature and 4/10/17 biomass'), xlim = c(dates2017[7], dates2017[length(dates2017) - 7]))
+points(dates2017[T_vs_biomass_analysis2017$p.value < 0.05], T_vs_biomass_analysis2017$slope[T_vs_biomass_analysis2017$p.value < 0.05], col='red')
+abline(0, 0, lty=2)
+axis.Date(side = 1, at=seq.Date(from = as.Date('2016/12/1'), to = as.Date('2017/7/1'), by='months'), format = '%m/%d/%y')
+dev.off()
+plot(dates2017, T_vs_biomass_analysis2017$r2)
+plot(dates2017, T_vs_biomass_analysis2017$p.value)
+
+#model biomass as function of temperature
+T_vs_biomass_analysis2018 <- data.frame(dates=dates2018, T.mean=apply(soilT_data_2018[2:ncol(soilT_data_2018)], 2, mean, na.rm=TRUE), T.range=apply(soilT_data_2018[2:ncol(soilT_data_2018)], 2, max, na.rm=TRUE) - apply(soilT_data_2018[2:ncol(soilT_data_2018)], 2, min, na.rm=TRUE), slope=NA, p.value=NA, r2=NA)
+for (i in 2:ncol(soilT_data_2018)) {
+  lm.summary <- summary(lm(forage_data$clp032218 ~ soilT_data_2018[,i]))
+  T_vs_biomass_analysis2018[i-1, 'slope'] <- lm.summary$coefficients[2, 1]
+  T_vs_biomass_analysis2018[i-1, 'p.value'] <- lm.summary$coefficients[2, 4]
+  T_vs_biomass_analysis2018[i-1, 'r2'] <- lm.summary$r.squared
+}
+plot(dates2018, T_vs_biomass_analysis2018$r2)
+plot(dates2018, T_vs_biomass_analysis2018$p.value)
+png(file = file.path(results, 'figures', 'WY2018soiltemperature7cm.vs.Apr.forage.png', sep = ''), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+plot(dates2018, T_vs_biomass_analysis2018$slope, xaxt='n', xlab = '', ylab='kg/ha effect of 1 deg soil T', main = paste('Relationship between', depth, 'cm soil temperature and 4/15/18 biomass'), xlim = c(dates2018[7], dates2018[length(dates2018) - 7]))
+points(dates2018[T_vs_biomass_analysis2018$p.value < 0.05], T_vs_biomass_analysis2018$slope[T_vs_biomass_analysis2018$p.value < 0.05], col='red')
+abline(0, 0, lty=2)
+axis.Date(side = 1, at=seq.Date(from = as.Date('2017/12/1'), to = as.Date('2018/7/1'), by='months'), format = '%m/%d/%y')
+dev.off()
+plot(dates2018, T_vs_biomass_analysis2018$p.value)
+
+
+#model biomass as function of temperature and soil moisture
+SM_T_vs_biomass_analysis2017 <- data.frame(dates=dates2017, slope.SM=NA, p.value.SM=NA, slope.T=NA, p.value.T=NA, r2=NA, r2.SM.vs.T=NA)
+for (i in 2:ncol(vwc_data_normalized_2017)) {
+  lm.summary <- summary(lm(forage_data$clp041017 ~ vwc_data_normalized_2017[,i] + soilT_data_2017[,i]))
+  SM_T_vs_biomass_analysis2017[i-1, 'slope.SM'] <- lm.summary$coefficients[2, 1]
+  SM_T_vs_biomass_analysis2017[i-1, 'slope.T'] <- lm.summary$coefficients[3, 1]
+  SM_T_vs_biomass_analysis2017[i-1, 'p.value.SM'] <- lm.summary$coefficients[2, 4]
+  SM_T_vs_biomass_analysis2017[i-1, 'p.value.T'] <- lm.summary$coefficients[3, 4]
+  SM_T_vs_biomass_analysis2017[i-1, 'r2'] <- lm.summary$r.squared
+  SM_T_vs_biomass_analysis2017[i-1, 'r2.SM.vs.T'] <- summary(lm(vwc_data_normalized_2017[,i] ~ soilT_data_normalized_2017[,i]))$r.squared
+}
+plot(dates2017, SM_T_vs_biomass_analysis2017$r2.SM.vs.T)
+plot(dates2017, SM_T_vs_biomass_analysis2017$r2)
+plot(dates2017, SM_T_vs_biomass_analysis2017$slope.SM)
+points(dates2017[SM_T_vs_biomass_analysis2017$p.value.SM < 0.05], SM_T_vs_biomass_analysis2017$slope.SM[SM_T_vs_biomass_analysis2017$p.value.SM < 0.05], col='red')
+abline(0, 0)
+plot(dates2017, SM_T_vs_biomass_analysis2017$slope.T)
+points(dates2017[SM_T_vs_biomass_analysis2017$p.value.T < 0.05], SM_T_vs_biomass_analysis2017$slope.T[SM_T_vs_biomass_analysis2017$p.value.T < 0.05], col='red')
+abline(0, 0)
+
+#do same for 2018
+SM_T_vs_biomass_analysis2018 <- data.frame(dates=dates2018, slope.SM=NA, p.value.SM=NA, slope.T=NA, p.value.T=NA, int=NA, r2=NA, r2.SM.vs.T=NA)
+for (i in 2:ncol(vwc_data_normalized_2018)) {
+  lm.summary <- summary(lm(forage_data$clp041518 ~ vwc_data_normalized_2018[,i] + soilT_data_2018[,i]))
+  SM_T_vs_biomass_analysis2018[i-1, 'slope.SM'] <- lm.summary$coefficients[2, 1]
+  SM_T_vs_biomass_analysis2018[i-1, 'slope.T'] <- lm.summary$coefficients[3, 1]
+  SM_T_vs_biomass_analysis2018[i-1, 'p.value.SM'] <- lm.summary$coefficients[2, 4]
+  SM_T_vs_biomass_analysis2018[i-1, 'p.value.T'] <- lm.summary$coefficients[3, 4]
+  SM_T_vs_biomass_analysis2018[i-1, 'int'] <- lm.summary$coefficients[1, 1]
+  SM_T_vs_biomass_analysis2018[i-1, 'r2'] <- lm.summary$r.squared
+  SM_T_vs_biomass_analysis2018[i-1, 'r2.SM.vs.T'] <- summary(lm(vwc_data_normalized_2018[,i] ~ soilT_data_normalized_2018[,i]))$r.squared
+}
+plot(dates2018, SM_T_vs_biomass_analysis2018$r2.SM.vs.T)
+plot(dates2018, SM_T_vs_biomass_analysis2018$r2)
+plot(dates2018, SM_T_vs_biomass_analysis2018$slope.SM)
+points(dates2018[SM_T_vs_biomass_analysis2018$p.value.SM < 0.05], SM_T_vs_biomass_analysis2018$slope.SM[SM_T_vs_biomass_analysis2018$p.value.SM < 0.05], col='red')
+abline(0, 0)
+plot(dates2018, SM_T_vs_biomass_analysis2018$slope.T)
+points(dates2018[SM_T_vs_biomass_analysis2018$p.value.T < 0.05], SM_T_vs_biomass_analysis2018$slope.T[SM_T_vs_biomass_analysis2018$p.value.T < 0.05], col='red')
+abline(0, 0)
+SM_T_vs_biomass_analysis2018[which(SM_T_vs_biomass_analysis2018$r2 > 0.6),]
 
