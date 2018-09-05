@@ -70,12 +70,12 @@ writeRaster(slope_30cm, file.path(terrainDir, '30cmfilled', 'slope_30cm_filled_d
 #writeRaster(tpi_30cm, file.path(terrainDir, 'topographic_position30cm.tif'), format='GTiff')
 #roughness_30cm <- terrain(dem_30cm, opt = 'roughness', neighbors = 8)
 #writeRaster(roughness_30cm, file.path(terrainDir, 'roughness_30cm.tif'), format='GTiff')
-stack_30cm_filled <- stack(file.path(terrainDir, '30cmfilled', 'dem30cm_filled.tif'), file.path(terrainDir, '30cmfilled', 'aspect_30cm_filled.tif'), file.path(terrainDir, '30cmfilled', 'slope_30cm_filled_degrees.tif'), file.path(terrainDir, '30cmfilled', 'curvature_mean30cm_filled.tif'), file.path(terrainDir, '30cmfilled', 'CTI_30cm_filled.tif'))
-names(stack_30cm_filled) <- c('elevation', 'aspect', 'slope', 'curvature_mean', 'CTI')
+list.files(file.path(terrainDir, '30cmfilled'))
+stack_30cm_filled <- stack(file.path(terrainDir, '30cmfilled', 'dem30cm_filled.tif'), file.path(terrainDir, '30cmfilled', 'aspect_30cm_filled.tif'), file.path(terrainDir, '30cmfilled', 'slope_30cm_filled_degrees.tif'), file.path(terrainDir, '30cmfilled', 'curvature_mean30cm_filled.tif'), file.path(terrainDir, '30cmfilled', 'CTI_30cm_filled.v2.tif'), file.path(terrainDir, '30cmfilled', 'curvature_profile30cm_filled.tif'), file.path(terrainDir, '30cmfilled', 'curvature_plan30cm_filled.tif')) #note that v2 of CTI used a revised formula
+names(stack_30cm_filled) <- c('elevation', 'aspect', 'slope', 'curvature_mean', 'CTI', 'curvature_profile', 'curvature_plan')
 sensor_shp <- shapefile('C:/Users/smdevine/Desktop/rangeland project/soil.moisture.sensors/5TM_sensor_locations_Camatta.shp')
 plot(sensor_shp, col='blue')
-sensor_terrain_summary_2mbuffer <- extract(stack_30cm_filled, sensor_shp, buffer=2, fun=mean)
-sensor_terrain_summary_2mbuffer <- as.data.frame(sensor_terrain_summary_2mbuffer)
+sensor_terrain_summary <- extract(stack_30cm_filled, sensor_shp, buffer=1.5, fun=mean)
 sensor_terrain_summary <- as.data.frame(sensor_terrain_summary)
 sensor_terrain_summary
 plot(sensor_terrain_summary_v1$elevation, sensor_terrain_summary$elevation)
@@ -90,4 +90,98 @@ plot(sensor_terrain_summary_v1$CTI, sensor_terrain_summary$CTI) #this is only di
 abline(0, 1)
 text(x=sensor_terrain_summary_v1$CTI, y=sensor_terrain_summary$CTI, pos=1, offset=0.3, labels=sensor_terrain_summary_v1$X)
 sensor_terrain_summary$location <- row.names(sensor_terrain_summary)
-write.csv(sensor_terrain_summary, file.path(results, 'terrain_characteristics', 'sensor_Rterrain30cmfilled_summary.csv'))
+write.csv(sensor_terrain_summary, file.path(results, 'terrain_characteristics', 'sensor_Rterrain30cmfilled_summary_CTI.v2.csv'))
+write.csv(sensor_terrain_summary_1mbuffer, file.path(results, 'terrain_characteristics', 'sensor_Rterrain30cmfilled1mbuffer_summary.csv'))
+
+##compare with a filled 1m DEM
+list.files(file.path(terrainDir, '1mfilled'))
+dem1m_filled <- raster(file.path(terrainDir, '1mfilled', 'dem1m_filled.tif'))
+aspect_1m <- terrain(dem1m_filled, opt = 'aspect', unit = 'degrees', neighbors = 8)
+writeRaster(aspect_1m, file.path(terrainDir, '1mfilled', 'aspect_1m_filled.tif'))
+stack_1m_filled <- stack(file.path(terrainDir, '1mfilled', 'dem1m_filled.tif'), file.path(terrainDir, '1mfilled', 'aspect_1m_filled.tif'), file.path(terrainDir, '1mfilled', 'slope1m_filled_degrees.tif'), file.path(terrainDir, '1mfilled', 'curvature_mean1m_filled.tif'), file.path(terrainDir, '1mfilled', 'CTI_1mfilled.v2.tif'), file.path(terrainDir, '1mfilled', 'curvature_profile1m_filled.tif'), file.path(terrainDir, '1mfilled', 'curvature_plan1m_filled.tif')) #note that v2 of CTI used a revised formula
+names(stack_1m_filled) <- c('elevation', 'aspect', 'slope', 'curvature_mean', 'CTI', 'curvature_profile', 'curvature_plan')
+sensor_shp <- shapefile('C:/Users/smdevine/Desktop/rangeland project/soil.moisture.sensors/5TM_sensor_locations_Camatta.shp')
+plot(sensor_shp, col='blue')
+sensor_terrain_summary <- extract(stack_1m_filled, sensor_shp) #use buffer: buffer=1.5, fun=mean
+sensor_terrain_summary <- as.data.frame(sensor_terrain_summary)
+sensor_terrain_summary
+sensor_terrain_summary$location <- row.names(sensor_terrain_summary)
+write.csv(sensor_terrain_summary, file.path(results, 'terrain_characteristics', 'sensor_Rterrain1mfille.csv')) #both of these used the v2 definition of CTI
+
+
+##compare with Nov 2016 1 m DEM from Grace, now excluding CTI as it is suspect
+Nov2016_terrain <- stack(list.files(file.path(terrainDir, '1m_Nov2016'), full.names = TRUE))
+Nov2016_terrain
+names(Nov2016_terrain) <- c('aspect', 'curvature_mean', 'curvature_plan', 'curvature_profile', 'elevation', 'slope', 'TCI')
+sensor_terrain_summary <- extract(Nov2016_terrain, sensor_shp) #use buffer: buffer=1.5, fun=mean
+sensor_terrain_summary <- as.data.frame(sensor_terrain_summary)
+sensor_terrain_summary
+sensor_terrain_summary$location <- row.names(sensor_terrain_summary)
+write.csv(sensor_terrain_summary, file.path(results, 'terrain_characteristics', 'sensor_terrain1mNov20161.5mbuff.csv')) #now includes TCI as opposed to 
+
+##compare with Nov 2016 5 m DEM from Grace, also excluding CTI as it is suspect
+Nov2016_terrain_5m <- stack(list.files(file.path(terrainDir, '5m_Nov2016'), full.names = TRUE))
+Nov2016_terrain_5m
+names(Nov2016_terrain_5m) <- c('aspect', 'elevation', 'curvature_mean', 'curvature_plan', 'curvature_profile', 'slope', 'TCI')
+sensor_terrain_summary_5m <- extract(Nov2016_terrain_5m, sensor_shp) #use buffer: buffer=1.5, fun=mean
+sensor_terrain_summary_5m <- as.data.frame(sensor_terrain_summary_5m)
+sensor_terrain_summary_5m
+sensor_terrain_summary_5m$location <- row.names(sensor_terrain_summary_5m)
+write.csv(sensor_terrain_summary_5m, file.path(results, 'terrain_characteristics', 'sensor_terrain5mNov2016.csv')) #now includes TCI as opposed to 
+plot(sensor_terrain_summary$aspect, sensor_terrain_summary_5m$aspect)
+abline(0, 1)
+plot(sensor_terrain_summary$curvature_mean, sensor_terrain_summary_5m$curvature_mean)
+abline(0, 1)
+plot(sensor_terrain_summary$curvature_plan, sensor_terrain_summary_5m$curvature_plan)
+abline(0, 1)
+plot(sensor_terrain_summary$curvature_profile, sensor_terrain_summary_5m$curvature_profile)
+abline(0, 1)
+plot(sensor_terrain_summary$elevation, sensor_terrain_summary_5m$elevation)
+abline(0, 1)
+plot(sensor_terrain_summary$slope, sensor_terrain_summary_5m$slope)
+abline(0, 1)
+plot(sensor_terrain_summary$TCI, sensor_terrain_summary_5m$TCI)
+abline(0, 1)
+sensor_terrain_summary$TCI - sensor_terrain_summary_5m$TCI
+
+##compare with Nov 2016 3 m DEM from Grace, also excluding CTI as it is suspect
+Nov2016_terrain_3m <- stack(list.files(file.path(terrainDir, '3m_Nov2016'), full.names = TRUE))
+Nov2016_terrain_3m
+names(Nov2016_terrain_3m) <- c('aspect', 'curvature_mean', 'curvature_plan', 'curvature_profile', 'elevation', 'slope', 'TCI')
+sensor_terrain_summary_3m <- extract(Nov2016_terrain_3m, sensor_shp) #use buffer: buffer=1.5, fun=mean
+sensor_terrain_summary_3m <- as.data.frame(sensor_terrain_summary_3m)
+sensor_terrain_summary_3m
+sensor_terrain_summary_3m$location <- row.names(sensor_terrain_summary_3m)
+write.csv(sensor_terrain_summary_3m, file.path(results, 'terrain_characteristics', 'sensor_terrain3mNov2016.csv')) #now includes TCI as opposed to 
+#compare with 1m analysis
+plot(sensor_terrain_summary$aspect, sensor_terrain_summary_3m$aspect)
+abline(0, 1)
+plot(sensor_terrain_summary$curvature_mean, sensor_terrain_summary_3m$curvature_mean)
+abline(0, 1)
+plot(sensor_terrain_summary$curvature_plan, sensor_terrain_summary_3m$curvature_plan)
+abline(0, 1)
+plot(sensor_terrain_summary$curvature_profile, sensor_terrain_summary_3m$curvature_profile)
+abline(0, 1)
+plot(sensor_terrain_summary$elevation, sensor_terrain_summary_3m$elevation)
+abline(0, 1)
+plot(sensor_terrain_summary$slope, sensor_terrain_summary_3m$slope)
+abline(0, 1)
+plot(sensor_terrain_summary$TCI, sensor_terrain_summary_3m$TCI)
+abline(0, 1)
+sensor_terrain_summary$TCI - sensor_terrain_summary_3m$TCI
+#compare with 5m analysis
+plot(sensor_terrain_summary_5m$aspect, sensor_terrain_summary_3m$aspect)
+abline(0, 1)
+plot(sensor_terrain_summary_5m$curvature_mean, sensor_terrain_summary_3m$curvature_mean)
+abline(0, 1)
+plot(sensor_terrain_summary_5m$curvature_plan, sensor_terrain_summary_3m$curvature_plan)
+abline(0, 1)
+plot(sensor_terrain_summary_5m$curvature_profile, sensor_terrain_summary_3m$curvature_profile)
+abline(0, 1)
+plot(sensor_terrain_summary_5m$elevation, sensor_terrain_summary_3m$elevation)
+abline(0, 1)
+plot(sensor_terrain_summary_5m$slope, sensor_terrain_summary_3m$slope)
+abline(0, 1)
+plot(sensor_terrain_summary_5m$TCI, sensor_terrain_summary_3m$TCI)
+abline(0, 1)
+sensor_terrain_summary_5m$TCI - sensor_terrain_summary_3m$TCI
