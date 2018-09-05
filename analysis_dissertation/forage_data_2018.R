@@ -42,6 +42,15 @@ colnames(by_plot_all)
 colnames(by_plot_all)[2:9] <- c('clp021517', 'clp031417', 'clp041017', 'clp050117', 'clp011618', 'clp021518', 'clp032218', 'clp041518')
 boxplot(by_plot_all[,2:9])
 plot(by_plot_all$clp041017, by_plot_all$clp041518)
+#plot Feb 2017 vs. 2018
+lm_Mar_forage <- summary(lm(clp021518 ~ clp021517, data = by_plot_all))
+png(file = file.path(results, 'figures', 'WY2017Feb.forage.vs.WY2018Feb.forage.png', sep = ''), family = 'Book Antiqua', width = 800, height = 600, units = 'px', res=100)
+par(mar=c(4.5, 4.5, 2, 2))
+plot(by_plot_all$clp021517, by_plot_all$clp021517, xlab='Feb 15, 2017 biomass (kg / ha)', ylab='Feb 15, 2018 biomass (kg / ha)', main='Relationship between 2017 and 2018 standing forage in March, Camatta catchment', cex.main = 1.2, cex.lab = 1.2, cex.axis = 1.1)
+abline(a=lm_Feb_forage$coefficients[1], b=lm_Feb_forage$coefficients[2], lty = 2)
+text(x=by_plot_all$clp031417, y=by_plot_all$clp032218, labels = by_plot_all$location, pos = 1, offset = 0.3)
+dev.off()
+#plot Mar 2017 vs. 2018
 lm_Mar_forage <- summary(lm(clp032218 ~ clp031417, data = by_plot_all))
 png(file = file.path(results, 'figures', 'WY2017Mar.forage.vs.WY2018Mar.forage.png', sep = ''), family = 'Book Antiqua', width = 800, height = 600, units = 'px', res=100)
 par(mar=c(4.5, 4.5, 2, 2))
@@ -49,6 +58,7 @@ plot(by_plot_all$clp031417, by_plot_all$clp032218, xlab='Mar 14, 2017 biomass (k
 abline(a=lm_Mar_forage$coefficients[1], b=lm_Mar_forage$coefficients[2], lty = 2)
 text(x=by_plot_all$clp031417, y=by_plot_all$clp032218, labels = by_plot_all$location, pos = 1, offset = 0.3)
 dev.off()
+#plot Apr 2017 vs. 2018
 lm_Apr_forage <- summary(lm(clp041518 ~ clp041017, data = by_plot_all))
 png(file = file.path(results, 'figures', 'WY2017Apr.forage.vs.WY2018Apr.forage.png', sep = ''), family = 'Book Antiqua', width = 800, height = 600, units = 'px', res=100)
 par(mar=c(4.5, 4.5, 2, 2))
@@ -65,7 +75,11 @@ write.csv(by_plot_all, file.path(forage_data, 'summaries', 'forage2017_2018.by.s
 
 by_plot_all <- read.csv(file.path(forageDir, 'summaries', 'forage2017_2018.by.sensor.csv'), stringsAsFactors = FALSE)
 
-
+#make a box plot of all dates
+png(file = file.path(results, 'figures', 'WY2017_WY2018.forage.png', sep = ''), family = 'Book Antiqua', width = 1000, height = 600, units = 'px', res=100)
+par(mar=c(3, 4.5, 2, 2))
+boxplot(by_plot_all[,2:9], names = c('2/15/17', '3/14/17', '4/10/17', '5/1/17', '1/16/18', '2/15/18', '3/22/18', '4/15/18'), ylab='kg forage per ha', main='Annual forage growth, Camatta catchment, 2017-2018', boxwex = 0.6)
+dev.off()
 #merge with spatial coordinates
 sensor_pts <- read.csv(file.path(spatial_data, "sensor_terrain_characteristics5_3_17.csv"), stringsAsFactors = FALSE) #how were terrain characteristics derived?
 sensor_pts <- sensor_pts[ ,c(1,3:4)] #reduce to columns that have location number and coordinates, because these terrain characteristics were derived from 10 m DEM
