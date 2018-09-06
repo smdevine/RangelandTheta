@@ -37,7 +37,7 @@ forageDir <- 'C:/Users/smdevine/Desktop/rangeland project/clip_plots'
 #read in terrain char for each sensor location
 #to be updated
 list.files(file.path(results, 'terrain_characteristics'))
-terrain_chars <- read.csv(file.path(results, 'terrain_characteristics', "sensor_Rterrain30cmfilled_summary.csv"), stringsAsFactors = FALSE) #this was made with a 1.5 m buffer with the raster 'extract' function in terrain_analysis.R
+terrain_chars <- read.csv(file.path(results, 'terrain_characteristics', "sensor_terrain5mNov2016.csv"), stringsAsFactors = FALSE) #this was made with a 1.5 m buffer with the raster 'extract' function in terrain_analysis.R
 colnames(terrain_chars)[1] <- 'location'
 terrain_chars
 
@@ -590,6 +590,39 @@ forage_data <- read.csv(file.path(forageDir, 'summaries', 'forage2017_2018.by.se
 #combine with sensor characteristics
 forage_terrain <- merge(forage_data, terrain_chars, by='location')
 
+#function to construct table of r2 and p-values for simple linear regression
+x <- forage_terrain$clp021517
+y <- 'aspect'
+get_stats <- function(x, y) {
+  model.result <- summary(lm(x ~ forage_terrain[ ,y]))
+  df <- data.frame(col1 = round(model.result$coefficients[2, 4], 3), col2 = round(model.result$coefficients[2, 1], 1), col3 = round(model.result$r.squared, 2))
+  colnames(df) <- c(paste0(y, '.p.val'), paste0(y, '.effect'), paste0(y, '.r2'))
+  df
+}
+aspect.results <- do.call(rbind, lapply(forage_terrain[,2:9], get_stats, y='aspect'))
+elevation.results <- do.call(rbind, lapply(forage_terrain[,2:9], get_stats, y='elevation'))
+slope.results <- do.call(rbind, lapply(forage_terrain[,2:9], get_stats, y='slope'))
+mean_curv.results <- do.call(rbind, lapply(forage_terrain[,2:9], get_stats, y='curvature_mean'))
+prof_curv.results <- do.call(rbind, lapply(forage_terrain[,2:9], get_stats, y='curvature_profile'))
+plan_curv.results <- do.call(rbind, lapply(forage_terrain[,2:9], get_stats, y='curvature_plan'))
+TCI.results <- do.call(rbind, lapply(forage_terrain[,2:9], get_stats, y='TCI'))
+overall.results <- cbind(elevation.results, aspect.results, slope.results, mean_curv.results, prof_curv.results, plan_curv.results, TCI.results)
+overall.results$clip.date <- c('2/15/17', '3/14/17', '4/10/17', '5/1/17', '1/16/18', '2/15/18', '3/22/18', '4/15/18')
+write.csv(overall.results, file.path(results, 'forage_vs_terrain', 'forage_vs_terrain_lm_results.csv'), row.names = FALSE)
+
+#multiple regression
+x <- forage_terrain$clp021517
+a <- 'aspect'
+b <- 'slope'
+c <- 'curvature_mean'
+d <- 'TCI'
+get_stats_multiple <- function(x, a, b, c, d) {
+  model.result <- summary(lm(x ~ forage_terrain[ ,a] + forage_terrain[ ,b] + forage_terrain[ ,c] + forage_terrain[ ,d]))
+  if (pf(model.result$fstatistic[1], model.result$fstatistic[2], model.result$fstatistic[3], lower.tail = FALSE) < pcrit) {
+  df <- data.frame(col1 = round(model.result$coefficients[2, 4], 3), col2 = round(model.result$coefficients[2, 1], 1), col3 = round(model.result$r.squared, 2))
+  colnames(df) <- c(paste0(y, '.p.val'), paste0(y, '.effect'), paste0(y, '.r2'))
+  df
+}
 
 #relate to Feb 2017 forage data
 summary(lm(clp021517 ~ elevation, data = forage_terrain)) #r^2=0.17
@@ -605,9 +638,9 @@ summary(lm(clp021517 ~ slope, data = forage_terrain))
 summary(lm(clp021517 ~ curvature_mean, data = forage_terrain))
 summary(lm(clp021517 ~ curvature_plan, data = forage_terrain)) #r2=0.28
 summary(lm(clp021517 ~ curvature_profile, data = forage_terrain))
-summary(lm(clp021517 ~ CTI, data = forage_terrain)) #r^2=0.21
-summary(lm(clp021517 ~ CTI + curvature_plan + aspect, data = forage_terrain)) #r^2 = 0.38
-summary(lm(clp021517 ~ CTI + aspect, data = forage_terrain)) #both sig, r^2=0.40
+summary(lm(clp021517 ~ TCI, data = forage_terrain)) #r^2=0.21
+summary(lm(clp021517 ~ TCI + curvature_plan + aspect, data = forage_terrain)) #r^2 = 0.38
+summary(lm(clp021517 ~ TCI + aspect, data = forage_terrain)) #both sig, r^2=0.40
 summary(lm(clp021517 ~ curvature_plan + aspect, data = forage_terrain)) #r^2 = 0.32
 
 
@@ -626,22 +659,15 @@ summary(lm(clp031417 ~ slope, data = forage_terrain))
 summary(lm(clp031417 ~ curvature_mean, data = forage_terrain))
 summary(lm(clp031417 ~ curvature_plan, data = forage_terrain)) #r2=0.34
 summary(lm(clp031417 ~ curvature_profile, data = forage_terrain))
-summary(lm(clp031417 ~ CTI, data = forage_terrain)) #weakly sig
+summary(lm(clp031417 ~ TCI, data = forage_terrain)) #weakly sig
 summary(lm(clp031417 ~  aspect + slope, data = forage_terrain)) #higher r^2 but slope and TRI are highly correlated and so their coefficients are offsetting in model
 summary(lm(clp031417 ~ aspect + curvature_mean, data = forage_terrain))
 summary(lm(clp031417 ~ aspect + curvature_plan, data = forage_terrain)) #both sig r2=0.56
-summary(lm(clp031417 ~ aspect + CTI, data = forage_terrain)) #r2=0.55, both params sig
-summary(lm(clp031417 ~ aspect + CTI + curvature_plan, data = forage_terrain)) #r2=0.57, only aspect is sig
-lm_aspect_CTI <- lm(clp031417 ~ aspect + CTI, data = forage_terrain)
+summary(lm(clp031417 ~ aspect + TCI, data = forage_terrain)) #r2=0.55, both params sig
+summary(lm(clp031417 ~ aspect + TCI + curvature_plan, data = forage_terrain)) #r2=0.57, only aspect is sig
 plot(forage_terrain$aspect, forage_terrain$curvature_plan)
-plot(forage_terrain$aspect, forage_terrain$CTI)
-plot(forage_terrain$curvature_plan, forage_terrain$CTI)
-summary(lm(forage_terrain$clp031417 ~ vwc_data_normalized_2017$Dec_24_2016)) #r2=0.66
-summary(lm(forage_terrain$clp031417 ~ vwc_data_normalized_2017$Dec_24_2016 + forage_terrain$CTI)) #r2=0.71
-summary(lm(forage_terrain$clp031417 ~ vwc_data_normalized_2017$Dec_24_2016 + forage_terrain$curvature_profile))
-summary(lm(forage_terrain$clp031417 ~ vwc_data_normalized_2017$Mar_01_2017))
-summary(lm(forage_terrain$clp031417 ~ vwc_data_normalized_2017$Mar_01_2017 + forage_terrain$CTI)) #r2=0.52, both params sig
-summary(lm(forage_terrain$clp031417 ~ forage_terrain$aspect + forage_terrain$CTI + vwc_data_normalized_2017$Mar_01_2017))
+plot(forage_terrain$aspect, forage_terrain$TCI)
+plot(forage_terrain$curvature_plan, forage_terrain$TCI)
 
 #and look at correlation with Apr biomass
 summary(lm(clp041017 ~ elevation, data = forage_terrain))
@@ -656,18 +682,18 @@ dev.off()
 
 summary(lm(clp041017 ~ slope, data = forage_terrain))
 summary(lm(clp041017 ~ curvature_mean, data = forage_terrain))
-summary(lm(clp041017 ~ CTI, data = forage_terrain)) #r2=0.23
+summary(lm(clp041017 ~ TCI, data = forage_terrain)) #r2=0.23
+plot(forage_terrain$TCI, forage_terrain$clp041017)
 summary(lm(clp041017 ~ curvature_plan, data = forage_terrain)) #r2=0.34
 summary(lm(clp041017 ~ curvature_profile, data = forage_terrain)) 
-summary(lm(clp041017 ~ CTI + elevation, data = forage_terrain)) #both params non sign
-summary(lm(clp041017 ~ CTI + curvature_mean, data = forage_terrain)) #NS for mean curvature
-summary(lm(clp041017 ~ CTI + curvature_plan, data = forage_terrain)) #both NS but r2=0.34
-summary(lm(clp041017 ~ CTI + curvature_profile, data = forage_terrain)) #both NS
-summary(lm(clp041017 ~ CTI + slope, data = forage_terrain)) #NS for slope
+summary(lm(clp041017 ~ TCI + elevation, data = forage_terrain)) #both params non sign
+summary(lm(clp041017 ~ TCI + curvature_mean, data = forage_terrain)) #NS for mean curvature
+summary(lm(clp041017 ~ TCI + curvature_plan, data = forage_terrain)) #both NS but r2=0.34
+summary(lm(clp041017 ~ TCI + curvature_profile, data = forage_terrain)) #both NS
+summary(lm(clp041017 ~ TCI + slope, data = forage_terrain)) #NS for slope
 summary(lm(clp041017 ~ aspect + curvature_mean, data = forage_terrain))
-summary(lm(clp041017 ~ aspect + CTI, data = forage_terrain)) #NS for aspect
+summary(lm(clp041017 ~ aspect + TCI, data = forage_terrain)) #NS for aspect
 summary(lm(clp041017 ~ aspect + curvature_plan, data = forage_terrain))
-summary(lm(forage_terrain$clp041017 ~ forage_terrain$curvature_plan + vwc_data_normalized_2017$Mar_26_2017))
 
 #and look at correlation with May biomass
 summary(lm(clp050117 ~ elevation, data = forage_terrain))
@@ -684,18 +710,15 @@ summary(lm(clp050117 ~ slope, data = forage_terrain))
 summary(lm(clp050117 ~ curvature_mean, data = forage_terrain))
 summary(lm(clp050117 ~ curvature_plan, data = forage_terrain))
 summary(lm(clp050117 ~ curvature_profile, data = forage_terrain)) #now this is significant
-summary(lm(clp050117 ~ CTI, data = forage_terrain))
-summary(lm(clp050117 ~  CTI + slope + elevation + curvature_mean, data = forage_terrain))
-summary(lm(clp050117 ~ CTI + elevation, data = forage_terrain))
-summary(lm(clp050117 ~ CTI + curvature_mean, data = forage_terrain))
-summary(lm(clp050117 ~ CTI + slope, data = forage_terrain)) #NS for slope
-summary(lm(clp050117 ~ CTI + curvature_profile, data = forage_terrain)) #r2=0.37
-summary(lm(clp050117 ~ CTI + curvature_plan, data = forage_terrain)) #r2=0.37
+summary(lm(clp050117 ~ TCI, data = forage_terrain))
+summary(lm(clp050117 ~  TCI + slope + elevation + curvature_mean, data = forage_terrain))
+summary(lm(clp050117 ~ TCI + elevation, data = forage_terrain))
+summary(lm(clp050117 ~ TCI + curvature_mean, data = forage_terrain))
+summary(lm(clp050117 ~ TCI + slope, data = forage_terrain)) #NS for slope
+summary(lm(clp050117 ~ TCI + curvature_profile, data = forage_terrain)) #r2=0.37
+summary(lm(clp050117 ~ TCI + curvature_plan, data = forage_terrain)) #r2=0.37
 summary(lm(clp050117 ~ aspect + curvature_mean, data = forage_terrain))
-summary(lm(clp050117 ~ aspect + CTI, data = forage_terrain)) #0.18 r^2
-lm_May2017_CTI <- lm(clp050117 ~ CTI, data = forage_terrain)
-lm_May2017_CTI_curv <- lm(clp050117 ~ CTI + curvature_mean, data = forage_terrain)
-
+summary(lm(clp050117 ~ aspect + TCI, data = forage_terrain)) #0.18 r^2
 
 #analyze Feb 2018 biomass
 
@@ -709,12 +732,12 @@ summary(lm(clp032218 ~ slope, data = forage_terrain))
 summary(lm(clp032218 ~ curvature_mean, data = forage_terrain))
 summary(lm(clp032218 ~ curvature_plan, data = forage_terrain))
 summary(lm(clp032218 ~ curvature_profile, data = forage_terrain))
-summary(lm(clp032218 ~ CTI, data = forage_terrain)) #weakly sig
-summary(lm(clp032218 ~  aspect + slope, data = forage_terrain)) #higher r^2 but slope and TRI are highly correlated and so their coefficients are offsetting in model
+summary(lm(clp032218 ~ TCI, data = forage_terrain)) #weakly sig
+summary(lm(clp032218 ~  aspect + slope, data = forage_terrain))
 summary(lm(clp032218 ~ aspect + curvature_mean, data = forage_terrain))
 summary(lm(clp032218 ~ aspect + curvature_plan, data = forage_terrain)) #both sig r2=0.38
-summary(lm(clp032218 ~ aspect + CTI, data = forage_terrain)) #both params sig r2=0.42
-summary(lm(clp032218 ~ aspect + CTI + curvature_plan, data = forage_terrain)) #r2=0.40, only aspect is sig
+summary(lm(clp032218 ~ aspect + TCI, data = forage_terrain)) #both params sig r2=0.42
+summary(lm(clp032218 ~ aspect + TCI + curvature_plan, data = forage_terrain)) #r2=0.40, only aspect is sig
 
 #and look at correlation with Apr biomass
 summary(lm(clp041518 ~ elevation, data = forage_terrain))
@@ -725,19 +748,20 @@ summary(lm(clp041518 ~ slope, data = forage_terrain))
 plot(forage_terrain$slope, forage_terrain$clp041518)
 abline(lm(clp041518 ~ slope, data = forage_terrain))
 summary(lm(clp041518 ~ curvature_mean, data = forage_terrain))
-summary(lm(clp041518 ~ CTI, data = forage_terrain)) #r2=0.23
+summary(lm(clp041518 ~ TCI, data = forage_terrain)) #r2=0.23
 summary(lm(clp041518 ~ curvature_plan, data = forage_terrain)) #r2=0.34
 summary(lm(clp041518 ~ curvature_profile, data = forage_terrain)) 
-summary(lm(clp041518 ~ CTI + elevation, data = forage_terrain)) #both params non sign
-summary(lm(clp041518 ~ CTI + curvature_mean, data = forage_terrain)) #NS for mean curvature
-summary(lm(clp041518 ~ CTI + curvature_plan, data = forage_terrain)) #both NS but r2=0.34
-summary(lm(clp041518 ~ CTI + curvature_profile, data = forage_terrain)) #both NS
-summary(lm(clp041518 ~ CTI + slope, data = forage_terrain))
+summary(lm(clp041518 ~ TCI + elevation, data = forage_terrain)) #both params non sign
+summary(lm(clp041518 ~ TCI + curvature_mean, data = forage_terrain)) #NS for mean curvature
+summary(lm(clp041518 ~ TCI + curvature_plan, data = forage_terrain)) #both NS but r2=0.34
+summary(lm(clp041518 ~ TCI + curvature_profile, data = forage_terrain)) #both NS
+summary(lm(clp041518 ~ TCI + slope, data = forage_terrain))
 summary(lm(clp041518 ~ curvature_profile + slope, data = forage_terrain))
 summary(lm(clp041518 ~ aspect + curvature_mean, data = forage_terrain))
-summary(lm(clp041518 ~ aspect + CTI, data = forage_terrain)) #NS for aspect
+summary(lm(clp041518 ~ aspect + TCI, data = forage_terrain)) #NS for aspect
 summary(lm(clp041518 ~ aspect + curvature_plan, data = forage_terrain))
-summary(lm(forage_terrain$clp041518 ~ forage_terrain$curvature_plan + vwc_data_normalized_2017$Mar_26_2017))
+summary(lm(clp041518 ~ aspect + slope, data = forage_terrain))
+summary(lm(clp041518 ~ aspect + slope + TCI, data = forage_terrain))
 
 #make some 2017 vs. 2018 forage plots
 lm_Mar_forage <- summary(lm(clp032218 ~ clp031417, data = forage_terrain))
@@ -1043,7 +1067,7 @@ dev.off()
 #model 2017 biomass as function of temperature
 T_vs_biomass_analysis2017 <- data.frame(dates=dates2017, T.mean=apply(soilT_data_2017[2:ncol(soilT_data_2017)], 2, mean, na.rm=TRUE), T.range=apply(soilT_data_2017[2:ncol(soilT_data_2017)], 2, max, na.rm=TRUE) - apply(soilT_data_2017[2:ncol(soilT_data_2017)], 2, min, na.rm=TRUE), slope=NA, p.value=NA, r2=NA)
 for (i in 2:ncol(soilT_data_2017)) {
-  lm.summary <- summary(lm(forage_data$clp031417 ~ soilT_data_2017[,i]))
+  lm.summary <- summary(lm(forage_data$clp041017 ~ soilT_data_2017[,i]))
   T_vs_biomass_analysis2017[i-1, 'slope'] <- lm.summary$coefficients[2, 1]
   T_vs_biomass_analysis2017[i-1, 'p.value'] <- lm.summary$coefficients[2, 4]
   T_vs_biomass_analysis2017[i-1, 'r2'] <- lm.summary$r.squared
@@ -1090,27 +1114,27 @@ for (i in 2:ncol(vwc_data_normalized_2017)) {
   SM_T_vs_biomass_analysis2017[i-1, 'r2.SM.vs.T'] <- summary(lm(vwc_data_normalized_2017[,i] ~ soilT_data_2017[,i]))$r.squared
 }
 plot(dates2017, SM_T_vs_biomass_analysis2017$r2.SM.vs.T)
-write.csv(SM_T_vs_biomass_analysis2017, file.path(results, 'SM_T_model_results', paste0('SM_T_vs_Mar2017biomass_', depth, 'cm.csv')), row.names = FALSE)
-png(file = file.path(results, 'figures', paste0('WY2017.r2.', depth, 'cm.Apr.forage_SM+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+write.csv(SM_T_vs_biomass_analysis2017, file.path(results, 'SM_T_model_results', paste0('SM_T_vs_May2017biomass_', depth, 'cm.csv')), row.names = FALSE)
+png(file = file.path(results, 'figures', paste0('WY2017.r2.', depth, 'cm.May.forage_SM+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4, 2, 2))
-plot(dates2017, SM_T_vs_biomass_analysis2017$r2.model, xaxt='n', xlab = '', ylab='model r^2', main = paste('Forage variance on 4/10/17 explaned by', depth, 'cm soil moisture and temperature'), xlim = c(dates2017[7], dates2017[length(dates2017) - 7]))
+plot(dates2017, SM_T_vs_biomass_analysis2017$r2.model, xaxt='n', xlab = '', ylab='model r^2', main = paste('Forage variance on 5/1/17 explaned by', depth, 'cm soil moisture and temperature'), xlim = c(dates2017[7], dates2017[length(dates2017) - 7]))
 points(dates2017[which(SM_T_vs_biomass_analysis2017$p.value.model < 0.05)], SM_T_vs_biomass_analysis2017$r2.model[which(SM_T_vs_biomass_analysis2017$p.value.model < 0.05)], col='red')
 axis.Date(side = 1, at=seq.Date(from = as.Date('2016/12/1'), to = as.Date('2017/7/1'), by='months'), format = '%m/%d/%y')
 dev.off()
 
 #soil moisture effect graph
-png(file = file.path(results, 'figures', paste0('WY2017SM', depth, 'cm.vs.Apr.forage_SM+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+png(file = file.path(results, 'figures', paste0('WY2017SM', depth, 'cm.vs.May.forage_SM+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4, 2, 2))
-plot(dates2017, SM_T_vs_biomass_analysis2017$slope.SM, xaxt='n', xlab = '', ylab='kg/ha association of 1 std dev soil moisture', main = paste('Relationship between', depth, 'cm soil moisture and 4/10/17 biomass, SM + T model'), xlim = c(dates2017[7], dates2017[length(dates2017) - 7]))
+plot(dates2017, SM_T_vs_biomass_analysis2017$slope.SM, xaxt='n', xlab = '', ylab='kg/ha association of 1 std dev soil moisture', main = paste('Relationship between', depth, 'cm soil moisture and 5/1/17 biomass, SM + T model'), xlim = c(dates2017[7], dates2017[length(dates2017) - 7]))
 points(dates2017[SM_T_vs_biomass_analysis2017$p.value.SM < 0.05], SM_T_vs_biomass_analysis2017$slope.SM[SM_T_vs_biomass_analysis2017$p.value.SM < 0.05], col='red')
 abline(0, 0, lty=2)
 axis.Date(side = 1, at=seq.Date(from = as.Date('2016/12/1'), to = as.Date('2017/7/1'), by='months'), format = '%m/%d/%y')
 dev.off()
 
 #and soil T association
-png(file = file.path(results, 'figures', paste0('WY2017T', depth, 'cm.vs.Apr.forage_SM+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+png(file = file.path(results, 'figures', paste0('WY2017T', depth, 'cm.vs.May.forage_SM+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4, 2, 2))
-plot(dates2017, SM_T_vs_biomass_analysis2017$slope.T, xaxt='n', xlab = '', ylab='kg/ha association of +1 deg C soil T', main = paste('Relationship between', depth, 'cm soil T and 4/10/17 biomass, SM + T model'), xlim = c(dates2017[7], dates2017[length(dates2017) - 7]))
+plot(dates2017, SM_T_vs_biomass_analysis2017$slope.T, xaxt='n', xlab = '', ylab='kg/ha association of +1 deg C soil T', main = paste('Relationship between', depth, 'cm soil T and 5/1/17 biomass, SM + T model'), xlim = c(dates2017[7], dates2017[length(dates2017) - 7]))
 points(dates2017[SM_T_vs_biomass_analysis2017$p.value.T < 0.05], SM_T_vs_biomass_analysis2017$slope.T[SM_T_vs_biomass_analysis2017$p.value.T < 0.05], col='red')
 abline(0, 0, lty=2)
 axis.Date(side = 1, at=seq.Date(from = as.Date('2016/12/1'), to = as.Date('2017/7/1'), by='months'), format = '%m/%d/%y')
@@ -1120,7 +1144,7 @@ dev.off()
 #only remove location 3 when doing 22 cm depth analysis
 SM_T_vs_biomass_analysis2018 <- data.frame(dates=dates2018, p.value.model= NA, r2.model=NA, slope.SM=NA, p.value.SM=NA, slope.T=NA, p.value.T=NA, r2.SM.vs.T=NA)
 for (i in 2:ncol(vwc_data_normalized_2018)) {
-  lm.summary <- summary(lm(forage_data$clp032218[-which(forage_data$location==3)] ~ vwc_data_normalized_2018[,i] + soilT_data_2018[,i])) #
+  lm.summary <- summary(lm(forage_data$clp041518[-which(forage_data$location==3)] ~ vwc_data_normalized_2018[,i] + soilT_data_2018[,i])) #
   SM_T_vs_biomass_analysis2018[i-1, 'p.value.model'] <- pf(lm.summary$fstatistic[1], lm.summary$fstatistic[2], lm.summary$fstatistic[3], lower.tail = FALSE)
   SM_T_vs_biomass_analysis2018[i-1, 'r2.model'] <- lm.summary$r.squared
   SM_T_vs_biomass_analysis2018[i-1, 'slope.SM'] <- lm.summary$coefficients[2, 1]
