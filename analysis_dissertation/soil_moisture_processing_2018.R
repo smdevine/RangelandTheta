@@ -764,6 +764,14 @@ summary(lm(clp041518 ~ aspect + slope, data = forage_terrain))
 summary(lm(clp041518 ~ aspect + slope + TCI, data = forage_terrain))
 
 #make some 2017 vs. 2018 forage plots
+lm_Feb_forage <- summary(lm(clp021518 ~ clp021517, data = forage_terrain))
+png(file = file.path(results, 'figures', 'WY2017Feb.forage.vs.WY2018Feb.forage.png'), family = 'Book Antiqua', width = 800, height = 600, units = 'px', res=100)
+par(mar=c(4.5, 4.5, 2, 2))
+plot(forage_terrain$clp021517, forage_terrain$clp021518, xlab='Feb 15, 2017 biomass (kg / ha)', ylab='Feb 15, 2018 biomass (kg / ha)', ylim=c(0, 1800), xlim=c(0, 1800), main='Relationship between 2017 and 2018 standing forage in March, Camatta catchment', cex.main = 1.2, cex.lab = 1.2, cex.axis = 1.1)
+abline(a=lm_Feb_forage$coefficients[1], b=lm_Feb_forage$coefficients[2], lty = 2)
+#text(x=forage_terrain$clp031417, y=forage_terrain$clp032218, labels = forage_terrain$location, pos = 1, offset = 0.3)
+dev.off()
+
 lm_Mar_forage <- summary(lm(clp032218 ~ clp031417, data = forage_terrain))
 png(file = file.path(results, 'figures', 'WY2017Mar.forage.vs.WY2018Mar.forage.png', sep = ''), family = 'Book Antiqua', width = 800, height = 600, units = 'px', res=100)
 par(mar=c(4.5, 4.5, 2, 2))
@@ -771,6 +779,7 @@ plot(forage_terrain$clp031417, forage_terrain$clp032218, xlab='Mar 14, 2017 biom
 abline(a=lm_Mar_forage$coefficients[1], b=lm_Mar_forage$coefficients[2], lty = 2)
 #text(x=forage_terrain$clp031417, y=forage_terrain$clp032218, labels = forage_terrain$location, pos = 1, offset = 0.3)
 dev.off()
+
 lm_Apr_forage <- summary(lm(clp041518 ~ clp041017, data = forage_terrain))
 png(file = file.path(results, 'figures', 'WY2017Apr.forage.vs.WY2018Apr.forage.png', sep = ''), family = 'Book Antiqua', width = 800, height = 600, units = 'px', res=100)
 par(mar=c(4.5, 4.5, 2, 2))
@@ -778,6 +787,10 @@ plot(forage_terrain$clp041017, forage_terrain$clp041518, xlab = 'Apr 10, 2017 bi
 abline(a=lm_Apr_forage$coefficients[1], lm_Apr_forage$coefficients[2], lty = 2)
 #text(x=forage_terrain$clp041017, y=forage_terrain$clp041518, labels = forage_terrain$location, pos = 1, offset = 0.3)
 dev.off()
+
+#check diff
+plot(forage_terrain$curvature_plan, forage_terrain$clp050117 - forage_terrain$clp041518)
+summary(lm(forage_terrain$clp041017 - forage_terrain$clp041518 ~ forage_terrain$curvature_profile))
 
 #work through dates and find correlation between normalized soil moisture and biomass at different dates
 #note that some of these variables are defined above
@@ -1104,7 +1117,7 @@ plot(dates2018, T_vs_biomass_analysis2018$p.value)
 #model biomass as function of temperature and soil moisture
 SM_T_vs_biomass_analysis2017 <- data.frame(dates=dates2017, p.value.model= NA, r2.model=NA, slope.SM=NA, p.value.SM=NA, slope.T=NA, p.value.T=NA, r2.SM.vs.T=NA)
 for (i in 2:ncol(vwc_data_normalized_2017)) {
-  lm.summary <- summary(lm(forage_data$clp041017 ~ vwc_data_normalized_2017[,i] + soilT_data_2017[,i]))
+  lm.summary <- summary(lm(forage_data$clp021517 ~ vwc_data_normalized_2017[,i] + soilT_data_2017[,i]))
   SM_T_vs_biomass_analysis2017[i-1, 'p.value.model'] <- pf(lm.summary$fstatistic[1], lm.summary$fstatistic[2], lm.summary$fstatistic[3], lower.tail = FALSE)
   SM_T_vs_biomass_analysis2017[i-1, 'r2.model'] <- lm.summary$r.squared
   SM_T_vs_biomass_analysis2017[i-1, 'slope.SM'] <- lm.summary$coefficients[2, 1]
@@ -1114,27 +1127,27 @@ for (i in 2:ncol(vwc_data_normalized_2017)) {
   SM_T_vs_biomass_analysis2017[i-1, 'r2.SM.vs.T'] <- summary(lm(vwc_data_normalized_2017[,i] ~ soilT_data_2017[,i]))$r.squared
 }
 plot(dates2017, SM_T_vs_biomass_analysis2017$r2.SM.vs.T)
-write.csv(SM_T_vs_biomass_analysis2017, file.path(results, 'SM_T_model_results', paste0('SM_T_vs_May2017biomass_', depth, 'cm.csv')), row.names = FALSE)
-png(file = file.path(results, 'figures', paste0('WY2017.r2.', depth, 'cm.May.forage_SM+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+write.csv(SM_T_vs_biomass_analysis2017, file.path(results, 'SM_T_model_results', paste0('SM_T_vs_Feb2017biomass_', depth, 'cm.csv')), row.names = FALSE)
+png(file = file.path(results, 'figures', paste0('WY2017.r2.', depth, 'cm.Feb.forage_SM+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4, 2, 2))
-plot(dates2017, SM_T_vs_biomass_analysis2017$r2.model, xaxt='n', xlab = '', ylab='model r^2', main = paste('Forage variance on 5/1/17 explaned by', depth, 'cm soil moisture and temperature'), xlim = c(dates2017[7], dates2017[length(dates2017) - 7]))
+plot(dates2017, SM_T_vs_biomass_analysis2017$r2.model, xaxt='n', xlab = '', ylab='model r^2', main = paste('Forage variance on 2/15/17 explaned by', depth, 'cm soil moisture and temperature'), xlim = c(dates2017[7], dates2017[length(dates2017) - 7]))
 points(dates2017[which(SM_T_vs_biomass_analysis2017$p.value.model < 0.05)], SM_T_vs_biomass_analysis2017$r2.model[which(SM_T_vs_biomass_analysis2017$p.value.model < 0.05)], col='red')
 axis.Date(side = 1, at=seq.Date(from = as.Date('2016/12/1'), to = as.Date('2017/7/1'), by='months'), format = '%m/%d/%y')
 dev.off()
 
 #soil moisture effect graph
-png(file = file.path(results, 'figures', paste0('WY2017SM', depth, 'cm.vs.May.forage_SM+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+png(file = file.path(results, 'figures', paste0('WY2017SM', depth, 'cm.vs.Feb.forage_SM+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4, 2, 2))
-plot(dates2017, SM_T_vs_biomass_analysis2017$slope.SM, xaxt='n', xlab = '', ylab='kg/ha association of 1 std dev soil moisture', main = paste('Relationship between', depth, 'cm soil moisture and 5/1/17 biomass, SM + T model'), xlim = c(dates2017[7], dates2017[length(dates2017) - 7]))
+plot(dates2017, SM_T_vs_biomass_analysis2017$slope.SM, xaxt='n', xlab = '', ylab='kg/ha association of 1 std dev soil moisture', main = paste('Relationship between', depth, 'cm soil moisture and 2/15/17 biomass, SM + T model'), xlim = c(dates2017[7], dates2017[length(dates2017) - 7]))
 points(dates2017[SM_T_vs_biomass_analysis2017$p.value.SM < 0.05], SM_T_vs_biomass_analysis2017$slope.SM[SM_T_vs_biomass_analysis2017$p.value.SM < 0.05], col='red')
 abline(0, 0, lty=2)
 axis.Date(side = 1, at=seq.Date(from = as.Date('2016/12/1'), to = as.Date('2017/7/1'), by='months'), format = '%m/%d/%y')
 dev.off()
 
 #and soil T association
-png(file = file.path(results, 'figures', paste0('WY2017T', depth, 'cm.vs.May.forage_SM+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+png(file = file.path(results, 'figures', paste0('WY2017T', depth, 'cm.vs.Feb.forage_SM+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4, 2, 2))
-plot(dates2017, SM_T_vs_biomass_analysis2017$slope.T, xaxt='n', xlab = '', ylab='kg/ha association of +1 deg C soil T', main = paste('Relationship between', depth, 'cm soil T and 5/1/17 biomass, SM + T model'), xlim = c(dates2017[7], dates2017[length(dates2017) - 7]))
+plot(dates2017, SM_T_vs_biomass_analysis2017$slope.T, xaxt='n', xlab = '', ylab='kg/ha association of +1 deg C soil T', main = paste('Relationship between', depth, 'cm soil T and 2/15/17 biomass, SM + T model'), xlim = c(dates2017[7], dates2017[length(dates2017) - 7]))
 points(dates2017[SM_T_vs_biomass_analysis2017$p.value.T < 0.05], SM_T_vs_biomass_analysis2017$slope.T[SM_T_vs_biomass_analysis2017$p.value.T < 0.05], col='red')
 abline(0, 0, lty=2)
 axis.Date(side = 1, at=seq.Date(from = as.Date('2016/12/1'), to = as.Date('2017/7/1'), by='months'), format = '%m/%d/%y')
@@ -1144,7 +1157,7 @@ dev.off()
 #only remove location 3 when doing 22 cm depth analysis
 SM_T_vs_biomass_analysis2018 <- data.frame(dates=dates2018, p.value.model= NA, r2.model=NA, slope.SM=NA, p.value.SM=NA, slope.T=NA, p.value.T=NA, r2.SM.vs.T=NA)
 for (i in 2:ncol(vwc_data_normalized_2018)) {
-  lm.summary <- summary(lm(forage_data$clp041518[-which(forage_data$location==3)] ~ vwc_data_normalized_2018[,i] + soilT_data_2018[,i])) #
+  lm.summary <- summary(lm(forage_data$clp021518[-which(forage_data$location==3)] ~ vwc_data_normalized_2018[,i] + soilT_data_2018[,i])) #
   SM_T_vs_biomass_analysis2018[i-1, 'p.value.model'] <- pf(lm.summary$fstatistic[1], lm.summary$fstatistic[2], lm.summary$fstatistic[3], lower.tail = FALSE)
   SM_T_vs_biomass_analysis2018[i-1, 'r2.model'] <- lm.summary$r.squared
   SM_T_vs_biomass_analysis2018[i-1, 'slope.SM'] <- lm.summary$coefficients[2, 1]
@@ -1155,25 +1168,25 @@ for (i in 2:ncol(vwc_data_normalized_2018)) {
   SM_T_vs_biomass_analysis2018[i-1, 'r2.SM.vs.T'] <- summary(lm(vwc_data_normalized_2018[,i] ~ soilT_data_2018[,i]))$r.squared
 }
 plot(dates2018, SM_T_vs_biomass_analysis2018$r2.SM.vs.T)
-write.csv(SM_T_vs_biomass_analysis2018, file.path(results, 'SM_T_model_results', paste0('SM_T_vs_Mar2018biomass_', depth, 'cm.csv')), row.names = FALSE)
-png(file = file.path(results, 'figures', paste0('WY2018.r2.', depth, 'cm.Mar.forage_SM+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+write.csv(SM_T_vs_biomass_analysis2018, file.path(results, 'SM_T_model_results', paste0('SM_T_vs_Feb2018biomass_', depth, 'cm.csv')), row.names = FALSE)
+png(file = file.path(results, 'figures', paste0('WY2018.r2.', depth, 'cm.Feb.forage_SM+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4, 2, 2))
-plot(dates2018, SM_T_vs_biomass_analysis2018$r2.model, xaxt='n', xlab = '', ylab='model r^2', main = paste('Forage variance on 3/22/18 explaned by', depth, 'cm soil moisture and temperature'), xlim = c(dates2018[7], dates2018[length(dates2018) - 7]))
+plot(dates2018, SM_T_vs_biomass_analysis2018$r2.model, xaxt='n', xlab = '', ylab='model r^2', main = paste('Forage variance on 2/15/18 explained by', depth, 'cm soil moisture and temperature'), xlim = c(dates2018[7], dates2018[length(dates2018) - 7]))
 points(dates2018[which(SM_T_vs_biomass_analysis2018$p.value.model < 0.05)], SM_T_vs_biomass_analysis2018$r2.model[which(SM_T_vs_biomass_analysis2018$p.value.model < 0.05)], col='red')
 axis.Date(side = 1, at=seq.Date(from = as.Date('2017/12/1'), to = as.Date('2018/7/1'), by='months'), format = '%m/%d/%y')
 dev.off()
 
-png(file = file.path(results, 'figures', paste0('WY2018SM', depth, 'cm.vs.Mar.forage_SM+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+png(file = file.path(results, 'figures', paste0('WY2018SM', depth, 'cm.vs.Feb.forage_SM+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4, 2, 2))
-plot(dates2018, SM_T_vs_biomass_analysis2018$slope.SM, xaxt='n', xlab = '', ylab='kg/ha association of 1 std dev soil moisture', main = paste('Relationship between', depth, 'cm soil moisture and 3/22/18 biomass, SM + T model'), xlim = c(dates2018[7], dates2018[length(dates2018) - 7]))
+plot(dates2018, SM_T_vs_biomass_analysis2018$slope.SM, xaxt='n', xlab = '', ylab='kg/ha association of 1 std dev soil moisture', main = paste('Relationship between', depth, 'cm soil moisture and 2/15/18 biomass, SM + T model'), xlim = c(dates2018[7], dates2018[length(dates2018) - 7]))
 points(dates2018[SM_T_vs_biomass_analysis2018$p.value.SM < 0.05], SM_T_vs_biomass_analysis2018$slope.SM[SM_T_vs_biomass_analysis2018$p.value.SM < 0.05], col='red')
 abline(0, 0, lty = 2)
 axis.Date(side = 1, at=seq.Date(from = as.Date('2017/12/1'), to = as.Date('2018/7/1'), by='months'), format = '%m/%d/%y')
 dev.off()
 
-png(file = file.path(results, 'figures', paste0('WY2018T', depth, 'cm.vs.Mar.forage_SM+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+png(file = file.path(results, 'figures', paste0('WY2018T', depth, 'cm.vs.Feb.forage_SM+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4, 2, 2))
-plot(dates2018, SM_T_vs_biomass_analysis2018$slope.T, xaxt='n', xlab = '', ylab='kg/ha association of +1 deg C soil T', main = paste('Relationship between', depth, 'cm soil T and 3/22/18 biomass, SM + T model'), xlim = c(dates2018[7], dates2018[length(dates2018) - 7]))
+plot(dates2018, SM_T_vs_biomass_analysis2018$slope.T, xaxt='n', xlab = '', ylab='kg/ha association of +1 deg C soil T', main = paste('Relationship between', depth, 'cm soil T and 2/15/18 biomass, SM + T model'), xlim = c(dates2018[7], dates2018[length(dates2018) - 7]))
 points(dates2018[SM_T_vs_biomass_analysis2018$p.value.T < 0.05], SM_T_vs_biomass_analysis2018$slope.T[SM_T_vs_biomass_analysis2018$p.value.T < 0.05], col='red')
 abline(0, 0, lty=2)
 axis.Date(side = 1, at=seq.Date(from = as.Date('2017/12/1'), to = as.Date('2018/7/1'), by='months'), format = '%m/%d/%y')
