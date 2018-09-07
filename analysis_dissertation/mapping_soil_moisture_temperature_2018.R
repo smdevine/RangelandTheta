@@ -127,6 +127,10 @@ autocorr_test('2017', 'VWC', 'Median', '7')
 autocorr_test('2017', 'VWC', 'Median', '22')
 autocorr_test('2018', 'VWC', 'Median', '7')
 autocorr_test('2018', 'VWC', 'Median', '22')
+autocorr_test('2017', 'VWC', 'Mean', '7')
+autocorr_test('2017', 'VWC', 'Mean', '22')
+autocorr_test('2018', 'VWC', 'Mean', '7')
+autocorr_test('2018', 'VWC', 'Mean', '22')
 
 #now do kriging interpolation of some of the significant ones
 read_data <- function(year, varname, stat, depth) {
