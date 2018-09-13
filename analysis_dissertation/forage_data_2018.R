@@ -12,6 +12,7 @@ library(extrafontdb)
 loadfonts()
 library(raster)
 
+
 list.files(forage_data, pattern = glob2rx('*.csv'))
 sensorplot_data <- read.csv(file.path(forage_data, "CamattaBiomassSensorPlotsOnly2017.csv"), stringsAsFactors = FALSE)
 sensorplot_data$Location_sub <- paste(sensorplot_data$Location, sensorplot_data$Subsample, sep='')
