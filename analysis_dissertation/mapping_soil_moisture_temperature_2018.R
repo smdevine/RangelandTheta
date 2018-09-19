@@ -135,14 +135,22 @@ autocorr_test('2018', 'VWC', 'Mean', '22')
 #now do kriging interpolation of some of the significant ones
 read_data <- function(year, varname, stat, depth) {
   read.csv(file.path(dataDir, year, varname,  paste0(stat, varname, '_', depth, 'cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
+}
 normalize_data <- function(df) {
   df[ ,2:ncol(df)] <- (df[ ,2:ncol(df)] - rowMeans(df[ ,2:ncol(df)], na.rm = TRUE)) / apply(df[ ,2:ncol(df)], 1, sd, na.rm=TRUE)
   df
 }
-vwc_data <- read_data('2017', 'VWC', 'Median', '7')
+vwc_data <- read_data('2017', 'VWC', 'Mean', '7')
 vwc_data_normalized <- normalize_data(vwc_data)
 coords <- sensor_pts[which(sensor_pts$location %in% vwc_data_normalized$location), c('Est_10N', 'Nrt_10N')]
 vwc_data_norm_sp <- SpatialPointsDataFrame(coords=coords, proj4string = crs('+proj=utm +zone=10 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0'), data=vwc_data_normalized)
+range(vwc_data_norm_sp$Jan_08_2017)
+range(vwc_data_norm_sp$Jan_09_2017)
+plot(vwc_data_norm_sp, cex=2*vwc_data_norm_sp$Jan_08_2017, col='blue', pch=19)
+plot(vwc_data_norm_sp, cex=2*vwc_data_norm_sp$Jan_09_2017, col='blue', pch=19)
+plot(vwc_data_norm_sp, cex=2*vwc_data_norm_sp$Jan_10_2017, col='blue', pch=19)
+plot(vwc_data_norm_sp, cex=2*vwc_data_norm_sp$Jan_11_2017, col='blue', pch=19)
+plot(vwc_data_norm_sp, cex=2*vwc_data_norm_sp$Jan_12_2017, col='blue', pch=19)
 gs <- gstat(formula=Jan_07_2017 ~ 1, locations=vwc_data_norm_sp)
 v <- variogram(gs, width=20, cutoff=300)
 v
