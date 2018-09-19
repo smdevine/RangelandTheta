@@ -1,0 +1,21 @@
+library(ggplot2)
+species_comp <- read.csv('C:/Users/smdevine/Desktop/rangeland project/clip_plots/Camatta_species_comp_2017.csv', stringsAsFactors = FALSE)
+species_comp$Composition_perc <- species_comp$Composition_perc * 100
+tapply(species_comp$Composition_perc, list(species_comp$Date, species_comp$Site_class), sum)
+tapply(species_comp$Common_Name, list(species_comp$Date, species_comp$Site_class), length)
+tapply(species_comp$Composition_perc, list(species_comp$Date, species_comp$Common_Name), mean)
+tapply(species_comp$Composition_perc, species_comp$Common_Name, mean)
+unique(species_comp$Genus)
+unique(species_comp$Species)
+legend_labels <- species_comp[1:9,]
+legend_labels <- legend_labels[order(legend_labels$Dummy_var),]
+legend_labels <- paste(legend_labels$Genus, legend_labels$Species)
+png(file = file.path(resultsFigures, 'species.comp', paste0('species.comp.by.date.landscape.png')), family = 'Book Antiqua', width = 1200, height = 1000, units = 'px', res=100)
+ggplot(data=species_comp) +
+  geom_col(aes(y = Composition_perc, x = Site_class, fill = as.character(Dummy_var)), position='stack') +
+  labs(title= 'Species composition in 2017 by date and landscape position', x = 'Landscape position', y = 'Species composition (%)') +
+  scale_fill_manual(values=c('forestgreen', 'springgreen', 'lightgreen', 'thistle', 'gold1', 'goldenrod2', 'lemonchiffon', 'rosybrown', 'brown'), name ='Species', labels=legend_labels) +
+  theme_classic(base_size = 15) +
+  theme(legend.position = 'bottom') +
+  facet_grid( ~ Date)
+dev.off()
