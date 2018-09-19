@@ -25,7 +25,7 @@ max_modified <- function(x) {
 
 #read in forage data
 depth <- 7
-yr <- 2017
+yr <- 2018
 clpname <- 'clp031417'
 #daily mean normalized soil moisture + temperature vs. biomass model
 SMnorm_T_model <- function(depth, yr, clpname, month) {
@@ -144,44 +144,42 @@ names(Tmodel_results_2017) <- c('Apr', 'Feb', 'Mar', 'May')
 #2017 plot
 png(file = file.path(resultsFigures, 'combined.dates', paste0('WY2017.', depth, 'cm.model.r2.results.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4, 2, 1))
-plot(as.Date(SMnorm_Tmodel_results_2017$Mar$dates), SMnorm_Tmodel_results_2017$Mar$r2.model, xaxt='n', type = 'l', xlab='', ylab = bquote('r'^2*' values'), ylim=c(0,1), xlim = as.Date(c('2016-12-01', '2017-05-01')), pch = 1, main=paste(depth, 'cm model results in', yr), col='red')
-lines(as.Date(Tmodel_results_2017$Mar$dates), Tmodel_results_2017$Mar$r2.model, col ='red', lty=2)
-lines(as.Date(SMnorm_Tmodel_results_2017$Apr$dates), SMnorm_Tmodel_results_2017$Apr$r2.model, col ='grey')
-lines(as.Date(Tmodel_results_2017$Apr$dates), Tmodel_results_2017$Apr$r2.model, col ='grey', lty=2)
-lines(as.Date(SMnorm_Tmodel_results_2017$May$dates), SMnorm_Tmodel_results_2017$May$r2.model, col='black')
-lines(as.Date(Tmodel_results_2017$May$dates), Tmodel_results_2017$May$r2.model, col='black', lty=2)
-lines(as.Date(SMnorm_Tmodel_results_2017$May$dates), SMnorm_Tmodel_results_2017$May$r2.SM.vs.T, col='lightblue')
+plot(as.Date(SMnorm_Tmodel_results_2017$Mar$dates), SMnorm_Tmodel_results_2017$Mar$r2.model, xaxt='n', type = 'l', xlab='', ylab = bquote('r'^2*' values'), ylim=c(0,1), xlim = as.Date(c('2016-12-01', '2017-05-01')), pch = 1, main=paste(depth, 'cm model results in', yr, '(wet year)'), col='grey')
+lines(as.Date(Tmodel_results_2017$Mar$dates), Tmodel_results_2017$Mar$r2.model, col ='grey', lty=2)
+lines(as.Date(SMnorm_Tmodel_results_2017$Apr$dates), SMnorm_Tmodel_results_2017$Apr$r2.model, col ='black')
+lines(as.Date(Tmodel_results_2017$Apr$dates), Tmodel_results_2017$Apr$r2.model, col ='black', lty=2)
+lines(as.Date(SMnorm_Tmodel_results_2017$May$dates), SMnorm_Tmodel_results_2017$May$r2.model, col='red')
+lines(as.Date(Tmodel_results_2017$May$dates), Tmodel_results_2017$May$r2.model, col='red', lty=2)
+#lines(as.Date(SMnorm_Tmodel_results_2017$May$dates), SMnorm_Tmodel_results_2017$May$r2.SM.vs.T, col='lightblue')
 axis.Date(side = 1, at=seq.Date(from = as.Date('2016/12/1'), to = as.Date('2017/5/1'), by='months'), format = '%m/%d/%y')
-legend("topright", legend=(c("SMnorm + T vs. March biomass model", 'T vs. March biomass model', "SMnorm + T vs. April biomass model", 'T vs. April biomass model', 'SMnorm + T vs. May biomass model', 'T vs. May biomass model', 'SMnorm vs. T')), lty=c(1, 2, 1, 2, 1, 2, 1), col=c('red', 'red', 'grey', 'grey', 'black', 'black', 'lightblue'), inset = 0.005, cex=0.9)
+legend("topright", legend=(c("SMnorm + T vs. March biomass model", 'T vs. March biomass model', "SMnorm + T vs. April biomass model", 'T vs. April biomass model', 'SMnorm + T vs. May biomass model', 'T vs. May biomass model')), lty=c(1, 2, 1, 2, 1, 2), col=c('grey', 'grey', 'black', 'black', 'red', 'red'), inset = 0.005, cex=0.9)
 dev.off()
 
 #make combined plots of r2 from SMnorm+T model and Tmodel for different dates in 2018
 #stopped here
 depth <- 7
-yr <- 2017
-SMnorm_Tmodel_results_2017 <- lapply(list.files(file.path(results, 'SMnorm_T_model_results'), pattern = glob2rx(paste0('*2017*', depth, 'cm*')), full.names = TRUE), read.csv, stringsAsFactors=FALSE)
-clipdates2017 <- as.Date(c('2017-04-10', '2017-02-15', '2017-03-14', '2017-05-01'))
-SMnorm_Tmodel_results_2017 <- mapply(function(x, y) x <- x[as.Date(x$dates) <= y, ], SMnorm_Tmodel_results_2017, clipdates2017, SIMPLIFY = FALSE)
-names(SMnorm_Tmodel_results_2017) <- list.files(file.path(results, 'SMnorm_T_model_results'), pattern = glob2rx(paste0('*2017*', depth, 'cm*')))
-names(SMnorm_Tmodel_results_2017)
-names(SMnorm_Tmodel_results_2017) <- c('Apr', 'Feb', 'Mar', 'May')
-Tmodel_results_2017 <- lapply(list.files(file.path(results, 'T_model_results'), pattern = glob2rx(paste0('*2017*', depth, 'cm*')), full.names = TRUE), read.csv, stringsAsFactors=FALSE)
-Tmodel_results_2017 <- mapply(function(x, y) x <- x[as.Date(x$dates) <= y, ], Tmodel_results_2017, clipdates2017, SIMPLIFY = FALSE)
-names(Tmodel_results_2017) <- list.files(file.path(results, 'T_model_results'), pattern = glob2rx(paste0('*2017*', depth, 'cm*')))
-names(Tmodel_results_2017)
-names(Tmodel_results_2017) <- c('Apr', 'Feb', 'Mar', 'May')
+yr <- 2018
+SMnorm_Tmodel_results_2018 <- lapply(list.files(file.path(results, 'SMnorm_T_model_results'), pattern = glob2rx(paste0('*2018*', depth, 'cm*')), full.names = TRUE), read.csv, stringsAsFactors=FALSE)
+clipdates2018 <- as.Date(c('2018-04-15', '2018-02-15', '2018-03-22'))
+SMnorm_Tmodel_results_2018 <- mapply(function(x, y) x <- x[as.Date(x$dates) <= y, ], SMnorm_Tmodel_results_2018, clipdates2018, SIMPLIFY = FALSE)
+names(SMnorm_Tmodel_results_2018) <- list.files(file.path(results, 'SMnorm_T_model_results'), pattern = glob2rx(paste0('*2018*', depth, 'cm*')))
+names(SMnorm_Tmodel_results_2018)
+names(SMnorm_Tmodel_results_2018) <- c('Apr', 'Feb', 'Mar')
+Tmodel_results_2018 <- lapply(list.files(file.path(results, 'T_model_results'), pattern = glob2rx(paste0('*2018*', depth, 'cm*')), full.names = TRUE), read.csv, stringsAsFactors=FALSE)
+Tmodel_results_2018 <- mapply(function(x, y) x <- x[as.Date(x$dates) <= y, ], Tmodel_results_2018, clipdates2018, SIMPLIFY = FALSE)
+names(Tmodel_results_2018) <- list.files(file.path(results, 'T_model_results'), pattern = glob2rx(paste0('*2018*', depth, 'cm*')))
+names(Tmodel_results_2018)
+names(Tmodel_results_2018) <- c('Apr', 'Feb', 'Mar')
 #and plot
-png(file = file.path(resultsFigures, 'combined.dates', paste0('WY2017.', depth, 'cm.model.r2.results.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+png(file = file.path(resultsFigures, 'combined.dates', paste0('WY2018.', depth, 'cm.model.r2.results.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4, 2, 1))
-plot(as.Date(SMnorm_Tmodel_results_2017$Mar$dates), SMnorm_Tmodel_results_2017$Mar$r2.model, xaxt='n', type = 'l', xlab='', ylab = bquote('r'^2*' values'), ylim=c(0,1), xlim = as.Date(c('2016-12-01', '2017-05-01')), pch = 1, main=paste(depth, 'cm model results in', yr), col='red')
-lines(as.Date(Tmodel_results_2017$Mar$dates), Tmodel_results_2017$Mar$r2.model, col ='red', lty=2)
-lines(as.Date(SMnorm_Tmodel_results_2017$Apr$dates), SMnorm_Tmodel_results_2017$Apr$r2.model, col ='grey')
-lines(as.Date(Tmodel_results_2017$Apr$dates), Tmodel_results_2017$Apr$r2.model, col ='grey', lty=2)
-lines(as.Date(SMnorm_Tmodel_results_2017$May$dates), SMnorm_Tmodel_results_2017$May$r2.model, col='black')
-lines(as.Date(Tmodel_results_2017$May$dates), Tmodel_results_2017$May$r2.model, col='black', lty=2)
-lines(as.Date(SMnorm_Tmodel_results_2017$May$dates), SMnorm_Tmodel_results_2017$May$r2.SM.vs.T, col='lightblue')
-axis.Date(side = 1, at=seq.Date(from = as.Date('2016/12/1'), to = as.Date('2017/5/1'), by='months'), format = '%m/%d/%y')
-legend("topright", legend=(c("SMnorm + T vs. March biomass model", 'T vs. March biomass model', "SMnorm + T vs. April biomass model", 'T vs. April biomass model', 'SMnorm + T vs. May biomass model', 'T vs. May biomass model', 'SMnorm vs. T')), lty=c(1, 2, 1, 2, 1, 2, 1), col=c('red', 'red', 'grey', 'grey', 'black', 'black', 'lightblue'), inset = 0.005, cex=0.9)
+plot(as.Date(SMnorm_Tmodel_results_2018$Mar$dates), SMnorm_Tmodel_results_2018$Mar$r2.model, xaxt='n', type = 'l', xlab='', ylab = bquote('r'^2*' values'), ylim=c(0,1), xlim = as.Date(c('2017-12-01', '2018-05-01')), pch = 1, main=paste(depth, 'cm model results in', yr, '(dry year)'), col='grey')
+lines(as.Date(Tmodel_results_2018$Mar$dates), Tmodel_results_2018$Mar$r2.model, col ='grey', lty=2)
+lines(as.Date(SMnorm_Tmodel_results_2018$Apr$dates), SMnorm_Tmodel_results_2018$Apr$r2.model, col ='black')
+lines(as.Date(Tmodel_results_2018$Apr$dates), Tmodel_results_2018$Apr$r2.model, col ='black', lty=2)
+#lines(as.Date(SMnorm_Tmodel_results_2018$Apr$dates), SMnorm_Tmodel_results_2018$Apr$r2.SM.vs.T, col='lightblue')
+axis.Date(side = 1, at=seq.Date(from = as.Date('2017/12/1'), to = as.Date('2018/5/1'), by='months'), format = '%m/%d/%y')
+legend("topright", legend=(c("SMnorm + T vs. March biomass model", 'T vs. March biomass model', "SMnorm + T vs. April biomass model", 'T vs. April biomass model')), lty=c(1, 2, 1, 2), col=c('grey', 'grey', 'black', 'black'), inset = 0.005, cex=0.9)
 dev.off()
 
 

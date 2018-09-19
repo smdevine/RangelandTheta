@@ -118,6 +118,11 @@ fnames_short <- list.files(file.path(results, 'processed_soil_moisture/Jul2018')
 soil_moisture_dfs <- lapply(soil_moisture_fnames, read.csv, stringsAsFactors=FALSE)
 names(soil_moisture_dfs) <- fnames_short
 
+#do some QC checking before aggregation
+lapply(soil_moisture_dfs, function(x) print(colnames(x)))
+
+
+
 #note that points 3, 6, 9, and 14 had an extra port active in WY2018 due to sensors added
 #investigate dates of blanks
 for (i in seq_along(soil_moisture_dfs)) {
@@ -243,6 +248,8 @@ plot(daily_dataVWC_2018_clean$Date_Calendar[daily_dataVWC_2018_clean$sensor_code
 daily_dataVWC_2018_clean$Date_Calendar <- as.Date(daily_dataVWC_2018_clean$Date_Calendar)
 
 #keep both years in one dataset
+#these sensors had data gaps
+#sensor 4-7-A problematic from 2/11 to 2/12/18, which screws up linear model regression results
 daily_dataVWC_clean <- daily_dataVWC[-which(daily_dataVWC$sensor_code %in% c('14-7-A', '14-22-A', '3-22-A', '3-22-B', '4-7-B', '6-7-B', '9-22-B', '14-NA-C', '3-22-C', '6-7-C', '9-22-C')), ]
 daily_dataVWC_clean <- daily_dataVWC_clean[-which(daily_dataVWC_clean$Location==13 & as.Date(daily_dataVWC_clean$Date_Calendar) %in% seq.Date(as.Date('2017-03-10'), as.Date('2017-03-16'), by=1)), ]
 daily_dataVWC_clean$Date_Calendar <- as.Date(daily_dataVWC_clean$Date_Calendar)
