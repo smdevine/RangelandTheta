@@ -25,7 +25,7 @@ max_modified <- function(x) {
 
 #read in forage data
 depth <- 7
-yr <- 2018
+yr <- 2017
 clpname <- 'clp031417'
 #daily mean normalized soil moisture + temperature vs. biomass model
 SMnorm_T_model <- function(depth, yr, clpname, month) {
@@ -114,11 +114,6 @@ T_model(22, 2018, 'clp041518', 'Apr')
 
 #stack r2 from SM + T and T vs biomass models for different clipping dates, cutting off model at clipping date
 
-
-#write correlations between normalized SM and T to file
-getSM_vs_T_corr <- 
-summary(lm(vwc_data_normalized[,i] ~ soilT_data[,i]))$r.squared
-
 #get dry periods for 2017 and 2018
 precip_data <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/climate_data/Camatta_precip_WY2017_2018.csv'), stringsAsFactors = FALSE)
 sum(precip_data$Rainfall..mm.[which(precip_data$Date=='1/10/2018'):which(precip_data$Date=='2/25/2018')]) #only 10.2 mm precip between these dates over
@@ -127,7 +122,7 @@ sum(precip_data$Rainfall..mm.[which(precip_data$Date=='2/21/2017'):which(precip_
 sum(precip_data$Rainfall..mm.[which(precip_data$Date=='3/21/2017'):which(precip_data$Date=='4/17/2017')]) #only 13.5 mm precip
 
 #make combined plots of r2 from SMnorm+T model and Tmodel for different dates in 2017
-depth <- 7
+depth <- 22
 yr <- 2017
 SMnorm_Tmodel_results_2017 <- lapply(list.files(file.path(results, 'SMnorm_T_model_results'), pattern = glob2rx(paste0('*2017*', depth, 'cm*')), full.names = TRUE), read.csv, stringsAsFactors=FALSE)
 clipdates2017 <- as.Date(c('2017-04-10', '2017-02-15', '2017-03-14', '2017-05-01'))
@@ -156,8 +151,7 @@ legend("topright", legend=(c("SMnorm + T vs. March biomass model", 'T vs. March 
 dev.off()
 
 #make combined plots of r2 from SMnorm+T model and Tmodel for different dates in 2018
-#stopped here
-depth <- 7
+depth <- 22
 yr <- 2018
 SMnorm_Tmodel_results_2018 <- lapply(list.files(file.path(results, 'SMnorm_T_model_results'), pattern = glob2rx(paste0('*2018*', depth, 'cm*')), full.names = TRUE), read.csv, stringsAsFactors=FALSE)
 clipdates2018 <- as.Date(c('2018-04-15', '2018-02-15', '2018-03-22'))
@@ -182,8 +176,6 @@ axis.Date(side = 1, at=seq.Date(from = as.Date('2017/12/1'), to = as.Date('2018/
 legend("topright", legend=(c("SMnorm + T vs. March biomass model", 'T vs. March biomass model', "SMnorm + T vs. April biomass model", 'T vs. April biomass model')), lty=c(1, 2, 1, 2), col=c('grey', 'grey', 'black', 'black'), inset = 0.005, cex=0.9)
 dev.off()
 
-
-#check this to make sure nothing was changed to 2018
 #make combined plots of significant 2017 associations
 depth <- 7
 model_results_2017 <- lapply(list.files(model_resultsDir, pattern = glob2rx(paste0('*2017*', depth, 'cm*')), full.names = TRUE), read.csv, stringsAsFactors=FALSE)
@@ -393,61 +385,3 @@ abline(v=as.Date(c('2018/01/10', '2018/02/25')))
 dev.off()
 
 
-#terrain characteristic analysis
-#read in terrain char for each sensor location
-#to be updated
-list.files(file.path(results, 'terrain_characteristics'))
-terrain_chars <- read.csv(file.path(results, 'terrain_characteristics', "sensor_terrain5mNov2016.csv"), stringsAsFactors = FALSE) #this was made with a 1.5 m buffer with the raster 'extract' function in terrain_analysis.R
-colnames(terrain_chars)[1] <- 'location'
-terrain_chars
-terrain_chars$aspect_standardized <- cos(45 - terrain_chars$aspect) + 1
-forage_data <- read.csv(file.path(forageDir, 'summaries', 'forage2017_2018.by.sensor.csv'), stringsAsFactors=FALSE)
-#combine with sensor characteristics
-forage_terrain <- merge(forage_data, terrain_chars, by='location')
-
-#function to construct table of r2 and p-values for simple linear regression
-get_stats <- function(x, y) {
-  model.result <- summary(lm(x ~ forage_terrain[ ,y]))
-  df <- data.frame(col1 = round(model.result$coefficients[2, 4], 3), col2 = round(model.result$coefficients[2, 1], 1), col3 = round(model.result$r.squared, 2))
-  colnames(df) <- c(paste0(y, '.p.val'), paste0(y, '.effect'), paste0(y, '.r2'))
-  df
-}
-aspect.results <- do.call(rbind, lapply(forage_terrain[,2:9], get_stats, y='aspect'))
-elevation.results <- do.call(rbind, lapply(forage_terrain[,2:9], get_stats, y='elevation'))
-slope.results <- do.call(rbind, lapply(forage_terrain[,2:9], get_stats, y='slope'))
-mean_curv.results <- do.call(rbind, lapply(forage_terrain[,2:9], get_stats, y='curvature_mean'))
-prof_curv.results <- do.call(rbind, lapply(forage_terrain[,2:9], get_stats, y='curvature_profile'))
-plan_curv.results <- do.call(rbind, lapply(forage_terrain[,2:9], get_stats, y='curvature_plan'))
-TCI.results <- do.call(rbind, lapply(forage_terrain[,2:9], get_stats, y='TCI'))
-aspect_standardized.results <- do.call(rbind, lapply(forage_terrain[,2:9], get_stats, y='aspect_standardized'))
-overall.results <- cbind(elevation.results, aspect.results, slope.results, mean_curv.results, prof_curv.results, plan_curv.results, TCI.results, aspect_standardized.results)
-overall.results$clip.date <- c('2/15/17', '3/14/17', '4/10/17', '5/1/17', '1/16/18', '2/15/18', '3/22/18', '4/15/18')
-write.csv(overall.results, file.path(results, 'forage_vs_terrain', 'forage_vs_terrain_lm_results.9.11.18.csv'), row.names = FALSE)
-
-#multiple regression
-x <- forage_terrain$clp021517
-a <- 'aspect'
-b <- 'slope'
-c <- 'curvature_mean'
-get_stats_multiple <- function(x, a, b, c) {
-  model.result <- summary(lm(x ~ forage_terrain[ ,a] + forage_terrain[ ,b] + forage_terrain[ ,c]))
-  df <- data.frame(col1 = pf(model.result$fstatistic[1], model.result$fstatistic[2], model.result$fstatistic[3], lower.tail = FALSE), col2 = round(model.result$r.squared, 2), col3 = round(model.result$coefficients[2, 4], 3), col4 = round(model.result$coefficients[2, 1], 1), col5 = round(model.result$coefficients[3, 4], 3), col6 = round(model.result$coefficients[3, 1], 1), col7 = round(model.result$coefficients[4, 4], 3), col8 = round(model.result$coefficients[4, 1], 1))
-  colnames(df) <- c('model.p.val', 'model.r2', paste0(a, '.p.val'), paste0(a, '.effect'), paste0(b, '.p.val'), paste0(b, '.effect'), paste0(c, '.p.val'), paste0(c, '.effect'))
-  df
-}
-mult.lm.results <- do.call(rbind, lapply(forage_terrain[,2:9], get_stats_multiple, a='aspect', b='slope', c='curvature_mean'))
-mult.lm.results$clip.date <- c('2/15/17', '3/14/17', '4/10/17', '5/1/17', '1/16/18', '2/15/18', '3/22/18', '4/15/18')
-write.csv(mult.lm.results, file.path(results, 'forage_vs_terrain', 'forage_vs_terrain_multlm_results.9.11.18.csv'), row.names = FALSE)
-
-#create figures of SMnorm_T model results
-model_results_2017 <- lapply()
-
-
-#double-checking results that were previously produced from soil_moisture_processing_2018.R
-# results_check <- lapply(list.files(model_resultsDir, full.names = TRUE), read.csv, stringsAsFactors=FALSE)
-# names(results_check) <- list.files(model_resultsDir)
-# results_old <- lapply(list.files(model_resultsDir_old, full.names = TRUE), read.csv, stringsAsFactors=FALSE)
-# names(results_old) <- list.files(model_resultsDir_old)
-# for (i in seq_along(results_check)) {
-#   print(sum(results_check[[i]]$slope.T) - sum(results_old[[i]]$slope.T)) 
-# }
