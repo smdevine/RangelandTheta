@@ -142,10 +142,26 @@ normalize_data <- function(df) {
 }
 vwc_data <- read_data('2017', 'VWC', 'Mean', '7')
 vwc_data_normalized <- normalize_data(vwc_data)
+#read-in points
+sensor_pts <- shapefile(file.path(spatialDir, '5TM_sensor_locations_Camatta.shp'))
+names(sensor_pts)[1] <- 'location'
 coords <- sensor_pts[which(sensor_pts$location %in% vwc_data_normalized$location), c('Est_10N', 'Nrt_10N')]
 vwc_data_norm_sp <- SpatialPointsDataFrame(coords=coords, proj4string = crs('+proj=utm +zone=10 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0'), data=vwc_data_normalized)
+
+range(vwc_data_norm_sp$Jan_07_2017)
 range(vwc_data_norm_sp$Jan_08_2017)
 range(vwc_data_norm_sp$Jan_09_2017)
+magfactor <- 2
+plotSM <- function(sp_obj, date, magfactor, color.pts, symbol.type) {
+  plot(sp_obj, cex=magfactor * sp_obj[[date]], col = color.pts, pch = symbol.type, main=date)
+}
+dates <- format.Date(seq.Date(as.Date('Nov_20_2016', '%b_%d_%Y'), as.Date('Apr_15_2017', '%b_%d_%Y'), by='day'), format = '%b_%d_%Y')
+for (i in seq_along(dates)) {
+  plotSM(vwc_data_norm_sp, dates[i], 2, 'blue', 19)
+  #text()
+}
+
+
 plot(vwc_data_norm_sp, cex=2*vwc_data_norm_sp$Jan_08_2017, col='blue', pch=19)
 plot(vwc_data_norm_sp, cex=2*vwc_data_norm_sp$Jan_09_2017, col='blue', pch=19)
 plot(vwc_data_norm_sp, cex=2*vwc_data_norm_sp$Jan_10_2017, col='blue', pch=19)
