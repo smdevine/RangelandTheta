@@ -45,7 +45,8 @@ summary(BD_data$bulk_density_g_cm3_whole_soil - BD_data$bulk_density_g_cm3)
 hist(BD_data$frags_vol_perc)
 summary(BD_data$frags_vol_perc)
 write.csv(BD_data, file.path(results, 'soil_data', paste0('soilBD_H2O_frags_', Sys.Date(), '.csv')), row.names=FALSE)
-
+#read-in BD_data
+BD_data <- read.csv(file.path(results, 'soil_data', 'soilBD_H2O_frags_2018-09-17.csv'), stringsAsFactors = FALSE)
 #split dataset by depth
 BD_data_0_10cm <- BD_data[BD_data$depth_code==1 | BD_data$depth_code==3, ]
 BD_data_10_30cm <- BD_data[BD_data$depth_code==2,]
@@ -61,9 +62,10 @@ plot(sampling_pts, pch=16, col = 'brown')
 text(sampling_pts, sampling_pts$point_no)
 sampling_pts$Apr2017biomass <- extract(biomass_Apr2017, coordinates(sampling_pts)[,1:2], buffer=1.5, fun=mean) #this calculates a mean of all 30 x 30 cm cells within 1.5 m of soil sampling point
 point_data_0_10cm <- merge(sampling_pts, BD_data_0_10cm, 'point_no')
+point_data_0_10cm <- point_data_0_10cm[order(point_data_0_10cm$point_no), ]
 plot(point_data_0_10cm, cex=point_data_0_10cm$Apr2017biomass/1000, pch=1)
-plot(point_data_0_10cm, cex=1.5 * point_data_0_10cm$bulk_density_g_cm3, pch=1)
-plot(point_data_0_10cm, cex=point_data_0_10cm$frags_vol_perc / 3, pch=1)
+plot(point_data_0_10cm, cex=1.5 * point_data_0_10cm$bulk_density_g_cm3, pch=1, main='0-10')
+plot(point_data_0_10cm, cex=point_data_0_10cm$frags_vol_perc / 3, pch=1, main='0-10 coarse fragment % by vol')
 plot(point_data_0_10cm, cex=point_data_0_10cm$H2O_volumetric * 20, pch=1)
 plot(point_data_0_10cm$H2O_gravimetric, point_data_0_10cm$Apr2017biomass)
 plot(point_data_0_10cm$bulk_density_g_cm3, point_data_0_10cm$Apr2017biomass)
@@ -80,8 +82,9 @@ plot(point_data_0_10cm$frags_vol_perc, point_data_0_10cm$OD.H2O.perc)
 #now the 10-30 cm data
 point_data_10_30cm <- merge(sampling_pts, BD_data_10_30cm, 'point_no')
 #plot(point_data_10_30cm, cex=point_data_10_30cm$Apr2017biomass/1000, pch=1)
+point_data_10_30cm <- point_data_10_30cm[order(point_data_10_30cm$point_no), ]
 plot(point_data_10_30cm, cex=1.5 * point_data_10_30cm$bulk_density_g_cm3, pch=1)
-plot(point_data_10_30cm, cex=point_data_10_30cm$frags_vol_perc / 3, pch=1)
+plot(point_data_10_30cm, cex=point_data_10_30cm$frags_vol_perc / 3, pch=1, main='10-30 cm coarse fragment % by vol')
 plot(point_data_10_30cm, cex=point_data_10_30cm$H2O_volumetric * 20, pch=1)
 plot(point_data_10_30cm$bulk_density_g_cm3, point_data_10_30cm$Apr2017biomass)
 plot(point_data_10_30cm$frags_vol_perc, point_data_10_30cm$Apr2017biomass)
@@ -92,7 +95,7 @@ summary(lm(Apr2017biomass ~ frags_vol_perc, data = point_data_10_30cm))
 summary(lm(Apr2017biomass ~ H2O_volumetric, data = point_data_10_30cm)) #should be done against 2018 biomass
 
 #multiple linear regression
-summary(lm(Apr2017biomass ~ bulk_density_g_cm3 + frags_vol_perc + H2O_volumetric, data = point_data_10_30cm))
+summary(lm(Apr2017biomass ~ bulk_density_g_cm3 + frags_vol_perc, data = point_data_10_30cm))
 summary(lm(Apr2017biomass ~ bulk_density_g_cm3 + frags_vol_perc + H2O_volumetric, data = point_data_0_10cm))
 summary(lm(Apr2017biomass ~ OD.H2O.perc + frags_vol_perc, data = point_data_0_10cm))
 
@@ -104,7 +107,8 @@ shapefile(point_data_10_30cm, file.path(results, 'shapefiles', 'point_data_10_30
 
 #read in sensor locations
 sensor.locations <- shapefile(file.path(mainDir, 'soil.moisture.sensors', 'sensor_forage2017.shp'))
-plot(sensor.locations)
+plot(sensor.locations, add=TRUE, col='red')
+text(sensor.locations, labels=sensor.locations$location, offset=0.2, pos=1)
 plot(sensor.locations, cex=sensor.locations$clp041017/1000, pch=1)
 
 #see data at point 88 and 56
