@@ -12,9 +12,8 @@ library(extrafontdb)
 loadfonts()
 library(raster)
 
-
-list.files(forage_data, pattern = glob2rx('*.csv'))
-sensorplot_data <- read.csv(file.path(forage_data, "CamattaBiomassSensorPlotsOnly2017.csv"), stringsAsFactors = FALSE)
+list.files(forageDir, pattern = glob2rx('*.csv'))
+sensorplot_data <- read.csv(file.path(forageDir, "CamattaBiomassSensorPlotsOnly2017.csv"), stringsAsFactors = FALSE)
 sensorplot_data$Location_sub <- paste(sensorplot_data$Location, sensorplot_data$Subsample, sep='')
 by_subsample <- as.data.frame(tapply(sensorplot_data$Forage_kg_hectare, list(sensorplot_data$Location_sub, sensorplot_data$DateClipped), as.numeric))
 by_subsample$location_sub <- rownames(by_subsample)
@@ -26,7 +25,16 @@ by_plot <- by_plot[ ,c(5, 1:4)]
 by_plot
 summary(by_plot[ ,2:5])
 boxplot(by_plot[,2:5])
-write.csv(by_plot, file.path(forage_data, 'summaries', 'forage2017.by.sensor.csv'), row.names = FALSE)
+write.csv(by_plot, file.path(forageDir, 'summaries', 'forage2017.by.sensor.csv'), row.names = FALSE)
+
+#get standard deviations by plot for 2017
+by_plot_stdev <- as.data.frame(tapply(sensorplot_data$Forage_kg_hectare, list(sensorplot_data$Location, sensorplot_data$DateClipped), sd))
+by_plot_stdev$location <- as.integer(rownames(by_plot_stdev))
+by_plot_stdev <- by_plot_stdev[ ,c(5, 1:4)]
+by_plot_stdev
+summary(by_plot_stdev[ ,2:5])
+boxplot(by_plot_stdev[,2:5])
+write.csv(by_plot_stdev, file.path(forageDir, 'summaries', 'forage2017.by.sensor_stdevs.csv'), row.names = FALSE)
 
 #read-in 2018 data and merge with 2017 data
 forage2018 <- read.csv(file.path(forageDir, "Camatta BioMass Production 2018 all dates.csv"), stringsAsFactors = FALSE)
@@ -36,8 +44,17 @@ by_plot2018 <- as.data.frame(tapply(forage2018$biomass.kg.ha, list(forage2018$lo
 by_plot2018$location <- as.integer(rownames(by_plot2018))
 by_plot2018 <- by_plot2018[ ,c(5, 1:4)]
 by_plot2018
-summary(by_plot2018[ ,''])
-write.csv(by_plot2018, file.path(forage_data, 'summaries', 'forage2018.by.sensor.csv'), row.names = FALSE)
+summary(by_plot2018[ ,2:5])
+write.csv(by_plot2018, file.path(forageDir, 'summaries', 'forage2018.by.sensor.csv'), row.names = FALSE)
+#get stdev for 2018
+by_plot2018_stdev <- as.data.frame(tapply(forage2018$biomass.kg.ha, list(forage2018$location, forage2018$Date), sd))
+by_plot2018_stdev$location <- as.integer(rownames(by_plot2018_stdev))
+by_plot2018_stdev <- by_plot2018_stdev[ ,c(5, 1:4)]
+by_plot2018_stdev
+summary(by_plot2018_stdev[ ,2:5])
+write.csv(by_plot2018_stdev, file.path(forageDir, 'summaries', 'forage2018.by.sensor_stdevs.csv'), row.names = FALSE)
+
+#merge 2017 and 2018
 by_plot_all <- cbind(by_plot, by_plot2018[,2:5])
 colnames(by_plot_all)
 colnames(by_plot_all)[2:9] <- c('clp021517', 'clp031417', 'clp041017', 'clp050117', 'clp011618', 'clp021518', 'clp032218', 'clp041518')
@@ -72,7 +89,7 @@ plot(by_plot_all$clp031417, by_plot_all$clp041518)
 summary(lm(clp041518 ~ clp041017, data = by_plot_all))
 summary(lm(clp041518 ~ clp031417, data = by_plot_all))
 summary(lm(clp041518 ~ clp021517, data = by_plot_all))
-write.csv(by_plot_all, file.path(forage_data, 'summaries', 'forage2017_2018.by.sensor.csv'), row.names = FALSE)
+write.csv(by_plot_all, file.path(forageDir, 'summaries', 'forage2017_2018.by.sensor.csv'), row.names = FALSE)
 
 by_plot_all <- read.csv(file.path(forageDir, 'summaries', 'forage2017_2018.by.sensor.csv'), stringsAsFactors = FALSE)
 
@@ -89,7 +106,7 @@ forage_summary <- merge(by_subsample, sensor_pts, by='location')
 coords <- forage_summary[ ,c('Est_10N', 'Nrt_10N')]
 forage_summary <- forage_summary[ ,-6:-7]
 forage_summary_sp <- SpatialPointsDataFrame(coords=coords, proj4string = crs('+proj=utm +zone=10 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0'), data=forage_summary)
-setwd(file.path(forage_data, 'results'))
+setwd(file.path(forageDir, 'results'))
 shapefile(forage_summary_sp, 'sensor_forage2017.shp', overwrite=TRUE)
 setwd(dem_fineres)
 dem_1m <- raster('camatta_Nov2016_1m_dsm.tif')
@@ -140,7 +157,7 @@ colnames(waypoint_forage)[2:5] <- c("clp021517", "clp031417", "clp041017", "clp0
 waypoint_coords <- waypoint_forage[ ,c('Est_10N', 'Nrt_10N')]
 waypoint_forage <- waypoint_forage[ ,-6:-7] #get rid of coordinates
 waypoint_forage_sp <- SpatialPointsDataFrame(coords=waypoint_coords, proj4string = crs('+proj=utm +zone=10 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0'), data=waypoint_forage)
-setwd(file.path(forage_data, 'results'))
+setwd(file.path(forageDir, 'results'))
 shapefile(waypoint_forage_sp, 'waypoint_forage2017.shp', overwrite=TRUE)
 
 #summarize waypoint clip plots
@@ -173,7 +190,7 @@ for (i in 2:5) {
 }
 
 #read in shapefiles for waypoint and sensor forage data
-setwd(file.path(forage_data, 'results'))
+setwd(file.path(forageDir, 'results'))
 list.files(pattern = glob2rx('*.shp'))
 sensor_forage_sp <- shapefile("sensor_forage2017.shp")
 waypoint_forage_sp <- shapefile("waypoint_forage2017.shp")  
