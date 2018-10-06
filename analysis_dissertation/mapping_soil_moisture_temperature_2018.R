@@ -12,40 +12,8 @@ soil_temperatureData <- 'C:/Users/smdevine/Desktop/rangeland project/results/pro
 spatialDir <- 'C:/Users/smdevine/Desktop/rangeland project/soilmoisture/sensor_coordinates'
 dem_fineres <- 'C:/Users/smdevine/Desktop/rangeland project/DEMs_10cm'
 plot_results <- 'C:/Users/smdevine/Desktop/rangeland project/results/plots/May2017'
+tablesDir <- 'C:/Users/smdevine/Desktop/rangeland project/results/tables'
 options(digits = 10)
-
-#test for autocorrelation using spdep package (create function out of this later)
-data_dir <- soil_VWCdata #define working directory manually, either soil_VWCdata or soil_temperatureData
-setwd(data_dir)
-vwc_files <- list.files(pattern = glob2rx('*.csv')) #vwc_files can be taken to mean
-#set j manually from 1 to 6
-for (j in 1:6) {
-  setwd(data_dir)
-  vwc_data <- read.csv(vwc_files[j], stringsAsFactors = FALSE)
-  coords <- vwc_data[ ,c('Est_10N', 'Nrt_10N')]
-  vwc_data_sp <- SpatialPointsDataFrame(coords=coords, proj4string = crs('+proj=utm +zone=10 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0'), data=vwc_data)
-#delete point 13 since missing data after 3/17/16; could be gap filled based on new data
-  vwc_data_sp <- vwc_data_sp[-13, ]
-  vwc_data <- vwc_data[-13, ]
-#then, make an inverse distance weighted matrix
-  idw <- 1/pointDistance(vwc_data_sp, latlon=FALSE)  #equivalent to 1/as.matrix(dist(coordinates(vwc_data_sp))), see GEO200CN lab 14
-  diag(idw) <- 0 #set Inf back to zero
-  idw_list <- mat2listw(idw)
-  dates <- seq.Date(as.Date('2016/11/19'), as.Date('2017/5/1'), by='day')
-  dates <- format.Date(as.Date(dates, format = '%Y%m%d'), '%b_%d_%Y')
-  for (i in 1:length(dates)) {
-    result <- moran.mc(vwc_data[[dates[i]]], idw_list, nsim = 99)
-    if (i==1) {
-      results <- matrix(c(dates[i], result$statistic, result$p.value), nrow=1, ncol=3, byrow=TRUE)
-      next
-    }
-    results <- rbind(results, c(dates[i], result$statistic, result$p.value))
-  }
-  results <- as.data.frame(results)
-  colnames(results) <- c('date', 'Moran I statistic', 'p_value')
-  setwd(file.path(data_dir, 'autocorrelation_test'))
-  write.csv(results, paste('autocorr_test', vwc_files[j], sep = ''), row.names = FALSE)
-}
 
 #make daily point plots of VWC and temperature data to put into a simple animation
 setwd(soil_VWCdata)
@@ -87,13 +55,18 @@ ani.options(convert="C:/PROGRA~1/ImageMagick/convert.exe", loop=1, interval=3, a
 im.convert(png_fnames, output = "Camatta_forage2017.gif")
 
 #test for autocorrelation on normalized soil moisture for 2017 and 2018 data [previously done on absolute values] using spdep package (create function out of this later)
-#read-in points
-sensor_pts <- shapefile(file.path(spatialDir, '5TM_sensor_locations_Camatta.shp'))
-names(sensor_pts)[1] <- 'location'
-autocorr_test <- function(year, varname, stat, depth) {
+
+# year <- '2017'
+# varname <- 'VWC'
+# stat <- 'Median'
+# depth <- '7'
+autocorr_test_norm <- function(year, varname, stat, depth, nsim) {
   #MedianVWC_7cm_dailymeans_by_location.csv
+  set.seed(19801976)
+  sensor_pts <- shapefile(file.path(spatialDir, '5TM_sensor_locations_Camatta.shp'))
+  names(sensor_pts)[1] <- 'location'
   vwc_data_normalized <- read.csv(file.path(dataDir, year, varname,  paste0(stat, varname, '_', depth, 'cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
-  if(sum(is.na(vwc_data_normalized))) {
+  if(sum(is.na(vwc_data_normalized)) > 0) {
     vwc_data_normalized <- vwc_data_normalized[-which(apply(vwc_data_normalized, 1, anyNA)), ]
   }
   vwc_data_normalized[ ,2:ncol(vwc_data_normalized)] <- (vwc_data_normalized[ ,2:ncol(vwc_data_normalized)] - rowMeans(vwc_data_normalized[ ,2:ncol(vwc_data_normalized)], na.rm = TRUE)) / apply(vwc_data_normalized[ ,2:ncol(vwc_data_normalized)], 1, sd, na.rm=TRUE)
@@ -108,7 +81,7 @@ autocorr_test <- function(year, varname, stat, depth) {
   dates <- as.Date(colnames(vwc_data_normalized)[2:ncol(vwc_data_normalized)], '%b_%d_%Y')
   dates <- format.Date(dates, '%b_%d_%Y')
   for (i in 1:length(dates)) {
-    result <- moran.mc(vwc_data_normalized[[dates[i]]], idw_list, nsim = 99)
+    result <- moran.mc(vwc_data_normalized[[dates[i]]], idw_list, nsim = nsim)
     if (i==1) {
       results <- matrix(c(dates[i], result$statistic, result$p.value), nrow=1, ncol=3, byrow=TRUE)
       next
@@ -117,20 +90,90 @@ autocorr_test <- function(year, varname, stat, depth) {
   }
   results <- as.data.frame(results)
   colnames(results) <- c('date', 'Moran I statistic', 'p_value')
+  results$n_pts <- nrow(vwc_data_normalized)
   if (!dir.exists(file.path(dataDir, 'autocorrelation_test_normalized'))) {
     dir.create(file.path(dataDir, 'autocorrelation_test_normalized'))
   }
-  write.csv(results, file.path(dataDir, 'autocorrelation_test_normalized', paste0(stat, year, '_', varname, depth, 'cm_autocorr_test.csv')), row.names = FALSE)
+  write.csv(results, file.path(dataDir, 'autocorrelation_test_normalized', paste0(stat, year, '_', varname, depth, 'cm_autocorr_normtest.csv')), row.names = FALSE)
 }
 #(year, varname, stat, depth)
-autocorr_test('2017', 'VWC', 'Median', '7')
-autocorr_test('2017', 'VWC', 'Median', '22')
-autocorr_test('2018', 'VWC', 'Median', '7')
-autocorr_test('2018', 'VWC', 'Median', '22')
-autocorr_test('2017', 'VWC', 'Mean', '7')
-autocorr_test('2017', 'VWC', 'Mean', '22')
-autocorr_test('2018', 'VWC', 'Mean', '7')
-autocorr_test('2018', 'VWC', 'Mean', '22')
+autocorr_test_norm('2017', 'VWC', 'Mean', '7', 999)
+autocorr_test_norm('2017', 'VWC', 'Mean', '22', 999)
+autocorr_test_norm('2018', 'VWC', 'Mean', '7', 999)
+autocorr_test_norm('2018', 'VWC', 'Mean', '22', 999)
+
+#autocorr test of absolute moisture and temperature
+autocorr_test_abs <- function(year, varname, varname2, stat, depth, nsim) {
+  set.seed(19801976)
+  sensor_pts <- shapefile(file.path(spatialDir, '5TM_sensor_locations_Camatta.shp'))
+  names(sensor_pts)[1] <- 'location'
+  vwc_data <- read.csv(file.path(dataDir, year, varname,  paste0(stat, varname2, '_', depth, 'cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
+  if(sum(is.na(vwc_data)) > 0) {
+    vwc_data <- vwc_data[-which(apply(vwc_data, 1, anyNA)), ]
+  } #have to remove rows for entire time frame if data missing
+  coords <- sensor_pts[which(sensor_pts$location %in% vwc_data$location), c('Est_10N', 'Nrt_10N')]
+  vwc_data_sp <- SpatialPointsDataFrame(coords=coords, proj4string = crs('+proj=utm +zone=10 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0'), data=vwc_data)
+  #vwc_data_sp <- vwc_data_sp[-13, ]
+  #vwc_data <- vwc_data[-13, ]
+  #then, make an inverse distance weighted matrix
+  idw <- 1/pointDistance(vwc_data_sp, latlon=FALSE)  #equivalent to 1/as.matrix(dist(coordinates(vwc_data_sp))), see GEO200CN lab 14
+  diag(idw) <- 0 #set Inf back to zero
+  idw_list <- mat2listw(idw)
+  dates <- as.Date(colnames(vwc_data)[2:ncol(vwc_data)], '%b_%d_%Y')
+  dates <- format.Date(dates, '%b_%d_%Y')
+  for (i in 1:length(dates)) {
+    result <- moran.mc(vwc_data[[dates[i]]], idw_list, nsim = nsim)
+    if (i==1) {
+      results <- matrix(c(dates[i], result$statistic, result$p.value), nrow=1, ncol=3, byrow=TRUE)
+      next
+    }
+    results <- rbind(results, c(dates[i], result$statistic, result$p.value))
+  }
+  results <- as.data.frame(results)
+  colnames(results) <- c('date', 'Moran I statistic', 'p_value')
+  results$n_pts <- nrow(vwc_data)
+  if (!dir.exists(file.path(dataDir, 'autocorrelation_test_abs'))) {
+    dir.create(file.path(dataDir, 'autocorrelation_test_abs'))
+  }
+  write.csv(results, file.path(dataDir, 'autocorrelation_test_abs', paste0(stat, year, '_', varname2, depth, 'cm_autocorrtest.csv')), row.names = FALSE)
+}
+#run the function
+autocorr_test_abs('2017', 'VWC', 'VWC', 'Mean', '7', 999)
+autocorr_test_abs('2017', 'VWC', 'VWC', 'Mean', '22', 999)
+autocorr_test_abs('2018', 'VWC', 'VWC', 'Mean', '7', 999)
+autocorr_test_abs('2018', 'VWC', 'VWC', 'Mean', '22', 999)
+autocorr_test_abs('2017', 'Temperature', 'T', 'Mean', '7', 999)
+autocorr_test_abs('2017', 'Temperature', 'T', 'Mean', '22', 999)
+autocorr_test_abs('2018', 'Temperature', 'T', 'Mean', '7', 999)
+autocorr_test_abs('2018', 'Temperature', 'T', 'Mean', '22', 999)
+
+#count up the significant days
+# test <- 'autocorrelation_test_abs'
+# varname <- 'T'
+# depth <- '7cm'
+# yr <- '2017'
+# start_date <- 'Dec_01_2016'
+# end_date <- 'May_01_2017'
+# p_val <- 0.05
+days_sig <- function(test, varname, depth, yr, start_date, end_date, p_val) {
+  autocorr_result <- read.csv(list.files(file.path(dataDir, test), pattern = glob2rx(paste0('*', yr, '*', varname, depth, '*.csv')), full.names = TRUE), stringsAsFactors = FALSE)
+  day_count <- sum(autocorr_result[which(autocorr_result$date==start_date):which(autocorr_result$date==end_date), 'p_value'] < p_val)
+  data.frame(test, varname, yr, depth, day_count, total_days=length(which(autocorr_result$date==start_date):which(autocorr_result$date==end_date)))
+}
+yr2017_7cm_normVWC <- days_sig('autocorrelation_test_normalized', 'VWC', '7cm', '2017', 'Dec_01_2016', 'May_01_2017', 0.05)
+yr2017_22cm_normVWC <- days_sig('autocorrelation_test_normalized', 'VWC', '22cm', '2017', 'Dec_01_2016', 'May_01_2017', 0.05)
+yr2018_7cm_normVWC <- days_sig('autocorrelation_test_normalized', 'VWC', '7cm', '2018', 'Dec_01_2017', 'May_01_2018', 0.05)
+yr2018_22cm_normVWC <- days_sig('autocorrelation_test_normalized', 'VWC', '22cm', '2018', 'Dec_01_2017', 'May_01_2018', 0.05)
+yr2017_7cm_absVWC <- days_sig('autocorrelation_test_abs', 'VWC', '7cm', '2017', 'Dec_01_2016', 'May_01_2017', 0.05)
+yr2017_22cm_absVWC <- days_sig('autocorrelation_test_abs', 'VWC', '22cm', '2017', 'Dec_01_2016', 'May_01_2017', 0.05)
+yr2018_7cm_absVWC <- days_sig('autocorrelation_test_abs', 'VWC', '7cm', '2018', 'Dec_01_2017', 'May_01_2018', 0.05)
+yr2018_22cm_absVWC <- days_sig('autocorrelation_test_abs', 'VWC', '22cm', '2018', 'Dec_01_2017', 'May_01_2018', 0.05)
+yr2017_7cm_absT <- days_sig('autocorrelation_test_abs', 'T', '7cm', '2017', 'Dec_01_2016', 'May_01_2017', 0.05)
+yr2017_22cm_absT <- days_sig('autocorrelation_test_abs', 'T', '22cm', '2017', 'Dec_01_2016', 'May_01_2017', 0.05)
+yr2018_7cm_absT <- days_sig('autocorrelation_test_abs', 'T', '7cm', '2018', 'Dec_01_2017', 'May_01_2018', 0.05)
+yr2018_22cm_absT <- days_sig('autocorrelation_test_abs', 'T', '22cm', '2018', 'Dec_01_2017', 'May_01_2018', 0.05)
+autocorr_count_final <- rbind(yr2017_7cm_absT, yr2017_7cm_absVWC, yr2017_7cm_normVWC, yr2017_22cm_absT, yr2017_22cm_absVWC, yr2017_22cm_normVWC, yr2018_7cm_absT, yr2018_7cm_absVWC, yr2018_7cm_normVWC, yr2018_22cm_absT, yr2018_22cm_absVWC, yr2018_22cm_normVWC)
+write.csv(autocorr_count_final, file.path(tablesDir, 'autocorr_results.csv'), row.names = FALSE)
 
 #now do kriging interpolation of some of the significant ones
 read_data <- function(year, varname, stat, depth) {
