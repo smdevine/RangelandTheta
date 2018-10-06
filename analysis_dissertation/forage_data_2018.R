@@ -5,12 +5,12 @@ plot_results <- 'C:/Users/smdevine/Desktop/rangeland project/results/plots/May20
 additional_waypoints <- 'C:/Users/smdevine/Desktop/rangeland project/clip_plots/coordinates_waypoints'
 forageDir <- 'C:/Users/smdevine/Desktop/rangeland project/clip_plots' #previously called forage_data
 soil_VWCdata <- 'C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/May2017/daily_by_location/VWC'
-options(digits = 10)
-options(stringsAsFactors = FALSE)
+results <- 'C:/Users/smdevine/Desktop/rangeland project/results'
 library(extrafont)
 library(extrafontdb)
 loadfonts()
 library(raster)
+library(spdep)
 
 list.files(forageDir, pattern = glob2rx('*.csv'))
 sensorplot_data <- read.csv(file.path(forageDir, "CamattaBiomassSensorPlotsOnly2017.csv"), stringsAsFactors = FALSE)
@@ -68,6 +68,7 @@ plot(by_plot_all$clp021517, by_plot_all$clp021517, xlab='Feb 15, 2017 biomass (k
 abline(a=lm_Feb_forage$coefficients[1], b=lm_Feb_forage$coefficients[2], lty = 2)
 text(x=by_plot_all$clp031417, y=by_plot_all$clp032218, labels = by_plot_all$location, pos = 1, offset = 0.3)
 dev.off()
+
 #plot Mar 2017 vs. 2018
 lm_Mar_forage <- summary(lm(clp032218 ~ clp031417, data = by_plot_all))
 png(file = file.path(results, 'figures', 'WY2017Mar.forage.vs.WY2018Mar.forage.png', sep = ''), family = 'Book Antiqua', width = 800, height = 600, units = 'px', res=100)
@@ -80,24 +81,106 @@ dev.off()
 lm_Apr_forage <- summary(lm(clp041518 ~ clp041017, data = by_plot_all))
 png(file = file.path(results, 'figures', 'WY2017Apr.forage.vs.WY2018Apr.forage.png', sep = ''), family = 'Book Antiqua', width = 800, height = 600, units = 'px', res=100)
 par(mar=c(4.5, 4.5, 2, 2))
-plot(by_plot_all$clp041017, by_plot_all$clp041518, xlab = 'Apr 10, 2017 biomass (kg / ha)', ylab ='Apr 15, 2018 biomass (kg / ha)', main='Relationship between 2017 and 2018 standing forage in April, Camatta catchment', cex.main = 1.2, cex.lab = 1.2, cex.axis = 1.1)
+plot(by_plot_all$clp041017, by_plot_all$clp041518, xlab = 'Apr 10, 2017 biomass (kg / ha)', ylab ='Apr 15, 2018 biomass (kg / ha)', main='Relationship between 2017 and 2018 standing forage in April, Camatta catchment', cex.main = 1.2, cex.lab = 1.2, cex.axis = 1.1, ylim = c(0, 4800), xlim=c(0, 4800))
 abline(a=lm_Apr_forage$coefficients[1], lm_Apr_forage$coefficients[2], lty = 2)
 text(x=by_plot_all$clp041017, y=by_plot_all$clp041518, labels = by_plot_all$location, pos = 1, offset = 0.3)
+legend("topleft", legend=(c("< 1254", '1254-1341', "1341-1458", '>1458')), lty=c(1, 2, 1, 2, 1, 2), col=c('blue', '', '', '', '', ''), inset = 0.005, cex=0.9)
 dev.off()
 
 plot(by_plot_all$clp031417, by_plot_all$clp041518)
 summary(lm(clp041518 ~ clp041017, data = by_plot_all))
 summary(lm(clp041518 ~ clp031417, data = by_plot_all))
 summary(lm(clp041518 ~ clp021517, data = by_plot_all))
-write.csv(by_plot_all, file.path(forageDir, 'summaries', 'forage2017_2018.by.sensor.csv'), row.names = FALSE)
+write.csv(by_plot_all, file.path(forageDir, 'summaries', 'peakforage_2017_2018.csv'), row.names = FALSE)
 
 by_plot_all <- read.csv(file.path(forageDir, 'summaries', 'forage2017_2018.by.sensor.csv'), stringsAsFactors = FALSE)
 
-#make a box plot of all dates
-png(file = file.path(results, 'figures', 'WY2017_WY2018.forage.png', sep = ''), family = 'Book Antiqua', width = 1000, height = 600, units = 'px', res=100)
-par(mar=c(3, 4.5, 2, 2))
-boxplot(by_plot_all[,2:9], names = c('2/15/17', '3/14/17', '4/10/17', '5/1/17', '1/16/18', '2/15/18', '3/22/18', '4/15/18'), ylab='kg forage per ha', main='Annual forage growth, Camatta catchment, 2017-2018', boxwex = 0.6)
+#read-in terrain chars
+terrain_energy <- read.csv(file.path(results, 'tables', "forage_terrain_energy_3m_Hogan.csv"), stringsAsFactors = FALSE)
+
+terrain_energy$energy_colors <- ifelse(terrain_energy$annual_kwh.m2 < summary(terrain_energy$annual_kwh.m2)[2], 'blue', ifelse(terrain_energy$annual_kwh.m2 > summary(terrain_energy$annual_kwh.m2)[2] & terrain_energy$annual_kwh.m2 < summary(terrain_energy$annual_kwh.m2)[3], 'lightblue2', ifelse(terrain_energy$annual_kwh.m2 < summary(terrain_energy$annual_kwh.m2)[5], 'darkorange', 'red3'))) #classifies annual energy into 4 groups
+
+
+test <- data.frame(terrain_energy$annual_kwh.m2, energy_colors)
+test[order(test$terrain_energy.annual_kwh.m2),]
+
+#look at peak forage differences between 2017 and 2018
+peak2017 <- as.numeric(round(apply(by_plot_all[,c(2:5)], 1, max), 1))
+peak2017_dates <- apply(by_plot_all[,c(2:5)], 1, function(x) names(x)[which(x == max(x))])
+peak2018 <- as.numeric(round(apply(by_plot_all[,c(6:9)], 1, max), 1))
+peak2018_dates <- apply(by_plot_all[,c(6:9)], 1, function(x) names(x)[which(x == max(x))])
+peak_df <- data.frame(location=1:16, peak2017 = peak2017, peak2017_dates = peak2017_dates, peak2018 = peak2018, peak2018_dates = peak2018_dates)
+
+plot(peak_df$peak2017, peak_df$peak2018)
+lm_peak_forage <- summary(lm(peak2018 ~ peak2017, data = peak_df))
+plot(lm_peak_forage$residuals, terrain_energy$annual_kwh.m2) #residuals tightly related to aspect in non-linear way
+non.lm_model <- summary(glm(peak_df$peak2018 ~ peak_df$peak2017 + poly(terrain_energy$annual_kwh.m2, 2)))
+non.lm_model$coefficients
+
+#plot peak2018 vs. peak2017
+plot(peak_df$peak2018, peak_df$peak2017)
+lm_peak_forage_v2 <- summary(lm(peak2017 ~ peak2018, data = peak_df))
+plot(lm_peak_forage_v2$residuals, terrain_energy$annual_kwh.m2)
+
+#write peak forage to file
+write.csv(peak_df, file.path(forageDir, 'summaries', 'forage2017_2018.peak.csv'), row.names=FALSE)
+
+#merge back with forage by month and write to file
+forage_all <- merge(by_plot_all, peak_df[,c('location', 'peak2017', 'peak2018')], by='location')
+write.csv(forage_all, file.path(forageDir, 'summaries', 'forage2017_2018_summary.csv'), row.names=FALSE)
+
+#make a plot of peak2017 vs. peak2018
+png(file = file.path(results, 'figures', 'finals', 'peak2017.vs.2018.forage.png', sep = ''), family = 'Book Antiqua', width = 800, height = 600, units = 'px', res=100)
+par(mar=c(4.5, 4.5, 2, 2))
+plot(peak_df$peak2017, peak_df$peak2018, xlab=expression(paste('2017 peak forage (kg', ' ', ha^-1, ')')), ylab=expression(paste('2018 peak forage (kg', ' ', ha^-1, ')')), main='Relationship between dry and wet year standing forage', pch=19, cex.main = 1.2, cex.lab = 1.2, cex.axis = 1.1, ylim = c(0, 1800), xlim=c(0, 4800), col=energy_colors)
+abline(a=lm_peak_forage$coefficients[1], b=lm_peak_forage$coefficients[2], lty = 2)
+text(x=peak_df$peak2017, y=peak_df$peak2018, labels = peak_df$location, pos = 1, offset = 0.3)
+legend("topleft", legend=(c("< 1254", '1254-1341', "1341-1458", '>1458')), pch=19, col=c('blue', 'gold', 'darkorange', 'red2'), inset = 0.005, title = expression(paste('annual kWh ', m^2)))
 dev.off()
+summary((peak_df$peak2017 - peak_df$peak2018) / peak_df$peak2017)
+
+#make a box plot of all dates
+png(file = file.path(results, 'figures', 'finals', 'WY2017_WY2018.forage.png', sep = ''), family = 'Book Antiqua', width = 800, height = 480, units = 'px', res=100)
+par(mar=c(3, 4.5, 2, 2))
+boxplot(by_plot_all[,c(2:5,7:9)], names = c('2/15/17', '3/14/17', '4/10/17', '5/1/17', '2/15/18', '3/22/18', '4/15/18'), ylab=expression(paste('kg forage ', ha^-1)), main='Annual forage growth, Camatta catchment, 2017-2018', boxwex = 0.5)
+abline(v=4.5, lty=2)
+text(1.5, 3000, 'wet year')
+text(5.5, 3000, 'dry year')
+dev.off()
+
+#autocorr test of forage results
+autocorr_test_forage <- function(nsim) {
+  set.seed(19801976)
+  #MedianVWC_7cm_dailymeans_by_location.csv
+  forage_data <- read.csv(file.path(forageDir, 'summaries', 'forage2017_2018_summary.csv'), stringsAsFactors = FALSE)
+  sensor_pts <- shapefile(file.path(sensor_coords, '5TM_sensor_locations_Camatta.shp'))
+  names(sensor_pts)[1] <- 'location'
+  coords <- sensor_pts[which(sensor_pts$location %in% forage_data$location), c('Est_10N', 'Nrt_10N')]
+  forage_data_sp <- SpatialPointsDataFrame(coords=coords, proj4string = crs('+proj=utm +zone=10 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0'), data=forage_data)
+  #then, make an inverse distance weighted matrix
+  idw <- 1/pointDistance(forage_data_sp, latlon=FALSE)  #equivalent to 1/as.matrix(dist(coordinates(forage_data_sp))), see GEO200CN lab 14
+  diag(idw) <- 0 #set Inf back to zero
+  idw_list <- mat2listw(idw)
+  dates <- colnames(forage_data)[2:ncol(forage_data)]
+  for (i in 1:length(dates)) {
+    result <- moran.mc(forage_data[[dates[i]]], idw_list, nsim = nsim)
+    if (i==1) {
+      results <- matrix(c(dates[i], result$statistic, result$p.value), nrow=1, ncol=3, byrow=TRUE)
+      next
+    }
+    results <- rbind(results, c(dates[i], result$statistic, result$p.value))
+  }
+  results <- as.data.frame(results)
+  colnames(results) <- c('date', 'Moran I statistic', 'p_value')
+  results$n_pts <- nrow(forage_data)
+  if (!dir.exists(file.path(forageDir, 'summaries', 'autocorrelation_test_abs'))) {
+    dir.create(file.path(forageDir, 'summaries', 'autocorrelation_test_abs'))
+  }
+  write.csv(results, file.path(forageDir, 'summaries', 'autocorrelation_test_abs', 'forage_autocorrtest.csv'), row.names = FALSE)
+}
+autocorr_test_forage(nsim=999)
+
+#old code
 #merge with spatial coordinates
 sensor_pts <- read.csv(file.path(spatial_data, "sensor_terrain_characteristics5_3_17.csv"), stringsAsFactors = FALSE) #how were terrain characteristics derived?
 sensor_pts <- sensor_pts[ ,c(1,3:4)] #reduce to columns that have location number and coordinates, because these terrain characteristics were derived from 10 m DEM
