@@ -23,7 +23,6 @@ max_modified <- function(x) {
   else {max(x, na.rm = TRUE)}
 }
 
-#read in forage data
 depth <- 7
 yr <- 2017
 clpname <- 'clp031417'
@@ -57,7 +56,7 @@ SMnorm_T_model <- function(depth, yr, clpname, month) {
   }
   write.csv(SM_T_vs_biomass_analysis, file.path(results, 'SMnorm_T_model_results', paste0('SMnorm_T_vs_', month, yr, 'biomass_', depth, 'cm.csv')), row.names = FALSE)
 }
-colnames(forage_data) # "clp021517" "clp031417" "clp041017" "clp050117" "clp011618" "clp021518" "clp032218" "clp041518"
+# colnames(forage_data) # "clp021517" "clp031417" "clp041017" "clp050117" "clp011618" "clp021518" "clp032218" "clp041518"
 SMnorm_T_model(7, 2017, 'clp021517', 'Feb')
 SMnorm_T_model(7, 2017, 'clp031417', 'Mar')
 SMnorm_T_model(7, 2017, 'clp041017', 'Apr')
@@ -73,10 +72,10 @@ SMnorm_T_model(22, 2018, 'clp021518', 'Feb')
 SMnorm_T_model(22, 2018, 'clp032218', 'Mar')
 SMnorm_T_model(22, 2018, 'clp041518', 'Apr')
 
-depth <- 7
-yr <- 2017
-clpname <- 'clp031417'
-month <- 'Mar'
+# depth <- 7
+# yr <- 2017
+# clpname <- 'clp031417'
+# month <- 'Mar'
 T_model <- function(depth, yr, clpname, month) {
   forage_data <- read.csv(file.path(forageDir, 'summaries', 'forage2017_2018.by.sensor.csv'), stringsAsFactors=FALSE)
   if (depth == 22 & yr == 2018) {
@@ -137,7 +136,7 @@ names(Tmodel_results_2017)
 names(Tmodel_results_2017) <- c('Apr', 'Feb', 'Mar', 'May')
 
 #2017 plot
-png(file = file.path(resultsFigures, 'combined.dates', paste0('WY2017.', depth, 'cm.model.r2.results.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+png(file = file.path(resultsFigures, 'finals', paste0('WY2017.', depth, 'cm.model.r2.results.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4, 2, 1))
 plot(as.Date(SMnorm_Tmodel_results_2017$Mar$dates), SMnorm_Tmodel_results_2017$Mar$r2.model, xaxt='n', type = 'l', xlab='', ylab = bquote('r'^2*' values'), ylim=c(0,1), xlim = as.Date(c('2016-12-01', '2017-05-01')), pch = 1, main=paste(depth, 'cm model results in', yr, '(wet year)'), col='grey')
 lines(as.Date(Tmodel_results_2017$Mar$dates), Tmodel_results_2017$Mar$r2.model, col ='grey', lty=2)
@@ -165,7 +164,7 @@ names(Tmodel_results_2018) <- list.files(file.path(results, 'T_model_results'), 
 names(Tmodel_results_2018)
 names(Tmodel_results_2018) <- c('Apr', 'Feb', 'Mar')
 #and plot
-png(file = file.path(resultsFigures, 'combined.dates', paste0('WY2018.', depth, 'cm.model.r2.results.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+png(file = file.path(resultsFigures, 'finals', paste0('WY2018.', depth, 'cm.model.r2.results.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4, 2, 1))
 plot(as.Date(SMnorm_Tmodel_results_2018$Mar$dates), SMnorm_Tmodel_results_2018$Mar$r2.model, xaxt='n', type = 'l', xlab='', ylab = bquote('r'^2*' values'), ylim=c(0,1), xlim = as.Date(c('2017-12-01', '2018-05-01')), pch = 1, main=paste(depth, 'cm model results in', yr, '(dry year)'), col='grey')
 lines(as.Date(Tmodel_results_2018$Mar$dates), Tmodel_results_2018$Mar$r2.model, col ='grey', lty=2)
@@ -177,7 +176,7 @@ legend("topright", legend=(c("SMnorm + T vs. March biomass model", 'T vs. March 
 dev.off()
 
 #make combined plots of significant 2017 associations
-depth <- 7
+depth <- 22
 model_results_2017 <- lapply(list.files(model_resultsDir, pattern = glob2rx(paste0('*2017*', depth, 'cm*')), full.names = TRUE), read.csv, stringsAsFactors=FALSE)
 names(model_results_2017) <- list.files(model_resultsDir, pattern = glob2rx(paste0('*2017*', depth, 'cm*')))
 names(model_results_2017)
@@ -189,10 +188,10 @@ clipdates2017 <- as.Date(c('2017-04-10', '2017-02-15', '2017-03-14', '2017-05-01
 for (i in seq_along(model_results_2017)) {
   model_results_2017[[i]] <- model_results_2017[[i]][as.Date(model_results_2017[[i]]$dates) <= clipdates2017[i], ]
 }
-min(unlist(lapply(model_results_2017, function(x) min_modified(x$slope.SM))), na.rm = TRUE)
+#min(unlist(lapply(model_results_2017, function(x) min_modified(x$slope.SM))), na.rm = TRUE)
 
 #2017 SM plot
-png(file = file.path(resultsFigures, 'combined.dates', paste0('WY2017.SM.', depth, 'cm.forage_SMnorm+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+png(file = file.path(resultsFigures, 'finals', paste0('WY2017.SM.', depth, 'cm.forage_SMnorm+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4, 2, 4.5))
 plot(as.Date(model_results_2017$Feb$dates[model_results_2017$Feb$p.value.SM < 0.05]), model_results_2017$Feb$slope.SM[model_results_2017$Feb$p.value.SM < 0.05], xaxt='n', xlab='', ylab = paste('kg/ha association of +1 std dev soil moisture'), ylim=c(min(unlist(lapply(model_results_2017, function(x) min_modified(x$slope.SM))), na.rm=TRUE), max(unlist(lapply(model_results_2017, function(x) max_modified(x$slope.SM))), na.rm=TRUE)), xlim = as.Date(c('2016-12-01', '2017-05-01')), pch = 1, main=paste(depth, 'cm depth soil moisture and forage growth relationship, 2017'))
 points(as.Date(model_results_2017$Mar$dates[model_results_2017$Mar$p.value.SM < 0.05]), model_results_2017$Mar$slope.SM[model_results_2017$Mar$p.value.SM < 0.05], pch = 19, col ='grey')
@@ -208,7 +207,7 @@ lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 200 - 8
 dev.off()
 
 #2017 Temperature plot
-png(file = file.path(resultsFigures, 'combined.dates', paste0('WY2017.T.', depth, 'cm.forage_SMnorm+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+png(file = file.path(resultsFigures, 'finals', paste0('WY2017.T.', depth, 'cm.forage_SMnorm+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4, 2, 4.5))
 plot(as.Date(model_results_2017$Feb$dates[model_results_2017$Feb$p.value.T < 0.05]), model_results_2017$Feb$slope.T[model_results_2017$Feb$p.value.T < 0.05], xaxt='n', xlab='', ylab = 'kg/ha association of +1 deg C soil temperature', ylim=c(min(unlist(lapply(model_results_2017, function(x) min_modified(x$slope.T))), na.rm = TRUE), max(unlist(lapply(model_results_2017, function(x) max_modified(x$slope.T))), na.rm = TRUE)), xlim = as.Date(c('2016-12-01', '2017-05-01')), pch = 1, main=paste(depth, 'cm depth soil temperature and forage growth relationship, 2017'))
 points(as.Date(model_results_2017$Mar$dates[model_results_2017$Mar$p.value.T < 0.05]), model_results_2017$Mar$slope.T[model_results_2017$Mar$p.value.T < 0.05], pch = 19, col='grey')
@@ -221,7 +220,7 @@ abline(v=as.Date(c('2017-02-21', '2017-03-20')))
 dev.off()
 
 #make plots of 2018 significant associations
-depth <- 7
+depth <- 22
 model_results_2018 <- lapply(list.files(model_resultsDir, pattern = glob2rx(paste0('*2018*', depth, 'cm*')), full.names = TRUE), read.csv, stringsAsFactors=FALSE)
 names(model_results_2018) <- list.files(model_resultsDir, pattern = glob2rx(paste0('*2018*', depth, 'cm*')))
 names(model_results_2018)
@@ -237,7 +236,7 @@ lapply(model_results_2018, nrow)
 lapply(model_results_2018, function(x) range(x$slope.SM))
 
 #2018 7 cm SM plot
-png(file = file.path(resultsFigures, 'combined.dates', paste0('WY2018.SM.', depth, 'cm.forage_SMnorm+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+png(file = file.path(resultsFigures, 'finals', paste0('WY2018.SM.', depth, 'cm.forage_SMnorm+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4, 2, 4.5))
 plot(as.Date(model_results_2018$Feb$dates[model_results_2018$Feb$p.value.SM < 0.05]), model_results_2018$Feb$slope.SM[model_results_2018$Feb$p.value.SM < 0.05], xaxt='n', xlab='', ylab = paste('kg/ha association of +1 std dev soil moisture'), ylim=c(min(unlist(lapply(model_results_2018, function(x) min_modified(x$slope.SM))), na.rm=TRUE), max(unlist(lapply(model_results_2018, function(x) max_modified(x$slope.SM))), na.rm=TRUE)), xlim = as.Date(c('2017-12-01', '2018-05-01')), pch = 1, main=paste(depth, 'cm depth soil moisture and forage growth relationship, 2018'))
 points(as.Date(model_results_2018$Mar$dates[model_results_2018$Mar$p.value.SM < 0.05]), model_results_2018$Mar$slope.SM[model_results_2018$Mar$p.value.SM < 0.05], pch = 19, col ='grey')
@@ -253,7 +252,7 @@ dev.off()
 
 #2018 Temp plot
 lapply(model_results_2018, function(x) range(x$slope.T))
-png(file = file.path(resultsFigures, 'combined.dates', paste0('WY2018.T.', depth, 'cm.forage_SMnorm+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+png(file = file.path(resultsFigures, 'finals', paste0('WY2018.T.', depth, 'cm.forage_SMnorm+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4, 2, 4.5))
 plot(as.Date(model_results_2018$Feb$dates[model_results_2018$Feb$p.value.T < 0.05]), model_results_2018$Feb$slope.T[model_results_2018$Feb$p.value.T < 0.05], xaxt='n', xlab='', ylab = 'kg/ha association of +1 deg C soil temperature', ylim=c(min(unlist(lapply(model_results_2018, function(x) min_modified(x$slope.T))), na.rm = TRUE), if(max(unlist(lapply(model_results_2018, function(x) max_modified(x$slope.T))), na.rm = TRUE) < 0) {0} else {max(unlist(lapply(model_results_2018, function(x) max_modified(x$slope.T))), na.rm = TRUE)}), xlim = as.Date(c('2017-12-01', '2018-05-01')), pch = 1, main=paste(depth, 'cm depth soil temperature and forage growth relationship, 2018'))
 points(as.Date(model_results_2018$Mar$dates[model_results_2018$Mar$p.value.T < 0.05]), model_results_2018$Mar$slope.T[model_results_2018$Mar$p.value.T < 0.05], pch = 19, col='grey')
@@ -288,7 +287,7 @@ SMabs_T_model <- function(depth, yr, clpname, month) {
   }
   write.csv(SM_T_vs_biomass_analysis, file.path(results, 'SMabs_T_model_results', paste0('SMabs_T_vs_', month, yr, 'biomass_', depth, 'cm.csv')), row.names = FALSE)
 }
-colnames(forage_data) # "clp021517" "clp031417" "clp041017" "clp050117" "clp011618" "clp021518" "clp032218" "clp041518"
+#colnames(forage_data) # "clp021517" "clp031417" "clp041017" "clp050117" "clp011618" "clp021518" "clp032218" "clp041518"
 SMabs_T_model(7, 2017, 'clp021517', 'Feb')
 SMabs_T_model(7, 2017, 'clp031417', 'Mar')
 SMabs_T_model(7, 2017, 'clp041017', 'Apr')
@@ -303,6 +302,61 @@ SMabs_T_model(7, 2018, 'clp041518', 'Apr')
 SMabs_T_model(22, 2018, 'clp021518', 'Feb')
 SMabs_T_model(22, 2018, 'clp032218', 'Mar')
 SMabs_T_model(22, 2018, 'clp041518', 'Apr')
+
+#make r2 stacked plots for absolute SM + T models
+depth <- 22
+yr <- 2017
+SMabs_Tmodel_results_2017 <- lapply(list.files(file.path(results, 'SMabs_T_model_results'), pattern = glob2rx(paste0('*2017*', depth, 'cm*')), full.names = TRUE), read.csv, stringsAsFactors=FALSE)
+clipdates2017 <- as.Date(c('2017-04-10', '2017-02-15', '2017-03-14', '2017-05-01'))
+SMabs_Tmodel_results_2017 <- mapply(function(x, y) x <- x[as.Date(x$dates) <= y, ], SMabs_Tmodel_results_2017, clipdates2017, SIMPLIFY = FALSE)
+names(SMabs_Tmodel_results_2017) <- list.files(file.path(results, 'SMabs_T_model_results'), pattern = glob2rx(paste0('*2017*', depth, 'cm*')))
+names(SMabs_Tmodel_results_2017)
+names(SMabs_Tmodel_results_2017) <- c('Apr', 'Feb', 'Mar', 'May')
+Tmodel_results_2017 <- lapply(list.files(file.path(results, 'T_model_results'), pattern = glob2rx(paste0('*2017*', depth, 'cm*')), full.names = TRUE), read.csv, stringsAsFactors=FALSE)
+Tmodel_results_2017 <- mapply(function(x, y) x <- x[as.Date(x$dates) <= y, ], Tmodel_results_2017, clipdates2017, SIMPLIFY = FALSE)
+names(Tmodel_results_2017) <- list.files(file.path(results, 'T_model_results'), pattern = glob2rx(paste0('*2017*', depth, 'cm*')))
+names(Tmodel_results_2017)
+names(Tmodel_results_2017) <- c('Apr', 'Feb', 'Mar', 'May')
+
+#2017 plot
+png(file = file.path(resultsFigures, 'finals', 'abs.model', paste0('WY2017.', depth, 'cm.model.r2.results.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+par(mar=c(2, 4, 2, 1))
+plot(as.Date(SMabs_Tmodel_results_2017$Mar$dates), SMabs_Tmodel_results_2017$Mar$r2.model, xaxt='n', type = 'l', xlab='', ylab = bquote('r'^2*' values'), ylim=c(0,1), xlim = as.Date(c('2016-12-01', '2017-05-01')), pch = 1, main=paste(depth, 'cm model results in', yr, '(wet year)'), col='grey')
+lines(as.Date(Tmodel_results_2017$Mar$dates), Tmodel_results_2017$Mar$r2.model, col ='grey', lty=2)
+lines(as.Date(SMabs_Tmodel_results_2017$Apr$dates), SMabs_Tmodel_results_2017$Apr$r2.model, col ='black')
+lines(as.Date(Tmodel_results_2017$Apr$dates), Tmodel_results_2017$Apr$r2.model, col ='black', lty=2)
+lines(as.Date(SMabs_Tmodel_results_2017$May$dates), SMabs_Tmodel_results_2017$May$r2.model, col='red')
+lines(as.Date(Tmodel_results_2017$May$dates), Tmodel_results_2017$May$r2.model, col='red', lty=2)
+#lines(as.Date(SMabs_Tmodel_results_2017$May$dates), SMabs_Tmodel_results_2017$May$r2.SM.vs.T, col='lightblue')
+axis.Date(side = 1, at=seq.Date(from = as.Date('2016/12/1'), to = as.Date('2017/5/1'), by='months'), format = '%m/%d/%y')
+legend("topright", legend=(c("SMabs + T vs. March biomass model", 'T vs. March biomass model', "SMabs + T vs. April biomass model", 'T vs. April biomass model', 'SMabs + T vs. May biomass model', 'T vs. May biomass model')), lty=c(1, 2, 1, 2, 1, 2), col=c('grey', 'grey', 'black', 'black', 'red', 'red'), inset = 0.005, cex=0.9)
+dev.off()
+
+#make combined plots of r2 from SMabs+T model and Tmodel for different dates in 2018
+depth <- 22
+yr <- 2018
+SMabs_Tmodel_results_2018 <- lapply(list.files(file.path(results, 'SMabs_T_model_results'), pattern = glob2rx(paste0('*2018*', depth, 'cm*')), full.names = TRUE), read.csv, stringsAsFactors=FALSE)
+clipdates2018 <- as.Date(c('2018-04-15', '2018-02-15', '2018-03-22'))
+SMabs_Tmodel_results_2018 <- mapply(function(x, y) x <- x[as.Date(x$dates) <= y, ], SMabs_Tmodel_results_2018, clipdates2018, SIMPLIFY = FALSE)
+names(SMabs_Tmodel_results_2018) <- list.files(file.path(results, 'SMabs_T_model_results'), pattern = glob2rx(paste0('*2018*', depth, 'cm*')))
+names(SMabs_Tmodel_results_2018)
+names(SMabs_Tmodel_results_2018) <- c('Apr', 'Feb', 'Mar')
+Tmodel_results_2018 <- lapply(list.files(file.path(results, 'T_model_results'), pattern = glob2rx(paste0('*2018*', depth, 'cm*')), full.names = TRUE), read.csv, stringsAsFactors=FALSE)
+Tmodel_results_2018 <- mapply(function(x, y) x <- x[as.Date(x$dates) <= y, ], Tmodel_results_2018, clipdates2018, SIMPLIFY = FALSE)
+names(Tmodel_results_2018) <- list.files(file.path(results, 'T_model_results'), pattern = glob2rx(paste0('*2018*', depth, 'cm*')))
+names(Tmodel_results_2018)
+names(Tmodel_results_2018) <- c('Apr', 'Feb', 'Mar')
+#and plot
+png(file = file.path(resultsFigures, 'finals', 'abs.model', paste0('WY2018.', depth, 'cm.model.r2.results.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+par(mar=c(2, 4, 2, 1))
+plot(as.Date(SMabs_Tmodel_results_2018$Mar$dates), SMabs_Tmodel_results_2018$Mar$r2.model, xaxt='n', type = 'l', xlab='', ylab = bquote('r'^2*' values'), ylim=c(0,1), xlim = as.Date(c('2017-12-01', '2018-05-01')), pch = 1, main=paste(depth, 'cm model results in', yr, '(dry year)'), col='grey')
+lines(as.Date(Tmodel_results_2018$Mar$dates), Tmodel_results_2018$Mar$r2.model, col ='grey', lty=2)
+lines(as.Date(SMabs_Tmodel_results_2018$Apr$dates), SMabs_Tmodel_results_2018$Apr$r2.model, col ='black')
+lines(as.Date(Tmodel_results_2018$Apr$dates), Tmodel_results_2018$Apr$r2.model, col ='black', lty=2)
+#lines(as.Date(SMabs_Tmodel_results_2018$Apr$dates), SMabs_Tmodel_results_2018$Apr$r2.SM.vs.T, col='lightblue')
+axis.Date(side = 1, at=seq.Date(from = as.Date('2017/12/1'), to = as.Date('2018/5/1'), by='months'), format = '%m/%d/%y')
+legend("topright", legend=(c("SMabs + T vs. March biomass model", 'T vs. March biomass model', "SMabs + T vs. April biomass model", 'T vs. April biomass model')), lty=c(1, 2, 1, 2), col=c('grey', 'grey', 'black', 'black'), inset = 0.005, cex=0.9)
+dev.off()
 
 #make combined plots of significant 2017 associations
 depth <- 22
@@ -320,7 +374,7 @@ for (i in seq_along(model_results_2017)) {
 min(unlist(lapply(model_results_2017, function(x) min_modified(x$slope.SM))), na.rm = TRUE)
 
 #2017 SM plot
-png(file = file.path(resultsFigures, 'combined.dates', 'abs.model', paste0('WY2017.SM.', depth, 'cm.forage_SMabs+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+png(file = file.path(resultsFigures, 'finals', 'abs.model', paste0('WY2017.SM.', depth, 'cm.forage_SMabs+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4, 2, 2))
 plot(as.Date(model_results_2017$Feb$dates[model_results_2017$Feb$p.value.SM < 0.05]), model_results_2017$Feb$slope.SM[model_results_2017$Feb$p.value.SM < 0.05], xaxt='n', xlab='', ylab = paste('kg/ha association of 0.01 vol. soil moisture'), ylim=c(min(unlist(lapply(model_results_2017, function(x) min_modified(x$slope.SM))), na.rm=TRUE), max(unlist(lapply(model_results_2017, function(x) max_modified(x$slope.SM))), na.rm=TRUE)), xlim = as.Date(c('2016-12-01', '2017-05-01')), pch = 1, main=paste(depth, 'cm depth soil moisture and forage growth relationship, 2017'))
 points(as.Date(model_results_2017$Mar$dates[model_results_2017$Mar$p.value.SM < 0.05]), model_results_2017$Mar$slope.SM[model_results_2017$Mar$p.value.SM < 0.05], pch = 19, col ='grey')
@@ -333,7 +387,7 @@ abline(v=as.Date(c('2017-02-21', '2017-03-20'))) #only 2.8 mm precip over 30 day
 dev.off()
 
 #2017 Temperature plot
-png(file = file.path(resultsFigures, 'combined.dates', 'abs.model', paste0('WY2017.T.', depth, 'cm.forage_SMabs+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+png(file = file.path(resultsFigures, 'finals', 'abs.model', paste0('WY2017.T.', depth, 'cm.forage_SMabs+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4, 2, 2))
 plot(as.Date(model_results_2017$Feb$dates[model_results_2017$Feb$p.value.T < 0.05]), model_results_2017$Feb$slope.T[model_results_2017$Feb$p.value.T < 0.05], xaxt='n', xlab='', ylab = 'kg/ha association of +1 deg C soil temperature', ylim=c(min(unlist(lapply(model_results_2017, function(x) min_modified(x$slope.T))), na.rm = TRUE), max(unlist(lapply(model_results_2017, function(x) max_modified(x$slope.T))), na.rm = TRUE)), xlim = as.Date(c('2016-12-01', '2017-05-01')), pch = 1, main=paste(depth, 'cm depth soil temperature and forage growth relationship, 2017'))
 points(as.Date(model_results_2017$Mar$dates[model_results_2017$Mar$p.value.T < 0.05]), model_results_2017$Mar$slope.T[model_results_2017$Mar$p.value.T < 0.05], pch = 19, col='grey')
@@ -361,7 +415,7 @@ for (i in seq_along(model_results_2018)) {
 lapply(model_results_2018, nrow)
 
 #2018 7 cm SM plot
-png(file = file.path(resultsFigures, 'combined.dates', 'abs.model', paste0('WY2018.SM.', depth, 'cm.forage_SMabs+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+png(file = file.path(resultsFigures, 'finals', 'abs.model', paste0('WY2018.SM.', depth, 'cm.forage_SMabs+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4, 2, 2))
 plot(as.Date(model_results_2018$Feb$dates[model_results_2018$Feb$p.value.SM < 0.05]), model_results_2018$Feb$slope.SM[model_results_2018$Feb$p.value.SM < 0.05], xaxt='n', xlab='', ylab = paste('kg/ha association of 0.01 vol. soil moisture'), ylim=c(min(unlist(lapply(model_results_2018, function(x) min_modified(x$slope.SM))), na.rm=TRUE), max(unlist(lapply(model_results_2018, function(x) max_modified(x$slope.SM))), na.rm=TRUE)), xlim = as.Date(c('2017-12-01', '2018-05-01')), pch = 1, main=paste(depth, 'cm depth soil moisture and forage growth relationship, 2018'))
 points(as.Date(model_results_2018$Mar$dates[model_results_2018$Mar$p.value.SM < 0.05]), model_results_2018$Mar$slope.SM[model_results_2018$Mar$p.value.SM < 0.05], pch = 19, col ='grey')
@@ -373,7 +427,7 @@ abline(v=as.Date(c('2018/01/10', '2018/02/25')))
 dev.off()
 
 #2018 Temp plot
-png(file = file.path(resultsFigures, 'combined.dates', 'abs.model', paste0('WY2018.T.', depth, 'cm.forage_SMabs+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+png(file = file.path(resultsFigures, 'finals', 'abs.model', paste0('WY2018.T.', depth, 'cm.forage_SMabs+Tmodel.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4, 2, 2))
 plot(as.Date(model_results_2018$Feb$dates[model_results_2018$Feb$p.value.T < 0.05]), model_results_2018$Feb$slope.T[model_results_2018$Feb$p.value.T < 0.05], xaxt='n', xlab='', ylab = 'kg/ha association of +1 deg C soil temperature', ylim=c(min(unlist(lapply(model_results_2018, function(x) min_modified(x$slope.T))), na.rm = TRUE), if(max(unlist(lapply(model_results_2018, function(x) max_modified(x$slope.T))), na.rm = TRUE) < 0) {0} else {max(unlist(lapply(model_results_2018, function(x) max_modified(x$slope.T))), na.rm = TRUE)}), xlim = as.Date(c('2017-12-01', '2018-05-01')), pch = 1, main=paste(depth, 'cm depth soil temperature and forage growth relationship, 2018'))
 points(as.Date(model_results_2018$Mar$dates[model_results_2018$Mar$p.value.T < 0.05]), model_results_2018$Mar$slope.T[model_results_2018$Mar$p.value.T < 0.05], pch = 19, col='grey')
