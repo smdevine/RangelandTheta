@@ -158,7 +158,6 @@ forage_terrain_energy[order(forage_terrain_energy$peak2017) , c('location', 'pea
 summary(lm(peak2017 ~ curvature_mean + slope + annual_kwh.m2, data=forage_terrain_energy[-c(13,14),]))
 
 
-
 #get pairwise semi-partial correclation for each pair of variables given others
 # spcor(forage_terrain_energy[,c('clp021517', 'annual_kwh.m2', 'slope', 'curvature_mean')], method = 'pearson')
 # spcor(forage_terrain_energy[,c('clp031417', 'annual_kwh.m2', 'slope', 'curvature_mean')], method = 'pearson')
@@ -198,6 +197,19 @@ mult.lm.results.3 <- do.call(rbind, lapply(forage_terrain_energy[,2:11], get_sta
 mult.lm.results.3$clip.date <- c('2/15/17', '3/14/17', '4/10/17', '5/1/17', '1/16/18', '2/15/18', '3/22/18', '4/15/18', 'peak2017', 'peak2018')
 mult.lm.results.3
 write.csv(mult.lm.results.3, file.path(results, 'forage_vs_terrain', 'forage_vs_terrain_3mult_norm_lm_3mDEM.filt_Hogan_final.csv'), row.names = FALSE)
+
+#check 2 var models with slope and energy
+mult2var_peak2017 <- lm(peak2017 ~ annual_kwh.m2 + slope, data=forage_terrain_energy)
+summary(mult2var_peak2017)
+
+mult2var_peak2018 <- lm(peak2018 ~ annual_kwh.m2 + slope, data=forage_terrain_energy)
+summary(mult2var_peak2018) #r2=0.6
+vif(mult2var_peak2018)
+plot(forage_terrain_energy$peak2018, mult2var_peak2018$fitted.values)
+abline(0, 1, lty=2)
+plot(forage_terrain_energy$peak2018, mult2var_peak2018$residuals)
+abline(h=0, lty=2)
+text(forage_terrain_energy$peak2018, mult2var_peak2018$residuals, forage_terrain_energy$location)
 
 #check residuals for peak 2017 and 2018
 mult3var_peak2017 <- lm(peak2017 ~ annual_kwh.m2 + slope + curvature_mean, data=forage_terrain_energy)
@@ -244,6 +256,19 @@ plot_lms <- function(x, y) {
 }
 mapply(plot_lms, c('curvature_mean', 'slope', 'annual_kwh.m2'), 'peak2017')
 mapply(plot_lms, c('curvature_mean', 'slope', 'annual_kwh.m2'), 'peak2018')
+
+#check some models were relationship with energy is non-linear
+summary(lm(peak2017 ~ poly(annual_kwh.m2, 2), data = forage_terrain_energy))
+summary(lm(peak2017 ~ poly(annual_kwh.m2, 2) + slope, data = forage_terrain_energy))
+summary(lm(peak2018 ~ poly(annual_kwh.m2, 2), data = forage_terrain_energy))
+summary(lm(peak2018 ~ poly(annual_kwh.m2, 2) + slope, data = forage_terrain_energy))
+summary(lm(peak2018 ~ poly(annual_kwh.m2, 2) + curvature_mean + slope, data = forage_terrain_energy))
+nl_2var2018 <- lm(peak2018 ~ poly(annual_kwh.m2, 2), data = forage_terrain_energy)
+plot(forage_terrain_energy$peak2018, nl_2var2018$residuals)
+abline(h=0)
+text(forage_terrain_energy$peak2018, nl_2var2018$residuals, labels=forage_terrain_energy$location)
+plot(forage_terrain_energy$peak2018, nl_2var2018$fitted.values)
+abline(0, 1)
 
 #spearman rank correlation
 #location 12 and 16 are tied, crazy
