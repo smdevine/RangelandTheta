@@ -339,6 +339,7 @@ plot(daily_dataVWC_2018_clean$Date_Calendar[daily_dataVWC_2018_clean$sensor_code
 #find an approach for point 9
 unique(daily_dataVWC_2018_clean$sensor_code[daily_dataVWC_2018_clean$Location==9]) #"9-7-A"  "9-7-B"  "9-22-A" available
 unique(daily_dataVWC_2018_clean$sensor_code[daily_dataVWC_2018_clean$Location==1]) #all sensors in dataset for point 1
+unique(daily_dataVWC_2018_clean$sensor_code[daily_dataVWC_2018_clean$Location==13])
 
 summary(lm(daily_dataVWC_2018_clean$MeanT[daily_dataVWC_2018_clean$sensor_code=='9-7-A'] ~ daily_dataVWC_2018_clean$MeanT[daily_dataVWC_2018_clean$sensor_code=='1-7-A'] + daily_dataVWC_2018_clean$MeanT[daily_dataVWC_2018_clean$sensor_code=='1-7-B']))
 lm(daily_dataVWC_2018_clean$MeanT[daily_dataVWC_2018_clean$sensor_code=='9-7-A'] ~ daily_dataVWC_2018_clean$MeanT[daily_dataVWC_2018_clean$sensor_code=='1-7-A'] + daily_dataVWC_2018_clean$MeanT[daily_dataVWC_2018_clean$sensor_code=='1-7-B'])
@@ -347,7 +348,9 @@ summary(lm(daily_dataVWC_2018_clean$MeanT[daily_dataVWC_2018_clean$sensor_code==
 lm(daily_dataVWC_2018_clean$MeanT[daily_dataVWC_2018_clean$sensor_code=='9-7-B'] ~ daily_dataVWC_2018_clean$MeanT[daily_dataVWC_2018_clean$sensor_code=='1-7-A'] + daily_dataVWC_2018_clean$MeanT[daily_dataVWC_2018_clean$sensor_code=='1-7-B'])
 
 summary(lm(daily_dataVWC_2018_clean$MeanT[daily_dataVWC_2018_clean$sensor_code=='9-22-A'] ~ daily_dataVWC_2018_clean$MeanT[daily_dataVWC_2018_clean$sensor_code=='1-22-A'] + daily_dataVWC_2018_clean$MeanT[daily_dataVWC_2018_clean$sensor_code=='1-22-B']))
+lm(daily_dataVWC_2018_clean$MeanT[daily_dataVWC_2018_clean$sensor_code=='9-22-A'] ~ daily_dataVWC_2018_clean$MeanT[daily_dataVWC_2018_clean$sensor_code=='1-22-A'] + daily_dataVWC_2018_clean$MeanT[daily_dataVWC_2018_clean$sensor_code=='1-22-B'])
 
+summary(lm(daily_dataVWC_2018_clean$MeanT[daily_dataVWC_2018_clean$sensor_code=='13-7-A'] ~ daily_dataVWC_2018_clean$MeanT[daily_dataVWC_2018_clean$sensor_code=='4-7-A'] + daily_dataVWC_2018_clean$MeanT[daily_dataVWC_2018_clean$sensor_code=='4-7-B']))
 lm(daily_dataVWC_2018_clean$MeanT[daily_dataVWC_2018_clean$sensor_code=='9-22-A'] ~ daily_dataVWC_2018_clean$MeanT[daily_dataVWC_2018_clean$sensor_code=='1-22-A'] + daily_dataVWC_2018_clean$MeanT[daily_dataVWC_2018_clean$sensor_code=='1-22-B'])
 
 #find an approach for gap-filling point 15
