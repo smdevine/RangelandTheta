@@ -39,7 +39,7 @@ SMnorm_T_model <- function(depth, yr, clpname, month) {
   vwc_data_normalized[ ,2:ncol(vwc_data_normalized)] <- (vwc_data_normalized[ ,2:ncol(vwc_data_normalized)] - rowMeans(vwc_data_normalized[ ,2:ncol(vwc_data_normalized)], na.rm = TRUE)) / apply(vwc_data_normalized[ ,2:ncol(vwc_data_normalized)], 1, sd, na.rm=TRUE) #normalize vwc data
   soilT_data <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location', yr, 'Temperature', paste0('MeanT_', depth, 'cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
   #model biomass as function of temperature and soil moisture
-  SM_T_vs_biomass_analysis <- data.frame(dates=dates, p.value.model= NA, r2.model=NA, slope.SM=NA, p.value.SM=NA, slope.T=NA, p.value.T=NA, p.value.SM.vs.T=NA, r2.SM.vs.T=NA, vif=NA)
+  SM_T_vs_biomass_analysis <- data.frame(dates=dates, p.value.model= NA, r2.model=NA, slope.SM=NA, p.value.SM=NA, slope.T=NA, p.value.T=NA, slope.SM.vs.T=NA, p.value.SM.vs.T=NA, r2.SM.vs.T=NA, vif=NA)
   for (i in 2:ncol(vwc_data_normalized)) {
     lm.result <- lm(forage_data[[clpname]] ~ vwc_data_normalized[,i] + soilT_data[,i])
     lm.summary <- summary(lm.result)
@@ -52,6 +52,7 @@ SMnorm_T_model <- function(depth, yr, clpname, month) {
     SM_T_vs_biomass_analysis[i-1, 'p.value.T'] <- lm.summary$coefficients[3, 4]
     SM_T_vs_biomass_analysis[i-1, 'p.value.SM.vs.T'] <- summary(lm.SM.vs.T)$coefficients[2, 4]
     SM_T_vs_biomass_analysis[i-1, 'r2.SM.vs.T'] <- summary(lm.SM.vs.T)$r.squared
+    SM_T_vs_biomass_analysis[i-1, 'slope.SM.vs.T'] <- summary(lm.SM.vs.T)$coefficients[2, 1]
     SM_T_vs_biomass_analysis[i-1, 'vif'] <- vif(lm.result)[1]
   }
   write.csv(SM_T_vs_biomass_analysis, file.path(results, 'SMnorm_T_model_results', paste0('SMnorm_T_vs_', month, yr, 'biomass_', depth, 'cm.csv')), row.names = FALSE)
@@ -280,16 +281,21 @@ SMabs_T_model <- function(depth, yr, clpname, month) {
   weeks <- seq.Date(as.Date(colnames(vwc_data)[2], '%b_%d_%Y'), as.Date(colnames(vwc_data)[ncol(vwc_data)], '%b_%d_%Y'), by='week')
   soilT_data <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location', yr, 'Temperature', paste0('MeanT_', depth, 'cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
   #model biomass as function of temperature and soil moisture
-  SM_T_vs_biomass_analysis <- data.frame(dates=dates, p.value.model= NA, r2.model=NA, slope.SM=NA, p.value.SM=NA, slope.T=NA, p.value.T=NA, r2.SM.vs.T=NA)
+  SM_T_vs_biomass_analysis <- data.frame(dates=dates, p.value.model= NA, r2.model=NA, slope.SM=NA, p.value.SM=NA, slope.T=NA, p.value.T=NA, r2.SM.vs.T=NA, slope.SM.vs.T=NA, p.value.SM.vs.T=NA, vif=NA)
   for (i in 2:ncol(vwc_data)) {
-    lm.summary <- summary(lm(forage_data[[clpname]] ~ vwc_data[,i] + soilT_data[,i]))
+    lm.result <- lm(forage_data[[clpname]] ~ vwc_data[,i] + soilT_data[,i])
+    lm.summary <- summary(lm.result)
+    lm.SM.vs.T <- lm(vwc_data[,i] ~ soilT_data[,i])
     SM_T_vs_biomass_analysis[i-1, 'p.value.model'] <- pf(lm.summary$fstatistic[1], lm.summary$fstatistic[2], lm.summary$fstatistic[3], lower.tail = FALSE)
     SM_T_vs_biomass_analysis[i-1, 'r2.model'] <- lm.summary$r.squared
     SM_T_vs_biomass_analysis[i-1, 'slope.SM'] <- lm.summary$coefficients[2, 1]
     SM_T_vs_biomass_analysis[i-1, 'slope.T'] <- lm.summary$coefficients[3, 1]
     SM_T_vs_biomass_analysis[i-1, 'p.value.SM'] <- lm.summary$coefficients[2, 4]
     SM_T_vs_biomass_analysis[i-1, 'p.value.T'] <- lm.summary$coefficients[3, 4]
-    SM_T_vs_biomass_analysis[i-1, 'r2.SM.vs.T'] <- summary(lm(vwc_data[,i] ~ soilT_data[,i]))$r.squared
+    SM_T_vs_biomass_analysis[i-1, 'p.value.SM.vs.T'] <- summary(lm.SM.vs.T)$coefficients[2, 4]
+    SM_T_vs_biomass_analysis[i-1, 'r2.SM.vs.T'] <- summary(lm.SM.vs.T)$r.squared
+    SM_T_vs_biomass_analysis[i-1, 'slope.SM.vs.T'] <- summary(lm.SM.vs.T)$coefficients[2, 1]
+    SM_T_vs_biomass_analysis[i-1, 'vif'] <- vif(lm.result)[1]
   }
   write.csv(SM_T_vs_biomass_analysis, file.path(results, 'SMabs_T_model_results', paste0('SMabs_T_vs_', month, yr, 'biomass_', depth, 'cm.csv')), row.names = FALSE)
 }
@@ -877,6 +883,314 @@ SMnorm2_model(22, 2018, 'clp032218', 'Mar')
 SMnorm2_model(22, 2018, 'clp041518', 'Apr')
 SMnorm2_model(22, 2018, 'peak2018', 'peak2018')
 
+# depth <- 7
+# yr <- 2017
+# clpname <- 'peak2017'
+WFpor_T2_model <- function(depth, yr, clpname, month) {
+  forage_data <- read.csv(file.path(forageDir, 'summaries', 'forage2017_2018_summary.csv'), stringsAsFactors=FALSE)
+  if (depth == 22 & yr == 2018) {
+    forage_data <- forage_data[!forage_data$location==3,] #because 22 cm data at location 3 was missing Dec 2017-Feb 2018
+  }
+  vwc_data <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/WF_porosity', paste0('WF_porosity_', depth, 'cm_', yr, '.csv')), stringsAsFactors = FALSE)
+  dates <- seq.Date(as.Date(colnames(vwc_data)[2], '%b_%d_%Y'), as.Date(colnames(vwc_data)[ncol(vwc_data)], '%b_%d_%Y'), by='day')
+  weeks <- seq.Date(as.Date(colnames(vwc_data)[2], '%b_%d_%Y'), as.Date(colnames(vwc_data)[ncol(vwc_data)], '%b_%d_%Y'), by='week')
+  soilT_data <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location', yr, 'Temperature', paste0('MeanT_', depth, 'cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
+  #model biomass as function of temperature and soil moisture
+  SM_T_vs_biomass_analysis <- data.frame(dates=dates, p.value.model= NA, r2.model=NA, slope.SM=NA, p.value.SM=NA, slope.T=NA, p.value.T=NA, slope.T2=NA, p.value.T2=NA, note.T.model=NA)
+  for (i in 2:ncol(vwc_data)) {
+    if (sum(is.na(soilT_data[,i])) > 0) {
+      lm.result <- lm(forage_data[[clpname]] ~ vwc_data[,i] + soilT_data[,i] + I(soilT_data[,i]^2))
+      SM_T_vs_biomass_analysis[i-1, 'note.T.model'] <- 'T + I(T^2) approach'
+    } else {lm.result <- lm(forage_data[[clpname]] ~ vwc_data[,i] + poly(soilT_data[,i], 2))
+    SM_T_vs_biomass_analysis[i-1, 'note.T.model'] <- 'poly(T, 2) approach'
+    }
+    lm.summary <- summary(lm.result)
+    SM_T_vs_biomass_analysis[i-1, 'p.value.model'] <- pf(lm.summary$fstatistic[1], lm.summary$fstatistic[2], lm.summary$fstatistic[3], lower.tail = FALSE)
+    SM_T_vs_biomass_analysis[i-1, 'r2.model'] <- lm.summary$r.squared
+    SM_T_vs_biomass_analysis[i-1, 'slope.SM'] <- lm.summary$coefficients[2, 1]
+    SM_T_vs_biomass_analysis[i-1, 'slope.T'] <- lm.summary$coefficients[3, 1]
+    SM_T_vs_biomass_analysis[i-1, 'slope.T2'] <- lm.summary$coefficients[4, 1]
+    SM_T_vs_biomass_analysis[i-1, 'p.value.SM'] <- lm.summary$coefficients[2, 4]
+    SM_T_vs_biomass_analysis[i-1, 'p.value.T'] <- lm.summary$coefficients[3, 4]
+    SM_T_vs_biomass_analysis[i-1, 'p.value.T2'] <- lm.summary$coefficients[4, 4]
+    #SM_T_vs_biomass_analysis[i-1, 'vif'] <- vif(lm.result)[1]
+  }
+  write.csv(SM_T_vs_biomass_analysis, file.path(results, 'WFpor_T2_model_results', paste0('WFpor_T2_vs_', month, yr, 'biomass_', depth, 'cm.csv')), row.names = FALSE)
+}
+# colnames(forage_data) # "clp021517" "clp031417" "clp041017" "clp050117" "clp011618" "clp021518" "clp032218" "clp041518"
+
+#
+WFpor_T2_model(7, 2017, 'clp021517', 'Feb')
+WFpor_T2_model(7, 2017, 'clp031417', 'Mar')
+WFpor_T2_model(7, 2017, 'clp041017', 'Apr')
+WFpor_T2_model(7, 2017, 'clp050117', 'May')
+WFpor_T2_model(7, 2017, 'peak2017', 'peak2017')
+WFpor_T2_model(22, 2017, 'clp021517', 'Feb')
+WFpor_T2_model(22, 2017, 'clp031417', 'Mar')
+WFpor_T2_model(22, 2017, 'clp041017', 'Apr')
+WFpor_T2_model(22, 2017, 'clp050117', 'May')
+WFpor_T2_model(22, 2017, 'peak2017', 'peak2017')
+WFpor_T2_model(7, 2018, 'clp021518', 'Feb')
+WFpor_T2_model(7, 2018, 'clp032218', 'Mar')
+WFpor_T2_model(7, 2018, 'clp041518', 'Apr')
+WFpor_T2_model(7, 2018, 'peak2018', 'peak2018')
+WFpor_T2_model(22, 2018, 'clp021518', 'Feb')
+WFpor_T2_model(22, 2018, 'clp032218', 'Mar')
+WFpor_T2_model(22, 2018, 'clp041518', 'Apr')
+WFpor_T2_model(22, 2018, 'peak2018', 'peak2018')
+
+#daily mean absolute soil moisture vs. biomass model
+WFpor_model <- function(depth, yr, clpname, month) {
+  forage_data <- read.csv(file.path(forageDir, 'summaries', 'forage2017_2018_summary.csv'), stringsAsFactors=FALSE)
+  if (depth == 22 & yr == 2018) {
+    forage_data <- forage_data[!forage_data$location==3,] #because 22 cm data at location 3 was jacked
+  }
+  vwc_data <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/WF_porosity', paste0('WF_porosity_', depth, 'cm_', yr, '.csv')), stringsAsFactors = FALSE)
+  dates <- seq.Date(as.Date(colnames(vwc_data)[2], '%b_%d_%Y'), as.Date(colnames(vwc_data)[ncol(vwc_data)], '%b_%d_%Y'), by='day')
+  weeks <- seq.Date(as.Date(colnames(vwc_data)[2], '%b_%d_%Y'), as.Date(colnames(vwc_data)[ncol(vwc_data)], '%b_%d_%Y'), by='week')
+  #model biomass as function of daily soil moisture
+  SM_vs_biomass_analysis <- data.frame(dates=dates, p.value.model= NA, r2.model=NA, slope.SM=NA, p.value.SM=NA, intercept=NA, p.value.int=NA)
+  for (i in 2:ncol(vwc_data)) {
+    lm.summary <- summary(lm(forage_data[[clpname]] ~ vwc_data[,i]))
+    SM_vs_biomass_analysis[i-1, 'p.value.model'] <- pf(lm.summary$fstatistic[1], lm.summary$fstatistic[2], lm.summary$fstatistic[3], lower.tail = FALSE)
+    SM_vs_biomass_analysis[i-1, 'r2.model'] <- lm.summary$r.squared
+    SM_vs_biomass_analysis[i-1, 'intercept'] <- lm.summary$coefficients[1, 1]
+    SM_vs_biomass_analysis[i-1, 'slope.SM'] <- lm.summary$coefficients[2, 1]
+    SM_vs_biomass_analysis[i-1, 'p.value.int'] <- lm.summary$coefficients[1, 4]
+    SM_vs_biomass_analysis[i-1, 'p.value.SM'] <- lm.summary$coefficients[2, 4]
+  }
+  write.csv(SM_vs_biomass_analysis, file.path(results, 'WFpor_model_results', paste0('WFpor_vs_', month, yr, 'biomass_', depth, 'cm.csv')), row.names = FALSE)
+}
+WFpor_model(7, 2017, 'clp021517', 'Feb')
+WFpor_model(7, 2017, 'clp031417', 'Mar')
+WFpor_model(7, 2017, 'clp041017', 'Apr')
+WFpor_model(7, 2017, 'clp050117', 'May')
+WFpor_model(7, 2017, 'peak2017', 'peak2017')
+WFpor_model(22, 2017, 'clp021517', 'Feb')
+WFpor_model(22, 2017, 'clp031417', 'Mar')
+WFpor_model(22, 2017, 'clp041017', 'Apr')
+WFpor_model(22, 2017, 'clp050117', 'May')
+WFpor_model(22, 2017, 'peak2017', 'peak2017')
+WFpor_model(7, 2018, 'clp021518', 'Feb')
+WFpor_model(7, 2018, 'clp032218', 'Mar')
+WFpor_model(7, 2018, 'clp041518', 'Apr')
+WFpor_model(7, 2018, 'peak2018', 'peak2018')
+WFpor_model(22, 2018, 'clp021518', 'Feb')
+WFpor_model(22, 2018, 'clp032218', 'Mar')
+WFpor_model(22, 2018, 'clp041518', 'Apr')
+WFpor_model(22, 2018, 'peak2018', 'peak2018')
+
+depth <- 7
+yr <- 2017
+clpname <- 'peak2017'
+depletion_T2_model <- function(depth, yr, clpname, month, fc.date, wp.date) {
+  forage_data <- read.csv(file.path(forageDir, 'summaries', 'forage2017_2018_summary.csv'), stringsAsFactors=FALSE)
+  # if (depth == 22 & yr == 2018) {
+  #   forage_data <- forage_data[!forage_data$location==3,] #because 22 cm data at location 3 was missing Dec 2017-Feb 2018
+  # } location 3 was added as NA to these depletion input files
+  vwc_data <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/depletion_vwc', paste0('depletion_vwc_', depth, 'cm_', yr, '.csv')), stringsAsFactors = FALSE)
+  dates <- seq.Date(as.Date(colnames(vwc_data)[2], '%b_%d_%Y'), as.Date(colnames(vwc_data)[ncol(vwc_data)], '%b_%d_%Y'), by='day')
+  weeks <- seq.Date(as.Date(colnames(vwc_data)[2], '%b_%d_%Y'), as.Date(colnames(vwc_data)[ncol(vwc_data)], '%b_%d_%Y'), by='week')
+  soilT_data <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location', '2017_2018', 'Temperature', paste0('MeanT_', depth, 'cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
+  if (depth == 7) {
+    soilT_data <- soilT_data[ ,c(1,which(colnames(soilT_data)==colnames(vwc_data)[2]):which(colnames(soilT_data)==colnames(vwc_data)[ncol(vwc_data)]))]
+  }
+  if (depth == 22) {
+    soilT_data[16,] <- c(3, rep(NA, (ncol(soilT_data) - 1)))
+    soilT_data <- soilT_data[order(soilT_data$location), ]
+    soilT_data <- soilT_data[ ,c(1,which(colnames(soilT_data)==colnames(vwc_data)[2]):which(colnames(soilT_data)==colnames(vwc_data)[ncol(vwc_data)]))]
+  }
+  #model biomass as function of temperature and soil moisture
+  SM_T_vs_biomass_analysis <- data.frame(dates=dates, p.value.model= NA, r2.model=NA, slope.SM=NA, p.value.SM=NA, slope.T=NA, p.value.T=NA, slope.T2=NA, p.value.T2=NA, note.T.model=NA)
+  for (i in 2:ncol(vwc_data)) {
+    if (colnames(vwc_data)[i] == fc.date | colnames(vwc_data)[i]==wp.date) {
+      next
+    } else if (sum(is.na(soilT_data[,i])) > 0) {
+      lm.result <- lm(forage_data[[clpname]] ~ vwc_data[,i] + soilT_data[,i] + I(soilT_data[,i]^2))
+      SM_T_vs_biomass_analysis[i-1, 'note.T.model'] <- 'T + I(T^2) approach'
+    } else {lm.result <- lm(forage_data[[clpname]] ~ vwc_data[,i] + poly(soilT_data[,i], 2))
+            SM_T_vs_biomass_analysis[i-1, 'note.T.model'] <- 'poly(T, 2) approach'
+    }
+    lm.summary <- summary(lm.result)
+    SM_T_vs_biomass_analysis[i-1, 'p.value.model'] <- pf(lm.summary$fstatistic[1], lm.summary$fstatistic[2], lm.summary$fstatistic[3], lower.tail = FALSE)
+    SM_T_vs_biomass_analysis[i-1, 'r2.model'] <- lm.summary$r.squared
+    SM_T_vs_biomass_analysis[i-1, 'slope.SM'] <- lm.summary$coefficients[2, 1]
+    SM_T_vs_biomass_analysis[i-1, 'slope.T'] <- lm.summary$coefficients[3, 1]
+    SM_T_vs_biomass_analysis[i-1, 'slope.T2'] <- lm.summary$coefficients[4, 1]
+    SM_T_vs_biomass_analysis[i-1, 'p.value.SM'] <- lm.summary$coefficients[2, 4]
+    SM_T_vs_biomass_analysis[i-1, 'p.value.T'] <- lm.summary$coefficients[3, 4]
+    SM_T_vs_biomass_analysis[i-1, 'p.value.T2'] <- lm.summary$coefficients[4, 4]
+    #SM_T_vs_biomass_analysis[i-1, 'vif'] <- vif(lm.result)[1]
+  }
+  write.csv(SM_T_vs_biomass_analysis, file.path(results, 'depletionVWC_T2_model_results', paste0('depletionVWC_T2_vs_', month, yr, 'biomass_', depth, 'cm.csv')), row.names = FALSE)
+}
+# colnames(forage_data) # "clp021517" "clp031417" "clp041017" "clp050117" "clp011618" "clp021518" "clp032218" "clp041518"
+
+#
+depletion_T2_model(7, 2017, 'clp021517', 'Feb', 'Jan_27_2017', 'NA')
+depletion_T2_model(7, 2017, 'clp031417', 'Mar', 'Jan_27_2017', 'NA')
+depletion_T2_model(7, 2017, 'clp041017', 'Apr', 'Jan_27_2017', 'NA')
+depletion_T2_model(7, 2017, 'clp050117', 'May', 'Jan_27_2017', 'NA')
+depletion_T2_model(7, 2017, 'peak2017', 'peak2017', 'Jan_27_2017', 'NA')
+depletion_T2_model(22, 2017, 'clp021517', 'Feb', 'Jan_31_2017', 'NA')
+depletion_T2_model(22, 2017, 'clp031417', 'Mar', 'Jan_31_2017', 'NA')
+depletion_T2_model(22, 2017, 'clp041017', 'Apr', 'Jan_31_2017', 'NA')
+depletion_T2_model(22, 2017, 'clp050117', 'May', 'Jan_31_2017', 'NA')
+depletion_T2_model(22, 2017, 'peak2017', 'peak2017',  'Jan_31_2017', 'NA')
+depletion_T2_model(7, 2018, 'clp021518', 'Feb',  'Jan_27_2017', 'NA')
+depletion_T2_model(7, 2018, 'clp032218', 'Mar',  'Jan_27_2017', 'NA')
+depletion_T2_model(7, 2018, 'clp041518', 'Apr',  'Jan_27_2017', 'NA')
+depletion_T2_model(7, 2018, 'peak2018', 'peak2018',  'Jan_27_2017', 'NA')
+depletion_T2_model(22, 2018, 'clp021518', 'Feb', 'Jan_31_2017', 'NA')
+depletion_T2_model(22, 2018, 'clp032218', 'Mar', 'Jan_31_2017', 'NA')
+depletion_T2_model(22, 2018, 'clp041518', 'Apr', 'Jan_31_2017', 'NA')
+depletion_T2_model(22, 2018, 'peak2018', 'peak2018', 'Jan_31_2017', 'NA')
+
+depletion_T_model <- function(depth, yr, clpname, month, fc.date, wp.date) {
+  forage_data <- read.csv(file.path(forageDir, 'summaries', 'forage2017_2018_summary.csv'), stringsAsFactors=FALSE)
+  # if (depth == 22 & yr == 2018) {
+  #   forage_data <- forage_data[!forage_data$location==3,] #because 22 cm data at location 3 was missing Dec 2017-Feb 2018
+  # }
+  vwc_data <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/depletion_vwc', paste0('depletion_vwc_', depth, 'cm_', yr, '.csv')), stringsAsFactors = FALSE)
+  dates <- seq.Date(as.Date(colnames(vwc_data)[2], '%b_%d_%Y'), as.Date(colnames(vwc_data)[ncol(vwc_data)], '%b_%d_%Y'), by='day')
+  weeks <- seq.Date(as.Date(colnames(vwc_data)[2], '%b_%d_%Y'), as.Date(colnames(vwc_data)[ncol(vwc_data)], '%b_%d_%Y'), by='week')
+  soilT_data <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location', '2017_2018', 'Temperature', paste0('MeanT_', depth, 'cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
+  if (depth == 7) {
+    soilT_data <- soilT_data[ ,c(1,which(colnames(soilT_data)==colnames(vwc_data)[2]):which(colnames(soilT_data)==colnames(vwc_data)[ncol(vwc_data)]))]
+  }
+  if (depth == 22) {
+    soilT_data[16,] <- c(3, rep(NA, (ncol(soilT_data) - 1)))
+    soilT_data <- soilT_data[order(soilT_data$location), ]
+    soilT_data <- soilT_data[ ,c(1,which(colnames(soilT_data)==colnames(vwc_data)[2]):which(colnames(soilT_data)==colnames(vwc_data)[ncol(vwc_data)]))]
+  }
+  #model biomass as function of temperature and soil moisture
+  SM_T_vs_biomass_analysis <- data.frame(dates=dates, p.value.model= NA, r2.model=NA, slope.SM=NA, p.value.SM=NA, slope.T=NA, p.value.T=NA, slope.SM.vs.T=NA, p.value.SM.vs.T=NA, r2.SM.vs.T=NA, vif=NA)
+  for (i in 2:ncol(vwc_data)) {
+    if (colnames(vwc_data)[i] == fc.date | colnames(vwc_data)[i] == wp.date) {
+      next
+    } else {
+      lm.result <- lm(forage_data[[clpname]] ~ vwc_data[,i] + soilT_data[,i])
+      lm.SM.vs.T <- lm(vwc_data[,i] ~ soilT_data[,i])
+    }
+    lm.summary <- summary(lm.result)
+    SM_T_vs_biomass_analysis[i-1, 'p.value.model'] <- pf(lm.summary$fstatistic[1], lm.summary$fstatistic[2], lm.summary$fstatistic[3], lower.tail = FALSE)
+    SM_T_vs_biomass_analysis[i-1, 'r2.model'] <- lm.summary$r.squared
+    SM_T_vs_biomass_analysis[i-1, 'slope.SM'] <- lm.summary$coefficients[2, 1]
+    SM_T_vs_biomass_analysis[i-1, 'slope.T'] <- lm.summary$coefficients[3, 1]
+    SM_T_vs_biomass_analysis[i-1, 'p.value.SM'] <- lm.summary$coefficients[2, 4]
+    SM_T_vs_biomass_analysis[i-1, 'p.value.T'] <- lm.summary$coefficients[3, 4]
+    SM_T_vs_biomass_analysis[i-1, 'p.value.SM.vs.T'] <- summary(lm.SM.vs.T)$coefficients[2, 4]
+    SM_T_vs_biomass_analysis[i-1, 'r2.SM.vs.T'] <- summary(lm.SM.vs.T)$r.squared
+    SM_T_vs_biomass_analysis[i-1, 'slope.SM.vs.T'] <- summary(lm.SM.vs.T)$coefficients[2, 1]
+    SM_T_vs_biomass_analysis[i-1, 'vif'] <- vif(lm.result)[1]
+  }
+  write.csv(SM_T_vs_biomass_analysis, file.path(results, 'depletionVWC_T_model_results', paste0('depletionVWC_T_vs_', month, yr, 'biomass_', depth, 'cm.csv')), row.names = FALSE)
+}
+depletion_T_model(7, 2017, 'clp021517', 'Feb', 'Jan_27_2017', 'NA')
+depletion_T_model(7, 2017, 'clp031417', 'Mar', 'Jan_27_2017', 'NA')
+depletion_T_model(7, 2017, 'clp041017', 'Apr', 'Jan_27_2017', 'NA')
+depletion_T_model(7, 2017, 'clp050117', 'May', 'Jan_27_2017', 'NA')
+depletion_T_model(7, 2017, 'peak2017', 'peak2017', 'Jan_27_2017', 'NA')
+depletion_T_model(22, 2017, 'clp021517', 'Feb', 'Jan_31_2017', 'NA')
+depletion_T_model(22, 2017, 'clp031417', 'Mar', 'Jan_31_2017', 'NA')
+depletion_T_model(22, 2017, 'clp041017', 'Apr', 'Jan_31_2017', 'NA')
+depletion_T_model(22, 2017, 'clp050117', 'May', 'Jan_31_2017', 'NA')
+depletion_T_model(22, 2017, 'peak2017', 'peak2017',  'Jan_31_2017', 'NA')
+depletion_T_model(7, 2018, 'clp021518', 'Feb',  'Jan_27_2017', 'NA')
+depletion_T_model(7, 2018, 'clp032218', 'Mar',  'Jan_27_2017', 'NA')
+depletion_T_model(7, 2018, 'clp041518', 'Apr',  'Jan_27_2017', 'NA')
+depletion_T_model(7, 2018, 'peak2018', 'peak2018',  'Jan_27_2017', 'NA')
+depletion_T_model(22, 2018, 'clp021518', 'Feb', 'Jan_31_2017', 'NA')
+depletion_T_model(22, 2018, 'clp032218', 'Mar', 'Jan_31_2017', 'NA')
+depletion_T_model(22, 2018, 'clp041518', 'Apr', 'Jan_31_2017', 'NA')
+depletion_T_model(22, 2018, 'peak2018', 'peak2018', 'Jan_31_2017', 'NA')
+
+depletion_model <- function(depth, yr, clpname, month, fc.date, wp.date) {
+  forage_data <- read.csv(file.path(forageDir, 'summaries', 'forage2017_2018_summary.csv'), stringsAsFactors=FALSE)
+  # if (depth == 22 & yr == 2018) {
+  #   forage_data <- forage_data[!forage_data$location==3,] #because 22 cm data at location 3 was missing Dec 2017-Feb 2018
+  # } #depletion vwc files now include NA for location 3
+  vwc_data <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/depletion_vwc', paste0('depletion_vwc_', depth, 'cm_', yr, '.csv')), stringsAsFactors = FALSE)
+  dates <- seq.Date(as.Date(colnames(vwc_data)[2], '%b_%d_%Y'), as.Date(colnames(vwc_data)[ncol(vwc_data)], '%b_%d_%Y'), by='day')
+  weeks <- seq.Date(as.Date(colnames(vwc_data)[2], '%b_%d_%Y'), as.Date(colnames(vwc_data)[ncol(vwc_data)], '%b_%d_%Y'), by='week')
+  #model biomass as function of temperature and soil moisture
+  SM_vs_biomass_analysis <- data.frame(dates=dates, p.value.model= NA, r2.model=NA, slope.SM=NA, p.value.SM=NA)
+  for (i in 2:ncol(vwc_data)) {
+    if (colnames(vwc_data)[i] == fc.date | colnames(vwc_data)[i] == wp.date) {
+      next
+    } else {
+      lm.result <- lm(forage_data[[clpname]] ~ vwc_data[,i])
+    }
+    lm.summary <- summary(lm.result)
+    SM_vs_biomass_analysis[i-1, 'p.value.model'] <- pf(lm.summary$fstatistic[1], lm.summary$fstatistic[2], lm.summary$fstatistic[3], lower.tail = FALSE)
+    SM_vs_biomass_analysis[i-1, 'r2.model'] <- lm.summary$r.squared
+    SM_vs_biomass_analysis[i-1, 'slope.SM'] <- lm.summary$coefficients[2, 1]
+    SM_vs_biomass_analysis[i-1, 'p.value.SM'] <- lm.summary$coefficients[2, 4]
+  }
+  write.csv(SM_vs_biomass_analysis, file.path(results, 'depletionVWC_model_results', paste0('depletionVWC_vs_', month, yr, 'biomass_', depth, 'cm.csv')), row.names = FALSE)
+}
+depletion_model(7, 2017, 'clp021517', 'Feb', 'Jan_27_2017', 'NA')
+depletion_model(7, 2017, 'clp031417', 'Mar', 'Jan_27_2017', 'NA')
+depletion_model(7, 2017, 'clp041017', 'Apr', 'Jan_27_2017', 'NA')
+depletion_model(7, 2017, 'clp050117', 'May', 'Jan_27_2017', 'NA')
+depletion_model(7, 2017, 'peak2017', 'peak2017', 'Jan_27_2017', 'NA')
+depletion_model(22, 2017, 'clp021517', 'Feb', 'Jan_31_2017', 'NA')
+depletion_model(22, 2017, 'clp031417', 'Mar', 'Jan_31_2017', 'NA')
+depletion_model(22, 2017, 'clp041017', 'Apr', 'Jan_31_2017', 'NA')
+depletion_model(22, 2017, 'clp050117', 'May', 'Jan_31_2017', 'NA')
+depletion_model(22, 2017, 'peak2017', 'peak2017', 'Jan_31_2017', 'NA')
+depletion_model(7, 2018, 'clp021518', 'Feb', 'Jan_27_2017', 'NA')
+depletion_model(7, 2018, 'clp032218', 'Mar', 'Jan_27_2017', 'NA')
+depletion_model(7, 2018, 'clp041518', 'Apr', 'Jan_27_2017', 'NA')
+depletion_model(7, 2018, 'peak2018', 'peak2018', 'Jan_27_2017', 'NA')
+depletion_model(22, 2018, 'clp021518', 'Feb', 'Jan_31_2017', 'NA')
+depletion_model(22, 2018, 'clp032218', 'Mar', 'Jan_31_2017', 'NA')
+depletion_model(22, 2018, 'clp041518', 'Apr', 'Jan_31_2017', 'NA')
+depletion_model(22, 2018, 'peak2018', 'peak2018', 'Jan_31_2017', 'NA')
+
+# yr <- 2017
+# clpname <- 'clp021517'
+# fc.date <- 'Jan_27_2017'
+depletion_7_22_model <- function(yr, clpname, month, fc.date, fc.date2) {
+  forage_data <- read.csv(file.path(forageDir, 'summaries', 'forage2017_2018_summary.csv'), stringsAsFactors=FALSE)
+  vwc_data_7 <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/depletion_vwc', paste0('depletion_vwc_7cm_', yr, '.csv')), stringsAsFactors = FALSE)
+  vwc_data_22 <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/depletion_vwc', paste0('depletion_vwc_22cm_', yr, '.csv')), stringsAsFactors = FALSE)
+  dates <- seq.Date(as.Date(colnames(vwc_data_7)[2], '%b_%d_%Y'), as.Date(colnames(vwc_data_7)[ncol(vwc_data_7)], '%b_%d_%Y'), by='day')
+  weeks <- seq.Date(as.Date(colnames(vwc_data_7)[2], '%b_%d_%Y'), as.Date(colnames(vwc_data_7)[ncol(vwc_data_7)], '%b_%d_%Y'), by='week')
+  #model biomass as function of soil moisture at both depths
+  SM_analysis <- data.frame(dates=dates, p.value.model= NA, r2.model=NA, slope.SM.7=NA, p.value.SM.7=NA, slope.SM.22=NA, p.value.SM.22=NA, p.value.SM7.vs.SM22=NA, r2.SM7.vs.SM22=NA, vif=NA)
+  for (i in 2:ncol(vwc_data_7)) {
+    if (colnames(vwc_data_7)[i] == fc.date | colnames(vwc_data_7)[i] == fc.date2) {
+      next
+    } else {
+      lm.result <- lm(forage_data[[clpname]] ~ vwc_data_7[,i] + vwc_data_22[,i])
+    }
+    lm.summary <- summary(lm.result)
+    lm.SM7.vs.SM22 <- lm(vwc_data_7[,i] ~ vwc_data_22[,i])
+    SM_analysis[i-1, 'p.value.model'] <- pf(lm.summary$fstatistic[1], lm.summary$fstatistic[2], lm.summary$fstatistic[3], lower.tail = FALSE)
+    SM_analysis[i-1, 'r2.model'] <- lm.summary$r.squared
+    SM_analysis[i-1, 'slope.SM.7'] <- lm.summary$coefficients[2, 1]
+    SM_analysis[i-1, 'slope.SM.22'] <- lm.summary$coefficients[3, 1]
+    SM_analysis[i-1, 'p.value.SM.7'] <- lm.summary$coefficients[2, 4]
+    SM_analysis[i-1, 'p.value.SM.22'] <- lm.summary$coefficients[3, 4]
+    SM_analysis[i-1, 'p.value.SM7.vs.SM22'] <- summary(lm.SM7.vs.SM22)$coefficients[2, 4]
+    SM_analysis[i-1, 'r2.SM7.vs.SM22'] <- summary(lm.SM7.vs.SM22)$r.squared
+    SM_analysis[i-1, 'vif'] <- vif(lm.result)[1]
+  }
+  write.csv(SM_analysis, file.path(results, 'depletionVWC_both.depths_model_results', paste0('depletionVWC_both.depths_vs_', month, yr, 'biomass.csv')), row.names = FALSE)
+}
+# colnames(forage_data) # "clp021517" "clp031417" "clp041017" "clp050117" "clp011618" "clp021518" "clp032218" "clp041518"
+depletion_7_22_model(2017, 'clp021517', 'Feb', 'Jan_27_2017', 'Jan_31_2017')
+depletion_7_22_model(2017, 'clp031417', 'Mar', 'Jan_27_2017', 'Jan_31_2017')
+depletion_7_22_model(2017, 'clp041017', 'Apr', 'Jan_27_2017', 'Jan_31_2017')
+depletion_7_22_model(2017, 'clp050117', 'May', 'Jan_27_2017', 'Jan_31_2017')
+depletion_7_22_model(2017, 'peak2017', 'peak2017', 'Jan_27_2017', 'Jan_31_2017')
+depletion_7_22_model(2018, 'clp021518', 'Feb', 'Jan_27_2017', 'Jan_31_2017')
+depletion_7_22_model(2018, 'clp032218', 'Mar', 'Jan_27_2017', 'Jan_31_2017')
+depletion_7_22_model(2018, 'clp041518', 'Apr', 'Jan_27_2017', 'Jan_31_2017')
+depletion_7_22_model(2018, 'peak2018', 'peak2018', 'Jan_27_2017', 'Jan_31_2017')
+
+
 #some residual checking
 normalize_VWCdata <- function(df) {
   df[ ,2:ncol(df)] <- (df[ ,2:ncol(df)] - rowMeans(df[ ,2:ncol(df)], na.rm = TRUE)) / apply(df[ ,2:ncol(df)], 1, sd, na.rm=TRUE)
@@ -1044,14 +1358,14 @@ names(SMabs_model_results_2017) <- c('peak2017')#c('Apr', 'Feb', 'Mar', 'May')
 #2017 plot
 png(file = file.path(resultsFigures, 'finals', 'SMabs_T2_model', paste0('WY2017.', depth, 'cm.model.r2.results.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
 par(mar=c(2, 4.5, 1, 4.5))
-plot(as.Date(SMabs_T2model_results_2017$peak2017$dates), SMabs_T2model_results_2017$peak2017$r2.model, xaxt='n', type = 'l', xlab='', ylab = bquote('r'^2*' values'), ylim=c(0,1), xlim = as.Date(c('2016-12-01', '2017-05-01')), pch = 1, col='black') #main=paste(depth, 'cm model results in', yr, '(wet year)')
+plot(as.Date(SMabs_T2model_results_2017$peak2017$dates), SMabs_T2model_results_2017$peak2017$r2.model, xaxt='n', type = 'l', xlab='', ylab = bquote('r'^2*' values'), ylim=c(0,1), xlim = as.Date(c('2016-12-01', '2017-05-01')), pch = 1, col='black', cex.axis=1) #main=paste(depth, 'cm model results in', yr, '(wet year)')
 lines(as.Date(T2model_results_2017$peak2017$dates), T2model_results_2017$peak2017$r2.model, col ='red', lty=2)
 lines(as.Date(SMabs_model_results_2017$peak2017$dates), SMabs_model_results_2017$peak$r2.model, col ='blue', lty=2)
 axis.Date(side = 1, at=seq.Date(from = as.Date('2016/12/1'), to = as.Date('2017/5/1'), by='months'), format = '%m/%d/%y')
 legend("topright", legend=(c("peak forage vs. SMabs + poly(T, 2) model", 'peak forage vs. poly(T, 2) model', "peak forage vs. SMabs model")), lty=c(1, 2, 2), col=c('black', 'red', 'blue'), inset = 0.01, cex=1.1)
-axis(side = 4, at = c(0, 0.1, 0.2, 0.3, 0.4), labels = c('0', '10', '20', '30', '40'), cex.axis=0.9)
-mtext("mm precipitation per day", side=4, line=2.5)
-lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. / 100, type='s', col='lightblue', cex=0.5)
+#axis(side = 4, at = c(0, 0.1, 0.2, 0.3, 0.4), labels = c('0', '10', '20', '30', '40'), cex.axis=0.9)
+#mtext("mm precipitation per day", side=4, line=2.5)
+#lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. / 100, type='s', col='lightblue', cex=0.5)
 dev.off()
 
 #make combined plots of r2 from SMnorm+T model, Tmodel, and SMnorm model for different dates in 2018
@@ -1173,7 +1487,7 @@ depth <- 22
 SMabs_T2model_results_2018 <- lapply(list.files(file.path(results, 'SMabs_T2_model_results'), pattern = glob2rx(paste0('*peak2018*', depth, 'cm*')), full.names = TRUE), read.csv, stringsAsFactors=FALSE)
 clipdates2018 <- '2018-04-15'
 SMabs_T2model_results_2018 <- mapply(function(x, y) x <- x[as.Date(x$dates) <= y, ], SMabs_T2model_results_2018, clipdates2018, SIMPLIFY = FALSE)
-names(SMabs_T2model_results_2018) <- list.files(file.path(results, 'SMnorm_T2_model_results'), pattern = glob2rx(paste0('*peak2018*', depth, 'cm*')))
+names(SMabs_T2model_results_2018) <- list.files(file.path(results, 'SMabs_T2_model_results'), pattern = glob2rx(paste0('*peak2018*', depth, 'cm*')))
 names(SMabs_T2model_results_2018)
 names(SMabs_T2model_results_2018) <- c('peak2018')
 #plot it
@@ -1182,9 +1496,33 @@ par(mar=c(2, 4.5, 1, 4.5))
 plot(as.Date(SMabs_T2model_results_2018$peak2018$dates[SMabs_T2model_results_2018$peak2018$p.value.SM < 0.05 & SMabs_T2model_results_2018$peak2018$p.value.model < 0.05]), SMabs_T2model_results_2018$peak2018$slope.SM[SMabs_T2model_results_2018$peak2018$p.value.SM < 0.05 & SMabs_T2model_results_2018$peak2018$p.value.model < 0.05] / 100, xaxt='n', xlab='', ylab = bquote('kg ha'^-1*' association of +0.01 vol. soil moisture'), ylim=c(min(unlist(lapply(SMabs_T2model_results_2018, function(x) min_modified(x$slope.SM) / 100)), na.rm=TRUE), max(unlist(lapply(SMabs_T2model_results_2018, function(x) max_modified(x$slope.SM) / 100)), na.rm=TRUE)), xlim = as.Date(c('2017-12-01', '2018-04-15')), pch = 21, bg='grey')
 abline(1, 0, lty=2)
 axis.Date(side = 1, at=seq.Date(from = as.Date('2017/12/1'), to = as.Date('2018/4/15'), by='months'), format = '%m/%d/%y')
+legend("topright", legend='volumetric soil moisture association (p<0.05) with peak forage \nderived from multiple regression analysis', pch=21, pt.bg='grey', inset = 0.02, cex=1.1)
+#text(x=as.Date('2018/2/15'), y= -30, label='lower volumetric soil moisture = more peak forage \n apparent trend in association suggests greater drawdown during dry period = more peak forage', cex=1.2)
+axis(side = 4, at = c(-60, -50, -40, -30, -20), labels = c('0', '10', '20', '30', '40'))
+#axis(side = 4, at = c(-88, -71, -54, -37, -20), labels = c('0', '10', '20', '30', '40')) #for 7 cm plot
+mtext("mm precipitation per day", side=4, line=2.5)
+lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. - 60, type='s', col='lightblue', cex=0.5)
+#lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 1.7 - 88, type='s', col='lightblue', cex=0.5) #for 7 cm plot
+dev.off()
+
+#2017 SM plot from SMabs + T2 model
+depth <- 22
+SMabs_T2model_results_2017 <- lapply(list.files(file.path(results, 'SMabs_T2_model_results'), pattern = glob2rx(paste0('*peak2017*', depth, 'cm*')), full.names = TRUE), read.csv, stringsAsFactors=FALSE)
+clipdates2017 <- '2017-05-01'
+SMabs_T2model_results_2017 <- mapply(function(x, y) x <- x[as.Date(x$dates) <= y, ], SMabs_T2model_results_2017, clipdates2017, SIMPLIFY = FALSE)
+names(SMabs_T2model_results_2017) <- list.files(file.path(results, 'SMabs_T2_model_results'), pattern = glob2rx(paste0('*peak2017*', depth, 'cm*')))
+names(SMabs_T2model_results_2017)
+names(SMabs_T2model_results_2017) <- c('peak2017')
+#plot it
+png(file = file.path(resultsFigures, 'finals', 'SMabs_T2_model', paste0('WY2017.SM.', depth, 'cm.forage_SMabs+T2model.png')), family = 'Book Antiqua', width = 1200, height = 400, units = 'px', res=100)
+par(mar=c(2, 4.5, 1, 4.5))
+plot(as.Date(SMabs_T2model_results_2017$peak2017$dates[SMabs_T2model_results_2017$peak2017$p.value.SM < 0.05 & SMabs_T2model_results_2017$peak2017$p.value.model < 0.05]), SMabs_T2model_results_2017$peak2017$slope.SM[SMabs_T2model_results_2017$peak2017$p.value.SM < 0.05 & SMabs_T2model_results_2017$peak2017$p.value.model < 0.05] / 100, xaxt='n', xlab='', ylab = bquote('kg ha'^-1*' association of +0.01 vol. soil moisture'), ylim=c(min(unlist(lapply(SMabs_T2model_results_2017, function(x) min_modified(x$slope.SM) / 100)), na.rm=TRUE), max(unlist(lapply(SMabs_T2model_results_2017, function(x) max_modified(x$slope.SM) / 100)), na.rm=TRUE)), xlim = as.Date(c('2016-12-01', '2017-05-01')), pch = 21, bg='grey')
+abline(1, 0, lty=2)
+axis.Date(side = 1, at=seq.Date(from = as.Date('2017/12/1'), to = as.Date('2017/4/15'), by='months'), format = '%m/%d/%y')
 legend("topleft", legend='soil moisture association (p<0.05) with peak forage \nafter accounting for non-linear association with soil temperature', pch=21, pt.bg='grey', inset = 0.01, cex=1.1)
-text(x=as.Date('2018/2/15'), y= -30, label='lower volumetric soil moisture = more peak forage \n apparent trend in association suggests greater drawdown during dry period = more peak forage', cex=1.2)
+text(x=as.Date('2017/2/15'), y= -30, label='lower volumetric soil moisture = more peak forage \n apparent trend in association suggests greater drawdown during dry period = more peak forage', cex=1.2)
 axis(side = 4, at = c(-88, -71, -54, -37, -20), labels = c('0', '10', '20', '30', '40'))
 mtext("mm precipitation per day", side=4, line=2.5)
 lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 1.7 - 88, type='s', col='lightblue', cex=0.5)
 dev.off()
+
