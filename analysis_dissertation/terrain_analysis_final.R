@@ -198,36 +198,23 @@ mult.lm.results.3$clip.date <- c('2/15/17', '3/14/17', '4/10/17', '5/1/17', '1/1
 mult.lm.results.3
 write.csv(mult.lm.results.3, file.path(results, 'forage_vs_terrain', 'forage_vs_terrain_3mult_norm_lm_3mDEM.filt_Hogan_final.csv'), row.names = FALSE)
 
-#check 2 var models with slope and energy
-mult2var_peak2017 <- lm(peak2017 ~ annual_kwh.m2 + slope, data=forage_terrain_energy)
+#check 2 var models
+mult2var_peak2017 <- lm(peak2017 ~ elevation + curvature_mean + slope, data=forage_terrain_energy)
 summary(mult2var_peak2017)
+plot(mult2var_peak2017)
 
 mult2var_peak2018 <- lm(peak2018 ~ annual_kwh.m2 + slope, data=forage_terrain_energy)
 summary(mult2var_peak2018) #r2=0.6
 vif(mult2var_peak2018)
-plot(forage_terrain_energy$peak2018, mult2var_peak2018$fitted.values)
-abline(0, 1, lty=2)
-plot(forage_terrain_energy$peak2018, mult2var_peak2018$residuals)
-abline(h=0, lty=2)
-text(forage_terrain_energy$peak2018, mult2var_peak2018$residuals, forage_terrain_energy$location)
+plot(mult2var_peak2018)
 
 #check residuals for peak 2017 and 2018
 mult3var_peak2017 <- lm(peak2017 ~ annual_kwh.m2 + slope + curvature_mean, data=forage_terrain_energy)
-plot(forage_terrain_energy$peak2017, mult3var_peak2017$fitted.values)
-abline(0, 1, lty=2)
-plot(forage_terrain_energy$peak2017, mult3var_peak2017$residuals)
-abline(h=0, lty=2)
-plot(vwc_data_normalized$Mar_01_2017, mult3var_peak2017$residuals)
-#text(forage_terrain_energy$peak2017, mult3var_peak2017$residuals, labels=forage_terrain_energy$curvature_mean, pos=1, offset=0.1)
+plot(mult3var_peak2017)
 mult3var_peak2018 <- lm(peak2018 ~ annual_kwh.m2 + slope + curvature_mean, data=forage_terrain_energy)
-plot(forage_terrain_energy$peak2018, mult3var_peak2018$fitted.values)
-abline(0, 1, lty=2)
-plot(forage_terrain_energy$peak2018, mult3var_peak2018$residuals)
-abline(h=0, lty=2)
 mult4var_peak2017 <- lm(peak2017 ~ annual_kwh.m2 + slope + curvature_mean + elevation, data=forage_terrain_energy)
 summary(mult4var_peak2017)
-plot(forage_terrain_energy$peak2017, mult4var_peak2017$residuals)
-abline(h=0, lty=2)
+plot(mult4var_peak2017)
 
 #explore combos with SM and T
 exploratory <- lm(peak2017 ~ soilT_data$Jan_11_2017 + vwc_data_normalized$Jan_11_2017 + elevation, data=forage_terrain_energy)
@@ -264,11 +251,12 @@ summary(lm(peak2018 ~ poly(annual_kwh.m2, 2), data = forage_terrain_energy))
 summary(lm(peak2018 ~ poly(annual_kwh.m2, 2) + slope, data = forage_terrain_energy))
 summary(lm(peak2018 ~ poly(annual_kwh.m2, 2) + curvature_mean + slope, data = forage_terrain_energy))
 nl_2var2018 <- lm(peak2018 ~ poly(annual_kwh.m2, 2), data = forage_terrain_energy)
-plot(forage_terrain_energy$peak2018, nl_2var2018$residuals)
-abline(h=0)
-text(forage_terrain_energy$peak2018, nl_2var2018$residuals, labels=forage_terrain_energy$location)
-plot(forage_terrain_energy$peak2018, nl_2var2018$fitted.values)
-abline(0, 1)
+summary(nl_2var2018)
+plot(nl_2var2018)
+nl_3var2018 <- lm(peak2018 ~ poly(annual_kwh.m2, 2) + slope, data = forage_terrain_energy)
+summary(nl_3var2018)
+vif(nl_3var2018)
+plot(nl_3var2018)
 
 #spearman rank correlation
 #location 12 and 16 are tied, crazy
@@ -326,9 +314,9 @@ forage_terrain_energy$aspect_cex_v2 <- seq(from=0.5, to=2.75, length.out = 16)[r
 #forage_terrain_energy$slope_cex <- ifelse(forage_terrain_energy$slope < summary(forage_terrain_energy$slope)[2], 2.5, ifelse(forage_terrain_energy$slope > summary(forage_terrain_energy$slope)[2] & forage_terrain_energy$slope < summary(forage_terrain_energy$slope)[3], 1.75, ifelse(forage_terrain_energy$slope > summary(forage_terrain_energy$slope)[3] & forage_terrain_energy$slope < summary(forage_terrain_energy$slope)[5], 1.25, 0.75))) #4 classes
 
 #make a temporal plot of forage growth
-png(file = file.path(results, 'figures', 'finals', 'forage_vs_terrain_detail.png'), family = 'Book Antiqua', width = 800, height = 700, units = 'px', res=100)
+png(file = file.path(results, 'figures', 'finals', 'forage_vs_terrain', 'forage_vs_terrain_detail.png'), family = 'Book Antiqua', width = 800, height = 700, units = 'px', res=100)
 par(mar=c(3.5, 4.5, 2, 2))
-plot(x=rep(0.25,16), forage_terrain_energy$clp021517, type = 'p', col=forage_terrain_energy$energy_colors, pch=1, cex=forage_terrain_energy$curvature_cex_v2, ylim=c(0, 4700), xlim=c(0,5), xaxt='n', xlab='', ylab=expression(paste('standing forage (kg', ' ', ha^-1, ')')))
+plot(x=rep(0.25,16), forage_terrain_energy$clp021517, type = 'p', col=forage_terrain_energy$energy_colors, pch=1, cex=forage_terrain_energy$curvature_cex_v2, ylim=c(0, 4700), xlim=c(0,5), xaxt='n', xlab='', ylab=expression(paste('standing forage (kg', ' ', ha^-1, ')')), cex.axis=1.1, cex.lab=1.1)
 points(x=rep(1,16), forage_terrain_energy$clp031417, col=forage_terrain_energy$energy_colors, pch=1, cex=forage_terrain_energy$slope_cex_v2)
 points(x=rep(1.75,16), forage_terrain_energy$clp041017, col=forage_terrain_energy$energy_colors, pch=1, cex=1) #cex=forage_terrain_energy$elevation_cex_v2) this is non-significant
 points(x=rep(2.5,16), forage_terrain_energy$clp050117, col=forage_terrain_energy$energy_colors, pch=1, cex=1) # cex=forage_terrain_energy$elevation_cex_v2) non-significant
@@ -336,15 +324,15 @@ abline(v=2.875, lty=2)
 points(x=rep(3.25,16), forage_terrain_energy$clp021518, col=forage_terrain_energy$energy_colors, pch=1, cex=forage_terrain_energy$curvature_cex_v2)
 points(x=rep(4,16), forage_terrain_energy$clp032218, col=forage_terrain_energy$energy_colors, pch=1, cex=1) #cex=forage_terrain_energy$aspect_cex_v2) non-significant
 points(x=rep(4.75,16), forage_terrain_energy$clp041518, col=forage_terrain_energy$energy_colors, pch=1, cex=forage_terrain_energy$slope_cex_v2)
-text(x=0.25, y= 2500, label = 'mean curvature', srt = 90)
-text(x=1, y= 3300, label = 'aspect & slope', srt = 90)
-text(x=1.75, y= 500, label = 'NS', srt = 90)
-text(x=2.5, y= 500, label = 'NS', srt = 90)
-text(x=3.25, y = 1300, label = 'mean curvature', srt=90)
-text(x=4, y = 1500, label = 'NS', srt=90)
-text(x=4.75, y=2600, label='slope & non-linear aspect', srt=90)
-axis(side = 1, at = c(0.25, 1, 1.75, 2.5, 3.25, 4, 4.75), labels = c('Feb 15', 'Mar 22', 'Apr 10', 'May 1', 'Feb 15', 'Mar 22', 'Apr 15'))
-legend('topright', legend=(c("< 1254", '1254-1458', '>1458')), pch=1, pt.cex = c(1.5, 1.5, 1.5), col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), inset=0.01)
+text(x=0.25, y= 2500, label = 'mean curvature', srt = 90, cex=1.1)
+text(x=1, y= 3300, label = 'aspect & slope', srt = 90, cex = 1.1)
+text(x=1.75, y= 500, label = 'NS', srt = 90, cex = 1.1)
+text(x=2.5, y= 500, label = 'NS', srt = 90, cex = 1.1)
+text(x=3.25, y = 1300, label = 'mean curvature', srt=90, cex = 1.1)
+text(x=4, y = 1600, label = 'non-linear aspect', srt=90, cex=1.1)
+text(x=4.75, y=2600, label='slope & non-linear aspect', srt=90, cex = 1.1)
+axis(side = 1, at = c(0.25, 1, 1.75, 2.5, 3.25, 4, 4.75), labels = c('Feb 15', 'Mar 22', 'Apr 10', 'May 1', 'Feb 15', 'Mar 22', 'Apr 15'), cex=1.1)
+legend('topright', legend=(c("< 1254", '1254-1458', '>1458')), pch=1, pt.cex = c(1.5, 1.5, 1.5), col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), inset=0.01, cex = 1.1)
 text(x=0.375, y=4400, label='wet year', cex=1.2)
 text(x=3.375, y=4400, label='dry year', cex=1.2)
 dev.off()
