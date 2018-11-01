@@ -1,9 +1,14 @@
 library(ggplot2)
 species_comp <- read.csv('C:/Users/smdevine/Desktop/rangeland project/clip_plots/Camatta_species_comp_2017.csv', stringsAsFactors = FALSE)
 species_comp$Composition_perc <- species_comp$Composition_perc * 100
+species_comp
 tapply(species_comp$Composition_perc, list(species_comp$Date, species_comp$Site_class), sum)
 tapply(species_comp$Common_Name, list(species_comp$Date, species_comp$Site_class), length)
-tapply(species_comp$Composition_perc, list(species_comp$Date, species_comp$Common_Name), mean)
+
+species_by_date <- as.data.frame(tapply(species_comp$Composition_perc, list(species_comp$Date, species_comp$Common_Name), mean))
+species_by_date[1, order(species_by_date[1,])]
+species_by_date[2, order(species_by_date[2,])]
+species_by_date[3, order(species_by_date[3,])]
 tapply(species_comp$Composition_perc, species_comp$Common_Name, mean)
 unique(species_comp$Genus)
 unique(species_comp$Species)
