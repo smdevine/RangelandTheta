@@ -1,3 +1,4 @@
+#as of 10/24/18 start at line 241 and aggregate from there
 #assume that sensor 7A and 22A crossed at location 15 in the datalogger ports (1 and 2); checked on 3/9/17, as labelled, sensors are in correct ports but could have been mislabeled. code to correct this is functional as of 5/3/17
 #large divergence at Location 11 at 22 cm depth (creates problem for plotting)
 #sensor A at location 14 at 7 cm depth was replaced on 1/16/17, because it was giving NA up to that point
@@ -239,6 +240,7 @@ write.csv(daily_dataVWC, file.path(results, 'processed_soil_moisture/Jul2018/dai
 # daily_fnames <- list.files(file.path(results, 'processed_soil_moisture/Jul2018/daily_by_sensor'))
 # daily_fnames
 daily_dataVWC <- read.csv(file.path(results, 'processed_soil_moisture/Jul2018/daily_by_sensor/daily_by_sensor_summaryprocessed2018-09-27.csv'), stringsAsFactors = FALSE)
+unique(daily_dataVWC$sensor_code)
 head(daily_dataVWC)
 colnames(daily_dataVWC)
 
@@ -264,22 +266,23 @@ for(i in seq_along(daily_dataVWCdfs)) {
 daily_dataVWC_2017 <- daily_dataVWC[daily_dataVWC$Date_Calendar < '2017-07-01', ]
 daily_dataVWC_2018 <- daily_dataVWC[daily_dataVWC$Date_Calendar > '2017-11-28' & daily_dataVWC$Date_Calendar < '2018-07-01', ]
 daily_dataVWC_2017_clean <- daily_dataVWC_2017[-which(daily_dataVWC_2017$sensor_code %in% c('14-7-A', '14-22-C', '3-22-C', '6-7-C', '9-22-C')), ]
-daily_dataVWC_2017_clean[daily_dataVWC_2017_clean$sensor_code=='13-7-B', c('Date_Calendar', 'MeanVWC')]
+#daily_dataVWC_2017_clean[daily_dataVWC_2017_clean$sensor_code=='13-7-B', c('Date_Calendar', 'MeanVWC')]
 daily_dataVWC_2017_clean$Date_Calendar <- as.Date(daily_dataVWC_2017_clean$Date_Calendar)
-plot(daily_dataVWC_2017_clean$Date_Calendar[daily_dataVWC_2017_clean$sensor_code=='13-7-A'], daily_dataVWC_2017_clean$MeanVWC[daily_dataVWC_2017_clean$sensor_code=='13-7-A'])
+#plot(daily_dataVWC_2017_clean$Date_Calendar[daily_dataVWC_2017_clean$sensor_code=='13-7-A'], daily_dataVWC_2017_clean$MeanVWC[daily_dataVWC_2017_clean$sensor_code=='13-7-A'])
 daily_dataVWC_2017_clean <- daily_dataVWC_2017_clean[-which(daily_dataVWC_2017_clean$Location==13 & daily_dataVWC_2017_clean$Date_Calendar %in% seq.Date(as.Date('2017-03-10'), as.Date('2017-03-16'), by=1)), ] #7 days have corrupt data in March 2017 at point 13, so remove 3/10-3/16/17 before datalogger 13 went offline
-plot(daily_dataVWC_2017_clean$Date_Calendar[daily_dataVWC_2017_clean$sensor_code=='12-7-A'], daily_dataVWC_2017_clean$MeanVWC[daily_dataVWC_2017_clean$sensor_code=='12-7-A'])
+#plot(daily_dataVWC_2017_clean$Date_Calendar[daily_dataVWC_2017_clean$sensor_code=='12-7-A'], daily_dataVWC_2017_clean$MeanVWC[daily_dataVWC_2017_clean$sensor_code=='12-7-A'])
 #2018 data row removals
-daily_dataVWC_2018_clean <- daily_dataVWC_2018[-which(daily_dataVWC_2018$sensor_code %in% c('14-22-A', '3-22-A', '3-22-B', '4-7-B', '6-7-B', '9-22-B', '14-22-C', '3-22-C', '6-7-C', '9-22-C')), ] #fixes for 2/12-2/14/18 for 15-22-A and 15-7-A and 1/30-2/14/18 for point 9-22-A and 9-7-A & B, which were periods with no rain when sensors became unplugged.
+daily_dataVWC_2018_clean <- daily_dataVWC_2018[-which(daily_dataVWC_2018$sensor_code %in% c('14-22-A', '4-7-B', '6-7-B', '9-22-B', '14-22-C', '3-22-C', '6-7-C', '9-22-C')), ] #fixes for 2/12-2/14/18 for 15-22-A and 15-7-A and 1/30-2/14/18 for point 9-22-A and 9-7-A & B, which were periods with no rain when sensors became unplugged.  on 10/24/18 decided to keep '3-22-A' & '3-22-B' for purpose of graphing deep soil moisture data when it was available
 daily_dataVWC_2018_clean$Date_Calendar <- as.Date(daily_dataVWC_2018_clean$Date_Calendar)
-plot(daily_dataVWC_2018_clean$Date_Calendar[daily_dataVWC_2018_clean$sensor_code=='9-7-A'], daily_dataVWC_2018_clean$MeanVWC[daily_dataVWC_2018_clean$sensor_code=='9-7-A'])
+#plot(daily_dataVWC_2018_clean$Date_Calendar[daily_dataVWC_2018_clean$sensor_code=='9-7-A'], daily_dataVWC_2018_clean$MeanVWC[daily_dataVWC_2018_clean$sensor_code=='9-7-A'])
 
 #sensor 4-7-A problematic from 2/11 to 2/12/18
-daily_dataVWC_clean <- daily_dataVWC[-which(daily_dataVWC$sensor_code %in% c('14-7-A', '14-22-A', '3-22-A', '3-22-B', '4-7-B', '6-7-B', '9-22-B', '14-22-C', '3-22-C', '6-7-C', '9-22-C')), ]
+#for combined 2017_2018 dataset from which fraction of PAW is produced
+daily_dataVWC_clean <- daily_dataVWC[-which(daily_dataVWC$sensor_code %in% c('14-7-A', '14-22-A', '4-7-B', '6-7-B', '9-22-B', '14-22-C', '3-22-C', '6-7-C', '9-22-C')), ] #decided to keep '3-22-A' & '3-22-B' for purpose of graphing
 daily_dataVWC_clean <- daily_dataVWC_clean[-which(daily_dataVWC_clean$Location==13 & as.Date(daily_dataVWC_clean$Date_Calendar) %in% seq.Date(as.Date('2017-03-10'), as.Date('2017-03-16'), by=1)), ]
 daily_dataVWC_clean$Date_Calendar <- as.Date(daily_dataVWC_clean$Date_Calendar)
 #daily_dataVWC_clean[which(as.Date(daily_dataVWC_clean$Date_Calendar) %in% seq.Date(as.Date('2017-07-15'), as.Date('2017-11-28'), by=1)), 1:8] <- NA
-dim(daily_dataVWC_clean) #34438 x 14
+dim(daily_dataVWC_clean) #34438 x 14; now 35654
 clean_it_VWC <- function(df, sensor_code, varname, start_date, end_date) {
   df[[varname]][df$sensor_code==sensor_code & df$Date_Calendar > as.Date(start_date) & df$Date_Calendar < as.Date(end_date)] <- df[[varname]][df$Date_Calendar==start_date & df$sensor_code==sensor_code] - as.integer(df$Date_Calendar[df$sensor_code==sensor_code & df$Date_Calendar > as.Date(start_date) & df$Date_Calendar < as.Date(end_date)] - as.Date(start_date)) * ((df[[varname]][df$Date_Calendar==start_date & df$sensor_code==sensor_code] - df[[varname]][df$Date_Calendar==end_date & df$sensor_code==sensor_code]) / as.numeric(as.Date(end_date) - as.Date(start_date)))
   df
@@ -445,6 +448,17 @@ daily_dataVWC_2018_clean <- gap_fill_soilTv2(daily_dataVWC_2018_clean, 'MedianT'
 daily_dataVWC_2018_clean <- gap_fill_soilTv2(daily_dataVWC_2018_clean, 'MaxT', '9-22-A', '1-22-A', '1-22-B', 0.99)
 daily_dataVWC_2018_clean <- gap_fill_soilTv2(daily_dataVWC_2018_clean, 'MinT', '9-22-A', '1-22-A', '1-22-B', 0.99)
 
+daily_dataVWC_2018_clean <- gap_fill_soilTv2(daily_dataVWC_2018_clean, 'MeanT', '3-22-A', '2-22-A', '2-22-B', 0.99)
+daily_dataVWC_2018_clean <- gap_fill_soilTv2(daily_dataVWC_2018_clean, 'MedianT', '3-22-A', '2-22-A', '2-22-B', 0.99)
+daily_dataVWC_2018_clean <- gap_fill_soilTv2(daily_dataVWC_2018_clean, 'MaxT', '3-22-A', '2-22-A', '2-22-B', 0.99)
+daily_dataVWC_2018_clean <- gap_fill_soilTv2(daily_dataVWC_2018_clean, 'MinT', '3-22-A', '2-22-A', '2-22-B', 0.99)
+
+daily_dataVWC_2018_clean <- gap_fill_soilTv2(daily_dataVWC_2018_clean, 'MeanT', '3-22-B', '2-22-A', '2-22-B', 0.99)
+daily_dataVWC_2018_clean <- gap_fill_soilTv2(daily_dataVWC_2018_clean, 'MedianT', '3-22-B', '2-22-A', '2-22-B', 0.99)
+daily_dataVWC_2018_clean <- gap_fill_soilTv2(daily_dataVWC_2018_clean, 'MaxT', '3-22-B', '2-22-A', '2-22-B', 0.99)
+daily_dataVWC_2018_clean <- gap_fill_soilTv2(daily_dataVWC_2018_clean, 'MinT', '3-22-B', '2-22-A', '2-22-B', 0.99)
+
+
 #fix 2017-2018 data
 daily_dataVWC_clean <- gap_fill_soilTv2(daily_dataVWC_clean, 'MeanT', '9-7-A', '1-7-A', '1-7-B', 0.99)
 daily_dataVWC_clean <- gap_fill_soilTv2(daily_dataVWC_clean, 'MedianT', '9-7-A', '1-7-A', '1-7-B', 0.99)
@@ -459,20 +473,32 @@ daily_dataVWC_clean <- gap_fill_soilTv2(daily_dataVWC_clean, 'MedianT', '9-22-A'
 daily_dataVWC_clean <- gap_fill_soilTv2(daily_dataVWC_clean, 'MaxT', '9-22-A', '1-22-A', '1-22-B', 0.99)
 daily_dataVWC_clean <- gap_fill_soilTv2(daily_dataVWC_clean, 'MinT', '9-22-A', '1-22-A', '1-22-B', 0.99)
 
+#added 10/24/18
+daily_dataVWC_clean <- gap_fill_soilTv2(daily_dataVWC_clean, 'MeanT', '3-22-A', '2-22-A', '2-22-B', 0.99)
+daily_dataVWC_clean <- gap_fill_soilTv2(daily_dataVWC_clean, 'MedianT', '3-22-A', '2-22-A', '2-22-B', 0.99)
+daily_dataVWC_clean <- gap_fill_soilTv2(daily_dataVWC_clean, 'MaxT', '3-22-A', '2-22-A', '2-22-B', 0.99)
+daily_dataVWC_clean <- gap_fill_soilTv2(daily_dataVWC_clean, 'MinT', '3-22-A', '2-22-A', '2-22-B', 0.99)
+
+daily_dataVWC_clean <- gap_fill_soilTv2(daily_dataVWC_clean, 'MeanT', '3-22-B', '2-22-A', '2-22-B', 0.99)
+daily_dataVWC_clean <- gap_fill_soilTv2(daily_dataVWC_clean, 'MedianT', '3-22-B', '2-22-A', '2-22-B', 0.99)
+daily_dataVWC_clean <- gap_fill_soilTv2(daily_dataVWC_clean, 'MaxT', '3-22-B', '2-22-A', '2-22-B', 0.99)
+daily_dataVWC_clean <- gap_fill_soilTv2(daily_dataVWC_clean, 'MinT', '3-22-B', '2-22-A', '2-22-B', 0.99)
+
+
 #check goodness of 2018 data
 tapply(daily_dataVWC_2018_clean$MeanVWC, daily_dataVWC_2018_clean$sensor_code, length) #214 days per sensor
-tapply(daily_dataVWC_2018_clean$MeanVWC, daily_dataVWC_2018_clean$sensor_code, function(x) sum(is.na(x)))
-tapply(daily_dataVWC_2018_clean$MeanT, daily_dataVWC_2018_clean$sensor_code, function(x) sum(is.na(x)))
+tapply(daily_dataVWC_2018_clean$MeanVWC, daily_dataVWC_2018_clean$sensor_code, function(x) sum(is.na(x))) #now missing data at location 3, because previously it was removed
+tapply(daily_dataVWC_2018_clean$MeanT, daily_dataVWC_2018_clean$sensor_code, function(x) sum(is.na(x))) #gap-filled location 3 for soil temperature
 
 #check goodness of 2017 data
-tapply(daily_dataVWC_2017_clean$MeanVWC, daily_dataVWC_2017_clean$sensor_code, length) #224 per sensor except for point 13
+tapply(daily_dataVWC_2017_clean$MeanVWC, daily_dataVWC_2017_clean$sensor_code, length) #224 per sensor except for point 13, which is 177
 tapply(daily_dataVWC_2017_clean$MeanVWC, daily_dataVWC_2017_clean$sensor_code, function(x) sum(is.na(x)))
 tapply(daily_dataVWC_2017_clean$MeanT, daily_dataVWC_2017_clean$sensor_code, function(x) sum(is.na(x)))
 
 #check goodness of both year data[combined both year data not used in further analysis]
-tapply(daily_dataVWC_clean$MeanVWC, daily_dataVWC_clean$sensor_code, length)
-tapply(daily_dataVWC_clean$MeanVWC, daily_dataVWC_clean$sensor_code, function(x) sum(is.na(x)))
-tapply(daily_dataVWC_clean$MeanT, daily_dataVWC_clean$sensor_code, function(x) sum(is.na(x)))
+tapply(daily_dataVWC_clean$MeanVWC, daily_dataVWC_clean$sensor_code, length) #607 or 608 per sensor
+tapply(daily_dataVWC_clean$MeanVWC, daily_dataVWC_clean$sensor_code, function(x) sum(is.na(x))) #127 or 128 per sensor except for 3-22-A and 3-22-B
+tapply(daily_dataVWC_clean$MeanT, daily_dataVWC_clean$sensor_code, function(x) sum(is.na(x))) #127 or 128 per sensor
 
 #write these files to disk
 write.csv(daily_dataVWC_2017_clean, file.path(results, 'processed_soil_moisture/Jul2018/daily_by_sensor', paste('daily_by_sensor_2017_processed', format(Sys.Date(), "%F"), '.csv', sep = '')), row.names=FALSE)
@@ -483,9 +509,9 @@ write.csv(daily_dataVWC_clean, file.path(results, 'processed_soil_moisture/Jul20
 # df <- daily_dataVWC
 # depth <- 7
 # varname <- 'MedianVWC'
-daily_dataVWC_2017_clean <- read.csv(file.path(results, 'processed_soil_moisture/Jul2018/daily_by_sensor', 'daily_by_sensor_2017_processed2018-09-27.csv'), stringsAsFactors = FALSE)
-daily_dataVWC_2018_clean <- read.csv(file.path(results, 'processed_soil_moisture/Jul2018/daily_by_sensor', 'daily_by_sensor_2018_processed2018-09-27.csv'), stringsAsFactors = FALSE)
-daily_dataVWC_clean <- read.csv(file.path(results, 'processed_soil_moisture/Jul2018/daily_by_sensor', 'daily_by_sensor_bothyrs_processed2018-09-27.csv'), stringsAsFactors = FALSE)
+daily_dataVWC_2017_clean <- read.csv(file.path(results, 'processed_soil_moisture/Jul2018/daily_by_sensor', 'daily_by_sensor_2017_processed2018-10-24.csv'), stringsAsFactors = FALSE)
+daily_dataVWC_2018_clean <- read.csv(file.path(results, 'processed_soil_moisture/Jul2018/daily_by_sensor', 'daily_by_sensor_2018_processed2018-10-24.csv'), stringsAsFactors = FALSE)
+daily_dataVWC_clean <- read.csv(file.path(results, 'processed_soil_moisture/Jul2018/daily_by_sensor', 'daily_by_sensor_bothyrs_processed2018-10-24.csv'), stringsAsFactors = FALSE)
 
 daily_by_location <- function(depth, df, varname, subdir, yr) {
   a <- which(df$Depth==depth)
