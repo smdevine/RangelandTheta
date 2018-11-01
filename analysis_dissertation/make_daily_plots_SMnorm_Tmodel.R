@@ -7,6 +7,18 @@ forageDir <- 'C:/Users/smdevine/Desktop/rangeland project/clip_plots'
 terrainDir <- 'C:/Users/smdevine/Desktop/rangeland project/terrain_analysis_r'
 results <- 'C:/Users/smdevine/Desktop/rangeland project/results'
 forage_terrain_energy <- read.csv(file.path(results, 'tables', 'forage_terrain_energy_3m_final.csv'), stringsAsFactors = FALSE)
+forage_terrain_energy$energy_colors <- ifelse(forage_terrain_energy$annual_kwh.m2 <= 1200, 'blue', ifelse(forage_terrain_energy$annual_kwh.m2 > 1200 & forage_terrain_energy$annual_kwh.m2 < 1410, 'orange2', 'red3'))
+forage_terrain_energy$May2017growth <- forage_terrain_energy$clp050117 - forage_terrain_energy$clp041017
+forage_terrain_energy$Apr2017growth <- forage_terrain_energy$clp041017 - forage_terrain_energy$clp031417
+forage_terrain_energy$Mar2017growth <- forage_terrain_energy$clp031417 - forage_terrain_energy$clp021517
+forage_terrain_energy$Mar2018growth <- forage_terrain_energy$clp032218 - forage_terrain_energy$clp021518
+forage_terrain_energy$Apr2018growth <- forage_terrain_energy$clp041518 - forage_terrain_energy$clp032218
+forage_terrain_energy$peak2018growth <- forage_terrain_energy$clp041518 - forage_terrain_energy$clp021518
+# soilT_data_7cm_2017 <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location', '2017', 'Temperature', paste0('MeanT_7cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
+# soilT_data_7cm_2018 <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location', '2018', 'Temperature', paste0('MeanT_7cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
+# soilT_data_7cm_2018_max <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location', '2018', 'Temperature', paste0('MaxT_7cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
+# soilT_data_22cm_2017 <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location', '2017', 'Temperature', paste0('MeanT_22cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
+# soilT_data_22cm_2018 <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location', '2018', 'Temperature', paste0('MeanT_22cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
 min_modified <- function(x) {
   if(all(is.na(x))) {
     return(NA)
@@ -26,32 +38,56 @@ normalize_VWCdata <- function(df) {
 
 #standardize VWC data by field capacity and wilting point
 #yr <- 2018
-depth <- 7
+depth <- 22
 #vwc_data<- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location', yr, 'VWC', paste0('MeanVWC_', depth, 'cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
 vwc_data<- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location', '2017_2018', 'VWC', paste0('MeanVWC_', depth, 'cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
+#check location 3
+plot(seq(from=1, by=1, length.out = ncol(vwc_data) -1), vwc_data[3,2:ncol(vwc_data)])
+plot(seq(from=1, by=1, length.out = 150), vwc_data[3,2:151])
+depth <- 7
 soilT_data<- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location', '2017_2018', 'Temperature', paste0('MeanT_', depth, 'cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
-if (depth == 22) {
-  vwc_data[16,] <- c(3,rep(NA, (ncol(vwc_data)-1)))
-  vwc_data <- vwc_data[order(vwc_data$location), ]
+if (depth == 7) {
+  soilT_data_7cm_2018 <- soilT_data[,which(colnames(soilT_data)=='Nov_30_2017'):which(colnames(soilT_data)=='Jun_30_2018')]
+  soilT_data_7cm_2017 <- soilT_data[,2:which(colnames(soilT_data)=='Jun_30_2017')]
+} else {
+  soilT_data_22cm_2017 <- soilT_data[,2:which(colnames(soilT_data)=='Jun_30_2017')]
+  soilT_data_22cm_2018 <- soilT_data[ ,which(colnames(soilT_data)=='Nov_30_2017'):which(colnames(soilT_data)=='Jun_30_2018')]
 }
-if (depth == 22) {
-  soilT_data[16,] <- c(3,rep(NA, (ncol(soilT_data)-1)))
-  soilT_data <- soilT_data[order(soilT_data$location), ]
+gap_fill_soilTv3 <- function(df, location_fix, location_use, location_use2, qc) {
+  lm.result <- lm(as.numeric(df[location_fix, 2:ncol(df)]) ~ as.numeric(df[location_use, 2:ncol(df)]) + as.numeric(df[location_use2, 2:ncol(df)]))
+  if (summary(lm.result)$r.squared < qc) {
+    stop(print('Regression results are unacceptable.'))
+  }
+  fix_indices <- which(is.na(df[location_fix, ]))
+  #print(fix_indices)
+  df[location_fix, fix_indices] <- lm.result$coefficients[1] + lm.result$coefficients[2] * df[location_use, fix_indices] + lm.result$coefficients[3] * df[location_use2, fix_indices]
+  df
 }
+# soilT_data_7cm_2017 <- gap_fill_soilTv3(soilT_data_7cm_2017, 13, 4, 14, 0.99)
+# soilT_data_22cm_2017 <- gap_fill_soilTv3(soilT_data_22cm_2017, 13, 4, 14, 0.99)
+#no longer needed because location 3 now included at 22 cm
+# if (depth == 22) {
+#   vwc_data[16,] <- c(3,rep(NA, (ncol(vwc_data)-1)))
+#   vwc_data <- vwc_data[order(vwc_data$location), ]
+# }
+# if (depth == 22) {
+#   soilT_data[16,] <- c(3,rep(NA, (ncol(soilT_data)-1)))
+#   soilT_data <- soilT_data[order(soilT_data$location), ]
+# }
 #standardize by "field capacity"
 #22 cm data to get location 3 for 2017
 #vwc_22cm.2017_by.sensor <- read.csv(file.path(results, 'processed_soil_moisture/Jul2018/daily_by_sensor/daily_by_sensor_2017_processed2018-09-27.csv'), stringsAsFactors = FALSE)
 #vwc_22cm_loc3_WP <- mean(vwc_22cm.2017_by.sensor$MeanVWC[vwc_22cm.2017_by.sensor$Date==20170630 & vwc_22cm.2017_by.sensor$Location==3]) #because data was suspect and removed from 2018
-vwc_22cm.2017_by.sensor <- read.csv(file.path(results, 'processed_soil_moisture/Jul2018/daily_by_sensor/daily_by_sensor_2018_processed2018-09-27.csv'), stringsAsFactors = FALSE)
-vwc_22cm_loc3_WP <- mean(vwc_22cm.2017_by.sensor$MeanVWC[vwc_22cm.2017_by.sensor$Date==20171129 & vwc_22cm.2017_by.sensor$Location==3])
-
-FC.by.location <- if (depth==7) {vwc_data$Jan_27_2017} else{vwc_data$Jan_31_2017} #Jan 16 is 3 days after no rainfall; Jan 27 is 4 days after no rainfall for 22 cm
+#vwc_22cm.2017_by.sensor <- read.csv(file.path(results, 'processed_soil_moisture/Jul2018/daily_by_sensor/daily_by_sensor_2018_processed2018-09-27.csv'), stringsAsFactors = FALSE)
+#vwc_22cm_loc3_WP <- mean(vwc_22cm.2017_by.sensor$MeanVWC[vwc_22cm.2017_by.sensor$Date==20171129 & vwc_22cm.2017_by.sensor$Location==3])
+apply(vwc_data[,which(colnames(vwc_data)=='Nov_30_2017'):which(colnames(vwc_data)=='Dec_31_2017')], 1, mean, na.rm=TRUE)/ vwc_data$Jul_20_2017
+FC.by.location <- if (depth==7) {rowMeans(cbind(vwc_data$Jan_27_2017, vwc_data$Jan_17_2017))} else{rowMeans(cbind(vwc_data$Jan_29_2017, vwc_data$Jan_18_2017))} #Jan 16 is 3 days after no rainfall; Jan 27 is 4 days after no rainfall for 22 cm; these dates were chosen as times when flux reached 0.003 cm / day on average
 #wp.date <- 'Jun_15_2017' #last analysis done with Jun_15_2017
 wilting.point.by.location <- if (depth == 7) {
   2 * apply(vwc_data[,which(colnames(vwc_data)=='Nov_30_2017'):which(colnames(vwc_data)=='Dec_20_2017')], 1, mean) #used Jun_20_2017 for latest version of figures
   #vwc_data[[wp.date]]
 } else {
-    1.35 * apply(vwc_data[,which(colnames(vwc_data)=='Nov_30_2017'):which(colnames(vwc_data)=='Dec_31_2017')], 1, mean)
+    1.35 * apply(vwc_data[,which(colnames(vwc_data)=='Nov_30_2017'):which(colnames(vwc_data)=='Dec_31_2017')], 1, mean, na.rm=TRUE)
 }
 paw.by.location <- FC.by.location - wilting.point.by.location
 mean(paw.by.location, na.rm = TRUE)
@@ -62,9 +98,9 @@ abline(lm(FC.by.location ~ wilting.point.by.location))
 text(wilting.point.by.location, FC.by.location, label=forage_terrain_energy$location, pos = 1, offset = 0.1)
 summary(lm(wilting.point.by.location ~ FC.by.location))
 summary(lm(FC.by.location ~ forage_terrain_energy$annual_kwh.m2))
-summary(lm(FC.by.location ~ soilT_data$Jan_30_2017)) #NS
-plot(soilT_data$Jan_27_2017, FC.by.location)
-text(soilT_data$Jan_27_2017, FC.by.location, pos = 1, offset = 0.1)
+summary(lm(FC.by.location ~ if (depth==7) {rowMeans(cbind(soilT_data$Jan_27_2017, soilT_data$Jan_17_2017))} else{rowMeans(cbind(soilT_data$Jan_29_2017, soilT_data$Jan_18_2017))})) #NS
+plot(if (depth==7) {rowMeans(cbind(soilT_data$Jan_27_2017, soilT_data$Jan_17_2017))} else{rowMeans(cbind(soilT_data$Jan_29_2017, soilT_data$Jan_18_2017))}, FC.by.location)
+text(if (depth==7) {rowMeans(cbind(soilT_data$Jan_27_2017, soilT_data$Jan_17_2017))} else{rowMeans(cbind(soilT_data$Jan_29_2017, soilT_data$Jan_18_2017))}, FC.by.location, pos = 1, offset = 0.1)
 #deltaT_Jan27 <- min(soilT_data$Jan_27_2017) - soilT_data$Jan_27_2017
 #deltaT_Jan27 * lm(FC.by.location ~ soilT_data$Jan_27_2017)$coefficients[2]
 #FC.by.location_BC <- FC.by.location + deltaT_Jan27 * lm(FC.by.location ~ soilT_data$Jan_27_2017)$coefficients[2]
@@ -75,62 +111,224 @@ text(soilT_data$Jan_27_2017, FC.by.location, pos = 1, offset = 0.1)
 summary(lm(wilting.point.by.location ~ forage_terrain_energy$annual_kwh.m2))
 plot(forage_terrain_energy$annual_kwh.m2, wilting.point.by.location)
 abline(lm(wilting.point.by.location ~ forage_terrain_energy$annual_kwh.m2))
+text(forage_terrain_energy$annual_kwh.m2, wilting.point.by.location, labels = forage_terrain_energy$location, offset = 0.5, pos=1)
 #paw.by.location <- FC.by.location_BC - wilting.point.by.location
 summary(lm(paw.by.location ~ forage_terrain_energy$annual_kwh.m2))
 plot(forage_terrain_energy$annual_kwh.m2, paw.by.location)
-text(forage_terrain_energy$annual_kwh.m2, paw.by.location, labels = forage_terrain_energy$location, pos = 1, offset = 0.5)
+text(forage_terrain_energy$annual_kwh.m2, paw.by.location, labels = forage_terrain_energy$location, pos = 1, offset = 0.2)
 abline(lm(paw.by.location ~ forage_terrain_energy$annual_kwh.m2))
-depletion_vwc_2017 <-  vwc_data[,2:which(colnames(vwc_data)=='Jun_30_2017')]
-depletion_vwc_2017 <- data.frame(location=1:16, lapply(depletion_vwc_2017[,2:ncol(depletion_vwc_2017)], function(x) { 1 - ((FC.by.location - x) / (FC.by.location - wilting.point.by.location))}))
-depletion_vwc_2018 <- vwc_data[,which(colnames(vwc_data)=='Nov_30_2017'):which(colnames(vwc_data)=='Jun_30_2018')]
-depletion_vwc_2018 <- data.frame(location=1:16, lapply(depletion_vwc_2018[,2:ncol(depletion_vwc_2018)], function(x) { 1 - ((FC.by.location - x) / (FC.by.location - wilting.point.by.location))}))
+if (depth == 7) {
+  depletion_vwc_2017 <-  vwc_data[,2:which(colnames(vwc_data)=='Jun_30_2017')]
+  depletion_vwc_2017 <- data.frame(location=1:16, lapply(depletion_vwc_2017[,2:ncol(depletion_vwc_2017)], function(x) { 1 - ((FC.by.location - x) / (FC.by.location - wilting.point.by.location))}))
+  depletion_vwc_2018 <- vwc_data[,which(colnames(vwc_data)=='Nov_30_2017'):which(colnames(vwc_data)=='Jun_30_2018')]
+  depletion_vwc_2018 <- data.frame(location=1:16, lapply(depletion_vwc_2018[,2:ncol(depletion_vwc_2018)], function(x) { 1 - ((FC.by.location - x) / (FC.by.location - wilting.point.by.location))}))
+} else {
+  depletion_vwc_2017_22 <-  vwc_data[,2:which(colnames(vwc_data)=='Jun_30_2017')]
+  depletion_vwc_2017_22 <- data.frame(location=1:16, lapply(depletion_vwc_2017_22[,2:ncol(depletion_vwc_2017_22)], function(x) { 1 - ((FC.by.location - x) / (FC.by.location - wilting.point.by.location))}))
+  depletion_vwc_2018_22 <- vwc_data[,which(colnames(vwc_data)=='Nov_30_2017'):which(colnames(vwc_data)=='Jun_30_2018')]
+  depletion_vwc_2018_22 <- data.frame(location=1:16, lapply(depletion_vwc_2018_22[,2:ncol(depletion_vwc_2018_22)], function(x) { 1 - ((FC.by.location - x) / (FC.by.location - wilting.point.by.location))}))
+}
 
-
-#read em in
-
-write.csv(depletion_vwc_2017, file.path(results, 'processed_soil_moisture/Jul2018/depletion_vwc', paste0('depletion_vwc_', depth, 'cm_2017.csv')), row.names=FALSE)
-write.csv(depletion_vwc_2018, file.path(results, 'processed_soil_moisture/Jul2018/depletion_vwc', paste0('depletion_vwc_', depth, 'cm_2018.csv')), row.names=FALSE)
+#write em to disk
+if (depth==7) {
+  write.csv(depletion_vwc_2017, file.path(results, 'processed_soil_moisture/Jul2018/depletion_vwc', paste0('depletion_vwc_', depth, 'cm_2017.csv')), row.names=FALSE)
+  write.csv(depletion_vwc_2018, file.path(results, 'processed_soil_moisture/Jul2018/depletion_vwc', paste0('depletion_vwc_', depth, 'cm_2018.csv')), row.names=FALSE)
+} else {
+  write.csv(depletion_vwc_2017_22, file.path(results, 'processed_soil_moisture/Jul2018/depletion_vwc', paste0('depletion_vwc_', depth, 'cm_2017.csv')), row.names=FALSE)
+  write.csv(depletion_vwc_2018_22, file.path(results, 'processed_soil_moisture/Jul2018/depletion_vwc', paste0('depletion_vwc_', depth, 'cm_2018.csv')), row.names=FALSE)
+}
+# read em in
 depletion_vwc_2017 <- read.csv(file.path(results, 'processed_soil_moisture/Jul2018/depletion_vwc/depletion_vwc_7cm_2017.csv'), stringsAsFactors=FALSE)
 depletion_vwc_2018 <- read.csv(file.path(results, 'processed_soil_moisture/Jul2018/depletion_vwc/depletion_vwc_7cm_2018.csv'), stringsAsFactors=FALSE)
 depletion_vwc_2017_22 <- read.csv(file.path(results, 'processed_soil_moisture/Jul2018/depletion_vwc/depletion_vwc_22cm_2017.csv'), stringsAsFactors=FALSE)
 depletion_vwc_2018_22 <- read.csv(file.path(results, 'processed_soil_moisture/Jul2018/depletion_vwc/depletion_vwc_22cm_2018.csv'), stringsAsFactors=FALSE)
 
-#get drawdown slopes for March 2017
-Mar2017_avgsoilT <- apply(soilT_data[,which(colnames(soilT_data)=='Mar_04_2017'):which(colnames(soilT_data)=='Mar_20_2017')], 1, mean)
-Mar2017_drydown <- as.data.frame(t(apply(depletion_vwc_2017[,which(colnames(depletion_vwc_2017)=='Mar_04_2017'):which(colnames(depletion_vwc_2017)=='Mar_20_2017')], 1, function(x) {
-  lm.summary <- summary(lm(x ~ seq_along(x)))
-  c(lm.summary$r.squared, lm.summary$coefficients[2, 1], lm.summary$coefficients[2, 4])
-})))
-# Mar2017_drydown <- as.data.frame(t(apply(vwc_data[,which(colnames(vwc_data)=='Feb_25_2017'):which(colnames(vwc_data)=='Mar_20_2017')], 1, function(x) {
-#   lm.summary <- summary(lm(x ~ seq_along(x)))
-#   c(lm.summary$r.squared, lm.summary$coefficients[2, 1], lm.summary$coefficients[2, 4])
-# })))
-colnames(Mar2017_drydown) <- c('r.squared', 'drydown.slopes', 'slopes.p.val')
-Mar2017_drydown$drydown.slopes <- -Mar2017_drydown$drydown.slopes
-plot(Mar2017_drydown$drydown.slopes, forage_terrain_energy$clp041017)
-plot(Mar2017_avgsoilT, Mar2017_drydown$drydown.slopes)
-plot(forage_terrain_energy$annual_kwh.m2, Mar2017_avgsoilT)
-summary(lm(Mar2017_drydown$drydown.slopes ~ Mar2017_avgsoilT))
-summary(lm(Mar2017_drydown$drydown.slopes ~ forage_terrain_energy$seasonal_kwh.m2))
-mult.lm.result <- lm(forage_terrain_energy$clp041017 ~ Mar2017_avgsoilT + Mar2017_drydown$drydown.slopes)
-summary(mult.lm.result)
-plot(mult.lm.result)
-lm.result <- lm(forage_terrain_energy$clp041017 ~ Mar2017_drydown$drydown.slopes)
-summary(lm.result)
-plot(lm.result)
-summary(lm(forage_terrain_energy$peak2017 ~ Mar2017_avgsoilT))
+#make 2017 Mar 14-Apr 10 plot
+Mar_growth_dates <- which(colnames(depletion_vwc_2017)=='Dec_01_2016'):which(colnames(depletion_vwc_2017)=='Mar_15_2017')
+Mar_growth_dates_v2 <- which(colnames(depletion_vwc_2017)=='Feb_15_2017'):which(colnames(depletion_vwc_2017)=='Mar_15_2017')
+Apr_growth_dates <- which(colnames(depletion_vwc_2017)=='Mar_15_2017'):which(colnames(depletion_vwc_2017)=='Apr_10_2017')
+spring_growth_dates <- which(colnames(depletion_vwc_2017)=='Feb_28_2017'):which(colnames(depletion_vwc_2017)=='Apr_10_2017')
+mean_depletion_Mar_growth <- apply(depletion_vwc_2017[,Mar_growth_dates], 1, mean)
+mean_depletion_Mar_growth_v2 <- apply(depletion_vwc_2017[,Mar_growth_dates_v2], 1, mean)
+mean_soilT_Mar_growth <- apply(soilT_data_7cm_2017[,Mar_growth_dates], 1, mean)
+mean_soilT_Mar_growth_v2 <- apply(soilT_data_7cm_2017[,Mar_growth_dates_v2], 1, mean)
+mean_depletion22_Mar_growth <- apply(depletion_vwc_2017_22[,Mar_growth_dates], 1, mean)
+mean_depletion22_Mar_growth_v2 <- apply(depletion_vwc_2017_22[,Mar_growth_dates_v2], 1, mean)
+mean_depletion_Apr_growth <- apply(depletion_vwc_2017[,Apr_growth_dates], 1, mean)
+mean_soilT_Apr_growth <- apply(soilT_data_7cm_2017[,Apr_growth_dates], 1, mean)
+mean_depletion_spring_growth <- apply(depletion_vwc_2017[,spring_growth_dates], 1, mean)
+mean_depletion22_spring_growth <- apply(depletion_vwc_2017_22[,spring_growth_dates], 1, mean)
+mean_depletion22_Apr_growth <- apply(depletion_vwc_2017_22[,Apr_growth_dates], 1, mean)
+tiff(file = file.path(results, 'figures', 'finals', 'SM_T_effects_visualizations', '2017 drawdown', 'Apr2017.growth.vs.PAW.v3.tif'), pointsize = 11, family = 'Times New Roman', width = 4.5, height = 4, units = 'in', res = 150)
+par(mar=c(4, 4, 0.5, 0.5))
+plot(rowMeans(cbind(mean_depletion_Apr_growth, mean_depletion22_Apr_growth)), forage_terrain_energy$Apr2017growth, col=forage_terrain_energy$energy_colors, ylab=expression('Mar 15 - Apr 10, 2017 growth (kg '~~ha^-1*')'), xaxt='n', xlab='% plant available water, 0-30 cm avg (Mar 15 - Apr 10, 2017)', cex.axis=1, cex.lab=1, pch=19, mgp=c(2.5, 1, 0)) #  cex=forage_terrain_energy$clp031417/750
+axis(side = 1, at=c(0.3, 0.4, 0.5, 0.6, 0.7), labels = c('30', '40', '50', '60', '70'), mgp=c(2.5, 1, 0))
+#text(rowMeans(cbind(mean_depletion_Apr_growth, mean_depletion22_Apr_growth)), forage_terrain_energy$Apr2017growth, labels=round(forage_terrain_energy$elevation, 0), pos=1, offset = 0.5)
+#abline(v=0.5, lty=2, col='grey')
+abline(lm(forage_terrain_energy$Apr2017growth ~ rowMeans(cbind(mean_depletion_Apr_growth, mean_depletion22_Apr_growth))), lty=2)
+legend('topleft', legend=(c(expression('< 1200 annual kWh'~m^-2), expression('1200-1410 annual kWh'~m^-2), expression('>1410 annual kWh'~m^-2), 'linear fit')), lty=c(NA, NA, NA, 2), pch = c(19,19,19,1), pt.cex = c(1.5, 1.5, 1.5, NA), col=c('blue', 'orange2', 'red3', 'black'), inset=0.01, cex = 1, y.intersp =1) # expression('1000 kg'~ha^-1~'Mar 14, 2017'), expression('2500 kg'~ha^-1~'Mar 14, 2017')
+text(x=0.45, y=700, label='linear model results', cex=1, adj=c(0,0))
+text(x=0.45, y=500, label=expression(paste(r^2, ' = 0.44, p.val = 0.006')), cex = 1, adj = c(0, 0))
+text(x=0.45, y=300, label=expression(paste('RMSE = 594 kg ', ha^-1)), cex = 1, adj = c(0, 0))
+dev.off()
 
-Mar2017_drydown_22 <- as.data.frame(t(apply(depletion_vwc_2017_22[-3,which(colnames(depletion_vwc_2017_22)=='Mar_04_2017'):which(colnames(depletion_vwc_2017_22)=='Mar_20_2017')], 1, function(x) {
-  lm.summary <- summary(lm(x ~ seq_along(x)))
-  c(lm.summary$r.squared, lm.summary$coefficients[2, 1], lm.summary$coefficients[2, 4])
-})))
-colnames(Mar2017_drydown_22) <- c('r.squared', 'drydown.slopes', 'slopes.p.val')
-Mar2017_drydown_22$drydown.slopes <- -Mar2017_drydown_22$drydown.slopes
-Mar2017_drydown_22
-plot(Mar2017_drydown_22$drydown.slopes, forage_terrain_energy$clp041017[-3])
-summary(lm(forage_terrain_energy$clp041017[-3] ~ Mar2017_drydown_22$drydown.slopes))
+summary(lm(forage_terrain_energy$Apr2017growth ~ mean_soilT_Apr_growth))
+summary(lm(forage_terrain_energy$Apr2017growth ~ mean_depletion_Apr_growth))
+summary(lm(forage_terrain_energy$Apr2017growth ~ mean_depletion_Apr_growth + mean_soilT_Apr_growth))
+summary(lm(forage_terrain_energy$Apr2017growth ~ mean_depletion_Apr_growth * mean_soilT_Apr_growth))
+summary(lm(forage_terrain_energy$Apr2017growth ~ mean_depletion22_Apr_growth))
+summary(lm(forage_terrain_energy$Apr2017growth ~ mean_depletion_Apr_growth + mean_depletion22_Apr_growth))
+summary(lm(forage_terrain_energy$Apr2017growth ~ rowMeans(cbind(mean_depletion_Apr_growth, mean_depletion22_Apr_growth))))
+plot(lm(forage_terrain_energy$Apr2017growth ~ rowMeans(cbind(mean_depletion_Apr_growth, mean_depletion22_Apr_growth)))$fitted.values, lm(forage_terrain_energy$Apr2017growth ~ rowMeans(cbind(mean_depletion_Apr_growth, mean_depletion22_Apr_growth)))$residuals)
+summary(lm(forage_terrain_energy$Apr2017growth ~ rowMeans(cbind(mean_depletion_Apr_growth, mean_depletion22_Apr_growth)) + mean_soilT_Apr_growth))
+plot(mean_depletion_Apr_growth / mean_depletion22_Apr_growth, forage_terrain_energy$Apr2017growth)
+summary(lm(mean_depletion_Apr_growth ~ mean_soilT_Apr_growth))
+#abline(lm(forage_terrain_energy$Apr2017growth[-8] ~ mean_depletion_Apr_growth[-8]), lty=2)
+summary(lm(forage_terrain_energy$clp041017 ~ forage_terrain_energy$clp031417))
+summary(lm(forage_terrain_energy$clp041017 ~ forage_terrain_energy$clp021517))
+summary(lm(forage_terrain_energy$clp041518 ~ forage_terrain_energy$clp021518))
+summary(lm(forage_terrain_energy$clp041017 ~ forage_terrain_energy$clp031417 + mean_depletion_Apr_growth))
+summary(lm(forage_terrain_energy$clp041017 ~ forage_terrain_energy$clp021517 + mean_depletion_Apr_growth))
+summary(lm(forage_terrain_energy$clp041017 ~ forage_terrain_energy$curvature_mean + mean_depletion_Apr_growth))
+summary(lm(forage_terrain_energy$clp041017 ~ rowMeans(cbind(mean_depletion_spring_growth, mean_depletion22_spring_growth))))
+summary(lm(forage_terrain_energy$clp041017 ~ rowMeans(cbind(mean_depletion_Apr_growth, mean_depletion22_Apr_growth)) + forage_terrain_energy$clp031417))
+summary(lm(forage_terrain_energy$clp041017 ~ rowMeans(cbind(mean_depletion_Apr_growth, mean_depletion22_Apr_growth)) + forage_terrain_energy$clp021517))
+summary(lm(forage_terrain_energy$clp041017 ~ rowMeans(cbind(mean_depletion_spring_growth, mean_depletion22_spring_growth)) + forage_terrain_energy$clp021517))
+summary(lm(forage_terrain_energy$clp041017 ~ rowMeans(cbind(mean_depletion_spring_growth, mean_depletion22_spring_growth)) + forage_terrain_energy$clp021517 + FC.by.location.7))
+summary(lm(rowMeans(cbind(mean_depletion_spring_growth, mean_depletion22_spring_growth)) ~ forage_terrain_energy$elevation))
+summary(lm(rowMeans(cbind(mean_depletion_spring_growth, mean_depletion22_spring_growth)) ~ wilting.point.by.location))
+plot(mean_depletion_Mar_growth)
+plot(mean_soilT_Mar_growth, mean_depletion_Mar_growth)
+plot(depletion_vwc_2017$Mar_15_2017, forage_terrain_energy$Apr2017growth, col=forage_terrain_energy$energy_colors)
+plot(lm(forage_terrain_energy$Apr2017growth ~ mean_depletion_Apr_growth))
+plot(mean_depletion_Apr_growth, forage_terrain_energy$clp041017)
+abline(lm(forage_terrain_energy$clp041017 ~ mean_depletion_Apr_growth))
+summary(lm(forage_terrain_energy$clp041017 ~ mean_depletion_Apr_growth))
+summary(lm(forage_terrain_energy$clp041017 ~ mean_soilT_Apr_growth))
+summary(lm(forage_terrain_energy$clp041017 ~ mean_depletion_Apr_growth + mean_soilT_Mar_growth))
+summary(lm(forage_terrain_energy$clp041017 ~ mean_depletion_Apr_growth * mean_soilT_Mar_growth))
+summary(lm(forage_terrain_energy$clp041017 ~ mean_depletion_Apr_growth + mean_soilT_Mar_growth + I(mean_soilT_Mar_growth^2)))
+summary(lm(forage_terrain_energy$clp041017 ~ mean_depletion_Apr_growth + mean_soilT_Mar_growth + forage_terrain_energy$elevation))
+lm(forage_terrain_energy$clp041017 ~ mean_depletion_Apr_growth + mean_soilT_Mar_growth)$residuals
+plot(lm(forage_terrain_energy$clp041017 ~ mean_depletion_Apr_growth + mean_soilT_Mar_growth)) #location 13 is missing VWC data; location 14 and 16 are nearly outliers
+plot(forage_terrain_energy$clp041017[-13], lm(forage_terrain_energy$clp041017 ~ mean_depletion_Apr_growth + mean_soilT_Mar_growth)$residuals)
+plot(lm(forage_terrain_energy$clp041017 ~ mean_depletion_Apr_growth + mean_soilT_Mar_growth)$fitted.values, lm(forage_terrain_energy$clp041017 ~ mean_depletion_Apr_growth + mean_soilT_Mar_growth)$residuals)
+summary(lm(forage_terrain_energy$clp041017[-c(14,16)] ~ mean_depletion_Apr_growth[-c(14,16)] + mean_soilT_Mar_growth[-c(14,16)]))
+plot(forage_terrain_energy$clp041017[-c(13:14,16)], lm(forage_terrain_energy$clp041017[-c(14,16)] ~ mean_depletion_Apr_growth[-c(14,16)] + mean_soilT_Mar_growth[-c(14,16)])$residuals)
+plot(lm(forage_terrain_energy$clp041017 ~ mean_depletion_Apr_growth + mean_soilT_Mar_growth)$fitted.values, forage_terrain_energy$Apr2017growth[-13])
 
 
+summary(lm(forage_terrain_energy$clp031417 ~ mean_soilT_Mar_growth))
+
+plot(lm(forage_terrain_energy$clp041017 ~ mean_depletion_Apr_growth))
+summary(lm(forage_terrain_energy$clp041017 ~ mean_depletion22_Apr_growth))
+
+summary(lm(forage_terrain_energy$Mar2017growth ~ mean_depletion_Mar_growth))
+summary(lm(forage_terrain_energy$Mar2017growth ~ mean_depletion_Mar_growth_v2))
+summary(lm(forage_terrain_energy$Mar2017growth ~ rowMeans(cbind(mean_depletion_Mar_growth, mean_depletion22_Mar_growth))))
+summary(lm(forage_terrain_energy$Mar2017growth ~ mean_depletion_Mar_growth + mean_soilT_Mar_growth))
+summary(lm(forage_terrain_energy$Mar2017growth ~ mean_soilT_Mar_growth_v2))
+summary(lm(forage_terrain_energy$Mar2017growth ~ mean_soilT_Mar_growth))
+summary(lm(forage_terrain_energy$Mar2017growth ~ mean_depletion_Mar_growth + mean_soilT_Mar_growth + forage_terrain_energy$curvature_mean))
+summary(lm(forage_terrain_energy$Mar2017growth ~ mean_depletion_Mar_growth + mean_soilT_Mar_growth + forage_terrain_energy$curvature_mean))
+summary(lm(forage_terrain_energy$Mar2017growth ~ mean_depletion_Mar_growth + mean_soilT_Mar_growth + forage_terrain_energy$curvature_mean))
+summary(lm(forage_terrain_energy$Mar2017growth ~  mean_soilT_Mar_growth + forage_terrain_energy$curvature_mean + forage_terrain_energy$slope))
+summary(lm(forage_terrain_energy$Mar2017growth ~ mean_depletion_Mar_growth + mean_soilT_Mar_growth + forage_terrain_energy$elevation))
+
+#Mar 2017 growth fig
+tiff(file = file.path(results, 'figures', 'finals', 'SM_T_effects_visualizations', '2017 drawdown', 'Mar2017.growth.vs.soilT.tif'), pointsize = 11, family = 'Times New Roman', width = 4.5, height = 4, units = 'in', res = 150)
+par(mar=c(4, 4, 0.5, 0.5))
+plot(mean_soilT_Mar_growth_v2, forage_terrain_energy$Mar2017growth, col=forage_terrain_energy$energy_colors, ylab=expression('Feb 15 - Mar 14, 2017 growth (kg '~~ha^-1*')'), xlab=expression('Feb 15 - Mar 14, 2017 mean 7 cm soil temperature ('~degree*'C)'), ylim=c(200, 1500), cex.axis=1, cex.lab=1, pch=19, mgp=c(2.5, 1, 0)) #  cex=forage_terrain_energy$clp031417/750
+#axis(side = 1, at=c(0.3, 0.4, 0.5, 0.6, 0.7), labels = c('30', '40', '50', '60', '70'), mgp=c(2.5, 1, 0))
+#text(rowMeans(cbind(mean_depletion_Apr_growth, mean_depletion22_Apr_growth)), forage_terrain_energy$Apr2017growth, labels=round(forage_terrain_energy$elevation, 0), pos=1, offset = 0.5)
+#abline(v=0.5, lty=2, col='grey')
+abline(lm(forage_terrain_energy$Mar2017growth ~ mean_soilT_Mar_growth_v2), lty=2)
+legend('topleft', legend=(c(expression('< 1200 annual kWh'~m^-2), expression('1200-1410 annual kWh'~m^-2), expression('>1410 annual kWh'~m^-2), 'linear fit')), lty=c(NA, NA, NA, 2), pch = c(19,19,19,1), pt.cex = c(1.5, 1.5, 1.5, NA), col=c('blue', 'orange2', 'red3', 'black'), inset=0.01, cex = 1, y.intersp =1) # expression('1000 kg'~ha^-1~'Mar 14, 2017'), expression('2500 kg'~ha^-1~'Mar 14, 2017')
+text(x=11.5, y=700, label='linear model results', cex=1, adj=c(0,0))
+text(x=10.4, y=600, label=expression(r^2~'= 0.47, p.val = 0.005, RMSE = 237 kg'~ha^-1), cex = 1, adj = c(0, 0))
+#text(x=8, y=1500, label=expression(paste('RMSE = 232 kg ', ha^-1)), cex = 1, adj = c(0, 0))
+text(x=10.4, y=500, label=expression('slope = 6.6 \u00B1 1.9  kg forage'~ha^-1~degree*C^-1~day^-1), adj = c(0, 0), cex = 1)
+dev.off()
+
+#now 2018 growth
+winter_growth_dates <- which(colnames(depletion_vwc_2018)=='Jan_10_2018'):which(colnames(depletion_vwc_2018)=='Feb_01_2018')
+late_winter_growth_dates <- which(colnames(depletion_vwc_2018)=='Feb_15_2018'):which(colnames(depletion_vwc_2018)=='Mar_22_2018')
+Feb2018_growth_dates <- which(colnames(depletion_vwc_2018)=='Feb_01_2018'):which(colnames(depletion_vwc_2018)=='Feb_28_2018')
+Mar2018_growth_dates <- which(colnames(depletion_vwc_2018)=='Feb_16_2018'):which(colnames(depletion_vwc_2018)=='Mar_22_2018')
+Apr2018_growth_dates <- which(colnames(depletion_vwc_2018)=='Mar_22_2018'):which(colnames(depletion_vwc_2018)=='Apr_10_2018')
+mean_depletion_winter_growth <- apply(depletion_vwc_2018[,winter_growth_dates], 1, mean)
+mean_depletion22_winter_growth <- apply(depletion_vwc_2018_22[,winter_growth_dates], 1, mean)
+mean_depletion_latewinter_growth <- apply(depletion_vwc_2018[,late_winter_growth_dates], 1, mean)
+mean_depletion22_latewinter_growth <- apply(depletion_vwc_2018_22[,late_winter_growth_dates], 1, mean)
+mean_depletion_mar2018_growth <- apply(depletion_vwc_2018[,Mar2018_growth_dates], 1, mean)
+mean_depletion22_mar2018_growth <- apply(depletion_vwc_2018_22[,Mar2018_growth_dates], 1, mean)
+mean_depletion_feb2018_growth <- apply(depletion_vwc_2018[,Feb2018_growth_dates], 1, mean)
+mean_depletion22_feb2018_growth <- apply(depletion_vwc_2018_22[,Feb2018_growth_dates], 1, mean)
+mean_depletion_apr2018_growth <- apply(depletion_vwc_2018[,Apr2018_growth_dates], 1, mean)
+mean_depletion22_apr2018_growth <- apply(depletion_vwc_2018_22[,Apr2018_growth_dates], 1, mean)
+mean_soilT_apr2018_growth <- apply(soilT_data_7cm_2018[,Apr2018_growth_dates], 1, mean)
+mean_soilT_mar2018_growth <- apply(soilT_data_7cm_2018[,Mar2018_growth_dates], 1, mean)
+mean_soilT_feb2018_growth <- apply(soilT_data_7cm_2018[,Feb2018_growth_dates], 1, mean)
+mean_soilT_winter_growth <- apply(soilT_data_7cm_2018[,winter_growth_dates], 1, mean)
+mean_soilT_latewinter_growth <- apply(soilT_data_7cm_2018[,late_winter_growth_dates], 1, mean)
+plot(mean_depletion_winter_growth, forage_terrain_energy$clp021518)
+
+summary(lm(forage_terrain_energy$clp021518 ~ mean_depletion_winter_growth))
+summary(lm(forage_terrain_energy$clp021518 ~ mean_depletion22_winter_growth))
+summary(lm(forage_terrain_energy$clp021518 ~ mean_soilT_winter_growth))
+summary(lm(forage_terrain_energy$clp021518 ~ forage_terrain_energy$curvature_mean))
+summary(lm(forage_terrain_energy$Mar2018growth ~ mean_depletion_winter_growth))
+summary(lm(forage_terrain_energy$Mar2018growth ~ mean_depletion22_winter_growth))
+summary(lm(forage_terrain_energy$Mar2018growth ~ mean_soilT_winter_growth))
+summary(lm(forage_terrain_energy$Mar2018growth ~ mean_depletion_winter_growth + mean_soilT_winter_growth))
+summary(lm(forage_terrain_energy$Mar2018growth ~ mean_depletion22_winter_growth + mean_soilT_winter_growth))
+summary(lm(forage_terrain_energy$Mar2018growth ~ mean_depletion22_winter_growth + mean_soilT_mar2018_growth))
+summary(lm(forage_terrain_energy$Mar2018growth ~ mean_depletion_mar2018_growth))
+summary(lm(forage_terrain_energy$Mar2018growth ~ mean_depletion22_mar2018_growth))
+summary(lm(forage_terrain_energy$Mar2018growth ~ mean_soilT_mar2018_growth))
+summary(lm(forage_terrain_energy$Mar2018growth ~ mean_depletion22_mar2018_growth+ mean_soilT_mar2018_growth + mean_depletion22_winter_growth))
+summary(lm(forage_terrain_energy$Mar2018growth ~ mean_depletion22_mar2018_growth+ mean_soilT_mar2018_growth))
+summary(lm(forage_terrain_energy$Mar2018growth ~ mean_depletion_mar2018_growth+ mean_soilT_mar2018_growth))
+summary(lm(forage_terrain_energy$Mar2018growth ~ mean_depletion_mar2018_growth * mean_soilT_mar2018_growth))
+summary(lm(forage_terrain_energy$Mar2018growth ~ rowMeans(cbind(mean_depletion_mar2018_growth, mean_depletion22_mar2018_growth)) + mean_soilT_mar2018_growth))
+summary(lm(forage_terrain_energy$Mar2018growth ~ mean_depletion_mar2018_growth + mean_depletion22_mar2018_growth + mean_soilT_mar2018_growth))
+summary(lm(forage_terrain_energy$Mar2018growth ~ mean_depletion_feb2018_growth))
+summary(lm(forage_terrain_energy$Mar2018growth ~ mean_depletion_feb2018_growth + mean_soilT_feb2018_growth))
+summary(lm(forage_terrain_energy$Mar2018growth ~ mean_depletion_feb2018_growth * mean_soilT_feb2018_growth))
+summary(lm(forage_terrain_energy$Mar2018growth ~ mean_depletion_feb2018_growth * mean_soilT_feb2018_growth + mean_depletion22_mar2018_growth))
+summary(lm(forage_terrain_energy$Mar2018growth ~ mean_depletion_feb2018_growth * mean_soilT_feb2018_growth + mean_depletion_mar2018_growth))
+summary(lm(forage_terrain_energy$Mar2018growth ~ mean_depletion_feb2018_growth + mean_soilT_feb2018_growth + mean_depletion_mar2018_growth))
+summary(lm(forage_terrain_energy$Mar2018growth ~ mean_depletion_feb2018_growth + mean_soilT_feb2018_growth + mean_depletion22_mar2018_growth))
+summary(lm(forage_terrain_energy$Mar2018growth ~ mean_depletion_latewinter_growth * mean_soilT_latewinter_growth))
+depletion_soilT_feb2018 <- mean_depletion_feb2018_growth * mean_soilT_feb2018_growth
+summary(lm(forage_terrain_energy$Mar2018growth ~ depletion_soilT_feb2018))
+tiff(file = file.path(results, 'figures', 'finals', 'SM_T_effects_visualizations', '2017 drawdown', 'Mar2017.growth.vs.soilT.tif'), pointsize = 11, family = 'Times New Roman', width = 4.5, height = 4, units = 'in', res = 150)
+par(mar=c(4, 4, 0.5, 0.5))
+plot(mean_soilT_mar2018_growth, mean_depletion22_mar2018_growth, pch=19, cex=pmax(forage_terrain_energy$Mar2018growth/168, 0.8), col=forage_terrain_energy$energy_colors, ylab=('Feb 15 - Mar 22, 2018 mean % PAW 15-30 cm'), xlab=expression('Mar 2 - Mar 22, 2018 mean 7 cm soil temperature ('~degree*'C)'), cex.axis=1, cex.lab=1, mgp=c(2.5, 1, 0)) #  cex=forage_terrain_energy$clp031417/750
+#axis(side = 1, at=c(0.3, 0.4, 0.5, 0.6, 0.7), labels = c('30', '40', '50', '60', '70'), mgp=c(2.5, 1, 0))
+#text(rowMeans(cbind(mean_depletion_Apr_growth, mean_depletion22_Apr_growth)), forage_terrain_energy$Apr2017growth, labels=round(forage_terrain_energy$elevation, 0), pos=1, offset = 0.5)
+#abline(v=0.5, lty=2, col='grey')
+#abline(lm(forage_terrain_energy$Mar2017growth ~ mean_soilT_Mar_growth), lty=2)
+legend('bottomleft', legend=(c(expression('< 1200 annual kWh'~m^-2), expression('1200-1410 annual kWh'~m^-2), expression('>1410 annual kWh'~m^-2), 'linear fit')), lty=c(NA, NA, NA, 2), pch = c(19,19,19,1), pt.cex = c(1.5, 1.5, 1.5, NA), col=c('blue', 'orange2', 'red3', 'black'), inset=0.01, cex = 1, y.intersp =1) # expression('1000 kg'~ha^-1~'Mar 14, 2017'), expression('2500 kg'~ha^-1~'Mar 14, 2017')
+text(x=9.5, y=700, label='linear model results', cex=1, adj=c(0,0))
+text(x=8.6, y=600, label=expression(r^2~'= 0.50, p.val = 0.003, RMSE = 232 kg'~~ha^-1), cex = 1, adj = c(0, 0))
+#text(x=8, y=1500, label=expression(paste('RMSE = 232 kg ', ha^-1)), cex = 1, adj = c(0, 0))
+text(x=8.6, y=500, label=expression('slope = 7.6 \u00B1 2.1  kg forage'~ha^-1~degree*C^-1~day^-1), adj = c(0, 0), cex = 1)
+dev.off()
+summary(lm(forage_terrain_energy$Apr2018growth ~ mean_depletion_winter_growth))
+summary(lm(forage_terrain_energy$Apr2018growth ~ mean_depletion_winter_growth))
+summary(lm(forage_terrain_energy$Apr2018growth ~ mean_depletion22_apr2018_growth))
+summary(lm(forage_terrain_energy$Apr2018growth ~ mean_depletion22_apr2018_growth+ mean_soilT_apr2018_growth))
+summary(lm(forage_terrain_energy$Apr2018growth ~ mean_depletion_apr2018_growth))
+summary(lm(forage_terrain_energy$Apr2018growth ~ mean_depletion22_apr2018_growth* mean_soilT_apr2018_growth))
+summary(lm(forage_terrain_energy$Apr2018growth ~ mean_depletion_feb2018_growth))
+summary(lm(forage_terrain_energy$Apr2018growth ~ mean_depletion_feb2018_growth* mean_soilT_feb2018_growth))
+summary(lm(forage_terrain_energy$Apr2018growth ~ mean_depletion_apr2018_growth* mean_soilT_apr2018_growth + mean_depletion22_Apr_growth))
+summary(lm(forage_terrain_energy$Apr2018growth ~ mean_depletion_feb2018_growth* mean_soilT_feb2018_growth+mean_depletion22_apr2018_growth))
+
+summary(lm(mean_depletion_winter_growth ~ mean_soilT_winter_growth))
+summary(lm(mean_depletion22_winter_growth ~ mean_soilT_winter_growth))
+#plot vwc data
 for(i in 1:16) {
   if (i == 1) {
     plot(as.Date(colnames(vwc_data)[2:ncol(vwc_data)], '%b_%d_%Y'), vwc_data[i,2:ncol(vwc_data)], type='l', col=i, ylim=c(0.06,0.42))
@@ -138,9 +336,6 @@ for(i in 1:16) {
 }
 vwc_data_normalized <- normalize_VWCdata(vwc_data)
 precip_data <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/climate_data/Camatta_precip_WY2017_2018.csv'), stringsAsFactors = FALSE)
-
-soilT_data_7cm_2018 <- soilT_data[,which(colnames(soilT_data)=='Nov_30_2017'):which(colnames(soilT_data)=='Jun_30_2018')]
-soilT_data_7cm_2017 <- soilT_data[,2:which(colnames(soilT_data)=='Jun_30_2017')]
 
 #maxVWC_2017 <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location', yr, 'VWC', paste0('MaxVWC_', depth, 'cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
 #maxVWC_by.location <- apply(maxVWC_2017[,2:ncol(maxVWC_2017)], 1, max_modified)
@@ -155,136 +350,228 @@ summary(lm(forage_terrain_energy$peak2017 ~ apply(WF_porosity[,45:103], 1, mean)
 
 
 #add energy colors
-forage_terrain_energy$energy_colors <- ifelse(forage_terrain_energy$annual_kwh.m2 < summary(forage_terrain_energy$annual_kwh.m2)[2], 'blue', ifelse(forage_terrain_energy$annual_kwh.m2 > summary(forage_terrain_energy$annual_kwh.m2)[2] & forage_terrain_energy$annual_kwh.m2 < summary(forage_terrain_energy$annual_kwh.m2)[5], 'orange2', 'red3'))
+#definition based on aspect south vs. north aspect classes
+forage_terrain_energy$aspect_class <- ifelse(forage_terrain_energy$aspect >= 45 & forage_terrain_energy$aspect < 135, 'east', ifelse(forage_terrain_energy$aspect >= 135 & forage_terrain_energy$aspect < 225, 'south', ifelse(forage_terrain_energy$aspect >= 225 & forage_terrain_energy$aspect < 315, 'west', 'north')))
+forage_terrain_energy$aspect_class_sp <- ifelse(forage_terrain_energy$aspect >= 67.5 & forage_terrain_energy$aspect < 112.5, 'east', ifelse(forage_terrain_energy$aspect >= 112.5 & forage_terrain_energy$aspect < 157.5, 'southeast', ifelse(forage_terrain_energy$aspect >= 157.5 & forage_terrain_energy$aspect < 202.5, 'south', ifelse(forage_terrain_energy$aspect >= 202.5 & forage_terrain_energy$aspect < 247.5, 'southwest', ifelse(forage_terrain_energy$aspect >= 247.5 & forage_terrain_energy$aspect < 292.5, 'west', ifelse(forage_terrain_energy$aspect >= 292.5 & forage_terrain_energy$aspect < 337.5, 'northwest', ifelse(forage_terrain_energy$aspect >= 337.5 & forage_terrain_energy$aspect < 22.5, 'north', 'northeast')))))))
+forage_terrain_energy$energy_colors <- ifelse(forage_terrain_energy$annual_kwh.m2 <= 1200, 'blue', ifelse(forage_terrain_energy$annual_kwh.m2 > 1200 & forage_terrain_energy$annual_kwh.m2 < 1410, 'orange2', 'red3')) #tres colores #tres colores
+forage_terrain_energy[order(forage_terrain_energy$annual_kwh.m2) ,c('location', 'annual_kwh.m2', 'aspect_class', 'aspect_class_sp', 'energy_colors')]
+#old def
+#forage_terrain_energy$energy_colors <- ifelse(forage_terrain_energy$annual_kwh.m2 < summary(forage_terrain_energy$annual_kwh.m2)[2], 'blue', ifelse(forage_terrain_energy$annual_kwh.m2 > summary(forage_terrain_energy$annual_kwh.m2)[2] & forage_terrain_energy$annual_kwh.m2 < summary(forage_terrain_energy$annual_kwh.m2)[5], 'orange2', 'red3'))
 ######
 #7cm VWC depletion
-png(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', paste0('WY2017.SM.', depth, 'cm.WP.2xFD.png')), family = 'Book Antiqua', width = 1200, height = 500, units = 'px', res=100)
-par(mar=c(2.5, 4.5, 1, 4.5))
+tiff(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', 'aspect scheme', '7 cm plots', paste0('WY2017.SM.7cm.WP.2xFD.tif')), family = 'Times New Roman', pointsize = 11, width = 9, height = 3, units = 'in', res=150)
+par(mar=c(2.25, 4.5, 0.5, 4.5))
 for (i in 1:16) {
   if (i == 1) {
-    plot(as.Date(colnames(depletion_vwc_2017)[2:ncol(depletion_vwc_2017)], '%b_%d_%Y'), depletion_vwc_2017[i,2:ncol(depletion_vwc_2017)], type='l', col=forage_terrain_energy$energy_colors[i], ylim=c(-0.6, 1.5), xaxt='n', xlab='', yaxt = 'n', ylab = 'fraction of plant available water, 7 cm depth', xlim = as.Date(c('2016-12-01', '2017-05-03')))
+    plot(as.Date(colnames(depletion_vwc_2017)[2:ncol(depletion_vwc_2017)], '%b_%d_%Y'), depletion_vwc_2017[i,2:ncol(depletion_vwc_2017)], type='l', col=forage_terrain_energy$energy_colors[i], ylim=c(-0.6, 1.5), xaxt='n', xlab='', yaxt = 'n', ylab = 'fraction of plant available water, 0-15 cm', xlim = as.Date(c('2016-11-25', '2017-05-03')))
   } else {lines(as.Date(colnames(depletion_vwc_2017)[2:ncol(depletion_vwc_2017)], '%b_%d_%Y'), depletion_vwc_2017[i,2:ncol(depletion_vwc_2017)], col=forage_terrain_energy$energy_colors[i])}
 }
 axis(side = 2, at=c(-0.5, 0, 0.5, 1, 1.5))
-axis.Date(side = 1, at=seq.Date(from = as.Date('2016/12/1'), to = as.Date('2017/5/03'), by='months'), format = '%m/%d/%y')
+axis.Date(side = 1, at=seq.Date(from = as.Date('2016/12/01'), to = as.Date('2017/5/03'), by='months'), format = '%m/%d/%y')
 abline(h=0.5, lty=2)
 abline(h=1, lty=2)
 #abline(v=as.Date('2017/4/10'))
-legend('bottomleft', legend=(c("< 1254", '1254-1458', '>1458')), lty=1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), inset=0.01)
-text(x=as.Date('2016/12/07'), y= 1.1, label='field\ncapacity', cex=1.1)
-text(x=as.Date('2017/2/07'), y= 0.75, label='easily available \nwater', cex=1.1)
-text(x=as.Date('2017/4/28'), y= 0.05, label='wilting point', cex=1.1)
-#text(x=as.Date('2017/4/1'), y=1.25, label='peak forage', cex = 1.1)
-axis(side = 4, at = c(0, 0.1, 0.2, 0.3, 0.4), labels = c('0', '10', '20', '30', '40'))
+legend("bottom", legend=(c("< 1200", '1200-1410', '>1410')), lty=1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^-2)), inset=0.01, ncol = 3, lwd = 1.3)
+text(x=as.Date('2016/12/07'), y= 1.2, label='field\ncapacity', cex=1)
+text(x=as.Date('2017/2/07'), y= 0.7, label='easily available \nwater', cex=1)
+text(x=as.Date('2016/12/07'), y= -0.1, label='wilting point', cex=1)
+#text(x=as.Date('2016/12/15'), y=1.4, label='WY2017', cex = 1)
+axis(side = 4, at = c(0, 0.15, 0.3, 0.45, 0.6), labels = c('0', '10', '20', '30', '40'))
 mtext("mm precipitation per day", side=4, line=2.5, at=0.2)
-lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 0.01, type='s', col='lightblue', cex=0.5)
+lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 0.015, type='s', col='lightblue', cex=0.5)
 dev.off()
 
 #7 cm soil T 2017
-depth <- 7
-png(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', paste0('WY2017.soilT.', depth, 'cm.png')), family = 'Book Antiqua', width = 1200, height = 500, units = 'px', res=100)
-par(mar=c(2.5, 4.5, 1, 4.5))
+tiff(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', 'aspect scheme', '7 cm plots', paste0('WY2017.soilT.7cm.tif')), family = 'Times New Roman', pointsize = 11, width = 9, height = 3, units = 'in', res=150)
+par(mar=c(2.25, 4.5, 0.5, 4.5))
 for (i in 1:16) {
   if (i == 1) {
-    plot(as.Date(colnames(soilT_data_7cm_2017)[2:ncol(soilT_data_7cm_2017)], '%b_%d_%Y'), soilT_data_7cm_2017[i,2:ncol(soilT_data_7cm_2017)], type='l', col=forage_terrain_energy$energy_colors[i], xaxt='n', xlab='', yaxt = 'n', ylab = '7 cm depth soil temperature (deg C)', ylim = c(0,32), xlim = as.Date(c('2016-12-01', '2017-05-03')))
+    plot(as.Date(colnames(soilT_data_7cm_2017)[2:ncol(soilT_data_7cm_2017)], '%b_%d_%Y'), soilT_data_7cm_2017[i,2:ncol(soilT_data_7cm_2017)], type='l', col=forage_terrain_energy$energy_colors[i], xaxt='n', xlab='', yaxt = 'n', ylab = expression('7 cm depth soil temperature ('~degree*'C)'), ylim = c(0,32), xlim = as.Date(c('2016-11-25', '2017-05-03')))
   } else {lines(as.Date(colnames(soilT_data_7cm_2017)[2:ncol(soilT_data_7cm_2017)], '%b_%d_%Y'), soilT_data_7cm_2017[i,2:ncol(soilT_data_7cm_2017)], col=forage_terrain_energy$energy_colors[i])}
 }
 axis(side = 2, at=c(0, 10, 20, 30))
 axis.Date(side = 1, at=seq.Date(from = as.Date('2016/12/1'), to = as.Date('2017/5/03'), by='months'), format = '%m/%d/%y')
+#text(x=as.Date('2016/12/15'), y=30, label='WY2017', cex = 1.5)
 #abline(h=30, lty=2)
-abline(h=10, lty=2)
-legend('topleft', legend=(c("< 1254", '1254-1458', '>1458')), lty=1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), inset=0.01)
+#abline(h=10, lty=2)
+legend('topleft', legend=(c("< 1200", '1200-1410', '>1410')), lty=1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), inset=0.01, lwd = 1.3)
 dev.off()
 
 #now 2018 7 cm
-png(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', paste0('WY2018.SM.', depth, 'cm.WP2xFD.png')), family = 'Book Antiqua', width = 1200, height = 500, units = 'px', res=100)
-par(mar=c(2.5, 4.5, 1, 4.5))
+tiff(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', 'aspect scheme', '7 cm plots', paste0('WY2018.SM.7cm.WP2xFD.tif')), family = 'Times New Roman', pointsize = 11, width = 9, height = 3, units = 'in', res=150)
+par(mar=c(2.25, 4.5, 0.5, 4.5))
 for (i in 1:16) {
   if (i == 1) {
-    plot(as.Date(colnames(depletion_vwc_2018)[2:ncol(depletion_vwc_2018)], '%b_%d_%Y'), depletion_vwc_2018[i,2:ncol(depletion_vwc_2018)], type='l', col=forage_terrain_energy$energy_colors[i], ylim=c(-0.6, 1.5), xaxt='n', xlab='', ylab = 'fraction of plant available water, 7 cm depth', xlim = as.Date(c('2017-12-01', '2018-05-03')))
+    plot(as.Date(colnames(depletion_vwc_2018)[2:ncol(depletion_vwc_2018)], '%b_%d_%Y'), depletion_vwc_2018[i,2:ncol(depletion_vwc_2018)], type='l', col=forage_terrain_energy$energy_colors[i], ylim=c(-0.6, 1.5), xaxt='n', xlab='', ylab = 'fraction of plant available water, 0-15 cm', xlim = as.Date(c('2017-11-25', '2018-05-03')))
   } else {lines(as.Date(colnames(depletion_vwc_2018)[2:ncol(depletion_vwc_2018)], '%b_%d_%Y'), depletion_vwc_2018[i,2:ncol(depletion_vwc_2018)], col=forage_terrain_energy$energy_colors[i])}
 }
 axis.Date(side = 1, at=seq.Date(from = as.Date('2017/12/1'), to = as.Date('2018/5/03'), by='months'), format = '%m/%d/%y')
 abline(h=0.5, lty=2)
 abline(h=1, lty=2)
 #abline(v=as.Date('2018/4/15'))
-legend('topright', legend=(c("< 1254", '1254-1458', '>1458')), lty=1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), inset=0.01)
-text(x=as.Date('2017/12/15'), y= 1.05, label='field capacity', cex=1.1)
-text(x=as.Date('2017/12/15'), y= 0.75, label='easily available \nwater', cex=1.1)
-text(x=as.Date('2017/12/15'), y= 0.05, label='wilting point', cex=1.1)
-#text(x=as.Date('2018/4/7'), y=1.25, label='peak forage', cex=1.1)
-axis(side = 4, at = c(0, 0.1, 0.2, 0.3, 0.4), labels = c('0', '10', '20', '30', '40'))
+#legend('topleft', legend=(c("< 1200", '1200-1410', '>1410')), lty=1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), inset=0.01, ncol = 3, lwd = 1.3)
+text(x=as.Date('2017/12/15'), y= 1.1, label='field capacity', cex=1)
+text(x=as.Date('2017/12/15'), y= 0.75, label='easily available \nwater', cex=1)
+text(x=as.Date('2017/12/15'), y= -0.1, label='wilting point', cex=1)
+#text(x=as.Date('2017/12/15'), y=1.4, label='WY2018', cex = 1)
+axis(side = 4, at = c(0, 0.15, 0.3, 0.45, 0.6), labels = c('0', '10', '20', '30', '40'))
 mtext("mm precipitation per day", side=4, line=2.5, at=0.2)
-lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 0.01, type='s', col='lightblue', cex=0.5)
+lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 0.015, type='s', col='lightblue', cex=0.5)
 dev.off()
 
 #7 cm soil T 2018
 depth <- 7
-png(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', paste0('WY2018.soilT.', depth, 'cm.png')), family = 'Book Antiqua', width = 1200, height = 500, units = 'px', res=100)
-par(mar=c(2.5, 4.5, 1, 4.5))
+tiff(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', 'aspect scheme', '7 cm plots', paste0('WY2018.soilT.7cm.tif')), family = 'Times New Roman', pointsize = 11, width = 9, height = 3, units = 'in', res=150)
+par(mar=c(2.25, 4.5, 0.5, 4.5))
 for (i in 1:16) {
   if (i == 1) {
-    plot(as.Date(colnames(soilT_data_7cm_2018)[2:ncol(soilT_data_7cm_2018)], '%b_%d_%Y'), soilT_data_7cm_2018[i,2:ncol(soilT_data_7cm_2018)], type='l', col=forage_terrain_energy$energy_colors[i], xaxt='n', xlab='', yaxt = 'n', ylab = '7 cm depth soil temperature (deg C)', ylim = c(0,32), xlim = as.Date(c('2017-12-01', '2018-05-03')))
+    plot(as.Date(colnames(soilT_data_7cm_2018)[2:ncol(soilT_data_7cm_2018)], '%b_%d_%Y'), soilT_data_7cm_2018[i,2:ncol(soilT_data_7cm_2018)], type='l', col=forage_terrain_energy$energy_colors[i], xaxt='n', xlab='', yaxt = 'n', ylab = expression('7 cm depth soil temperature ('~degree*'C)'), ylim = c(0,32), xlim = as.Date(c('2017-11-25', '2018-05-03')))
   } else {lines(as.Date(colnames(soilT_data_7cm_2018)[2:ncol(soilT_data_7cm_2018)], '%b_%d_%Y'), soilT_data_7cm_2018[i,2:ncol(soilT_data_7cm_2018)], col=forage_terrain_energy$energy_colors[i])}
 }
 axis(side = 2, at=c(0, 10, 20, 30))
 axis.Date(side = 1, at=seq.Date(from = as.Date('2017/12/1'), to = as.Date('2018/5/03'), by='months'), format = '%m/%d/%y')
 #abline(h=30, lty=2)
-abline(h=10, lty=2)
-legend('topleft', legend=(c("< 1254", '1254-1458', '>1458')), lty=1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), inset=0.01)
+#abline(h=10, lty=2)
+#text(x=as.Date('2017/12/15'), y=30, label='WY2018', cex = 1.5)
+#legend('bottomright', legend=(c("< 1200", '1200-1410', '>1410')), lty=1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), inset=0.01)
 dev.off()
-
-
 
 #now 22 cm graphs
 #2017
-depth <- 22
-png(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', paste0('WY2017.SM.', depth, 'cm.WP1.35xFD.png')), family = 'Book Antiqua', width = 1200, height = 500, units = 'px', res=100)
-par(mar=c(2.5, 4.5, 1, 4.5))
+tiff(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', 'aspect scheme', '22 cm plots', paste0('WY2017.SM.22cm.WP1.35xFD.tif')), family = 'Times New Roman', pointsize = 11, width = 9, height = 3, units = 'in', res=150)
+par(mar=c(2.25, 4.5, 0.5, 4.5))
 for (i in 1:16) {
   if (i == 1) {
-    plot(as.Date(colnames(depletion_vwc_2017)[2:ncol(depletion_vwc_2017)], '%b_%d_%Y'), depletion_vwc_2017[i,2:ncol(depletion_vwc_2017)], type='l', col=forage_terrain_energy$energy_colors[i], ylim=c(-0.55, 1.4), xaxt='n', xlab='', yaxt = 'n', ylab = 'fraction of plant available water, 22 cm depth', xlim = as.Date(c('2016-11-25', '2017-05-03')))
-  } else {lines(as.Date(colnames(depletion_vwc_2017)[2:ncol(depletion_vwc_2017)], '%b_%d_%Y'), depletion_vwc_2017[i,2:ncol(depletion_vwc_2017)], col=forage_terrain_energy$energy_colors[i])}
+    plot(as.Date(colnames(depletion_vwc_2017_22)[2:ncol(depletion_vwc_2017_22)], '%b_%d_%Y'), depletion_vwc_2017_22[i,2:ncol(depletion_vwc_2017_22)], type='l', col=forage_terrain_energy$energy_colors[i], ylim=c(-0.55, 1.5), xaxt='n', xlab='', yaxt = 'n', ylab = 'fraction of plant available water, 15-30 cm', xlim = as.Date(c('2016-11-25', '2017-05-03')))
+  } else {lines(as.Date(colnames(depletion_vwc_2017_22)[2:ncol(depletion_vwc_2017_22)], '%b_%d_%Y'), depletion_vwc_2017_22[i,2:ncol(depletion_vwc_2017_22)], col=forage_terrain_energy$energy_colors[i])}
 }
-axis(side = 2, at=c(-0.5, 0, 0.5, 1))
+axis(side = 2, at=c(-0.5, 0, 0.5, 1.0, 1.5))
 axis.Date(side = 1, at=seq.Date(from = as.Date('2016/12/1'), to = as.Date('2017/5/03'), by='months'), format = '%m/%d/%y')
 abline(h=0.5, lty=2)
 abline(h=1, lty=2)
-legend('topright', legend=(c("< 1254", '1254-1458', '>1458')), lty=1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), inset=0.01)
-text(x=as.Date('2016/12/07'), y= 1.05, label='field capacity', cex=1.1)
-text(x=as.Date('2017/2/07'), y= 0.75, label='easily available \nwater', cex=1.1)
-text(x=as.Date('2017/4/28'), y= 0.05, label='wilting point', cex=1.1)
-axis(side = 4, at = c(0, 0.1, 0.2, 0.3, 0.4), labels = c('0', '10', '20', '30', '40'))
+legend(x=as.Date('2017/1/10'), y=-0.05, legend=(c("< 1200", '1200-1410', '>1410')), lty=1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), inset=0.01, ncol=3, lwd = 1.3)
+text(x=as.Date('2016/12/07'), y= 1.1, label='field capacity', cex=1)
+text(x=as.Date('2017/2/07'), y= 0.75, label='easily available \nwater', cex=1)
+text(x=as.Date('2017/4/25'), y= -0.1, label='wilting point', cex=1)
+#text(x=as.Date('2016/12/15'), y=1.4, label='WY2017', cex = 1)
+axis(side = 4, at = c(0, 0.15, 0.3, 0.45, 0.6), labels = c('0', '10', '20', '30', '40'))
 mtext("mm precipitation per day", side=4, line=2.5, at=0.2)
-lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 0.01, type='s', col='lightblue', cex=0.5)
+lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 0.015, type='s', col='lightblue', cex=0.5)
 dev.off()
 
 #now 2018 22 cm
-png(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', paste0('WY2018.SM.', depth, 'cm.WP1.35xFD.png')), family = 'Book Antiqua', width = 1200, height = 500, units = 'px', res=100)
-par(mar=c(2.5, 4.5, 1, 4.5))
+png(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', 'aspect scheme', '22 cm plots', paste0('WY2018.SM.22cm.WP1.35xFD.png')), family = 'Times New Roman', pointsize = 11, width = 9, height = 3, units = 'in', res=150)
+par(mar=c(2.25, 4.5, 0.5, 4.5))
 for (i in 1:16) {
   if (i == 1) {
-    plot(as.Date(colnames(depletion_vwc_2018)[2:ncol(depletion_vwc_2018)], '%b_%d_%Y'), depletion_vwc_2018[i,2:ncol(depletion_vwc_2018)], type='l', col=forage_terrain_energy$energy_colors[i], ylim=c(-0.55, 1.4), xaxt='n', xlab='', yaxt = 'n', ylab = 'fraction of plant available water, 22 cm depth', xlim = as.Date(c('2017-11-25', '2018-05-03')))
-  } else {lines(as.Date(colnames(depletion_vwc_2018)[2:ncol(depletion_vwc_2018)], '%b_%d_%Y'), depletion_vwc_2018[i,2:ncol(depletion_vwc_2018)], col=forage_terrain_energy$energy_colors[i])}
+    plot(as.Date(colnames(depletion_vwc_2018_22)[2:ncol(depletion_vwc_2018_22)], '%b_%d_%Y'), depletion_vwc_2018_22[i,2:ncol(depletion_vwc_2018_22)], type='l', col=forage_terrain_energy$energy_colors[i], ylim=c(-0.55, 1.5), xaxt='n', xlab='', yaxt = 'n', ylab = 'fraction of plant available water, 15-30 cm', xlim = as.Date(c('2017-11-25', '2018-05-03')))
+  } else {lines(as.Date(colnames(depletion_vwc_2018_22)[2:ncol(depletion_vwc_2018_22)], '%b_%d_%Y'), depletion_vwc_2018_22[i,2:ncol(depletion_vwc_2018_22)], col=forage_terrain_energy$energy_colors[i])}
 }
 axis.Date(side = 1, at=seq.Date(from = as.Date('2017/12/1'), to = as.Date('2018/5/03'), by='months'), format = '%m/%d/%y')
-axis(side = 2, at=c(-0.5, 0, 0.5, 1))
+axis(side = 2, at=c(-0.5, 0, 0.5, 1.0, 1.5))
 abline(h=0.5, lty=2)
 abline(h=1, lty=2)
-legend('topright', legend=(c("< 1254", '1254-1458', '>1458')), lty=1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), inset=0.01)
-text(x=as.Date('2017/12/15'), y= 1.05, label='field capacity', cex=1.1)
+#legend('topright', legend=(c("< 1200", '1200-1410', '>1410')), lty=1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), inset=0.01)
+text(x=as.Date('2017/12/15'), y= 1.1, label='field capacity', cex=1.1)
 text(x=as.Date('2017/12/15'), y= 0.75, label='easily available \nwater', cex=1.1)
-text(x=as.Date('2017/12/15'), y= 0.05, label='wilting point', cex=1.1)
-axis(side = 4, at = c(0, 0.1, 0.2, 0.3, 0.4), labels = c('0', '10', '20', '30', '40'))
+text(x=as.Date('2017/12/15'), y= -0.1, label='wilting point', cex=1.1)
+#text(x=as.Date('2017/12/15'), y=1.4, label='WY2018', cex = 1.5)
+axis(side = 4, at = c(0, 0.15, 0.3, 0.45, 0.6), labels = c('0', '10', '20', '30', '40'))
 mtext("mm precipitation per day", side=4, line=2.5, at=0.2)
-lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 0.01, type='s', col='lightblue', cex=0.5)
+lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 0.015, type='s', col='lightblue', cex=0.5)
 dev.off()
 
-belowAD2017 <- apply(depletion_vwc_2017, 1, function(x) which(x < 0.5))
-names(belowAD2017) <- 1:16
-belowAD2018 <- apply(depletion_vwc_2018, 1, function(x) which(x < 0.5))
-names(belowAD2018) <- 1:16
-days.below.AD2018 <- apply(depletion_vwc_2018[,which(colnames(depletion_vwc_2018) =="Jan_08_2018"):which(colnames(depletion_vwc_2018)=='Apr_15_2018')], 1, function(x) sum(x < 0.5))
+#22 cm soil T 2018
+tiff(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', 'aspect scheme', '22 cm plots', paste0('WY2018.soilT.22cm.tif')), family = 'Times New Roman', width = 9, height = 3, units = 'in', res=150, pointsize = 11)
+par(mar=c(2.25, 4.5, 0.5, 4.5))
+for (i in 1:16) {
+  if (i == 1) {
+    plot(as.Date(colnames(soilT_data_22cm_2018)[2:ncol(soilT_data_22cm_2018)], '%b_%d_%Y'), soilT_data_22cm_2018[i,2:ncol(soilT_data_22cm_2018)], type='l', col=forage_terrain_energy$energy_colors[i], xaxt='n', xlab='', yaxt = 'n', ylab = expression('22 cm depth soil temperature (' ~degree*'C)'), ylim = c(0,32), xlim = as.Date(c('2017-11-25', '2018-05-03')))
+  } else {lines(as.Date(colnames(soilT_data_22cm_2018)[2:ncol(soilT_data_22cm_2018)], '%b_%d_%Y'), soilT_data_22cm_2018[i,2:ncol(soilT_data_22cm_2018)], col=forage_terrain_energy$energy_colors[i])}
+}
+#text(x=as.Date('2017/12/15'), y=30, label='WY2018', cex = 1.5)
+axis(side = 2, at=c(0, 10, 20, 30))
+axis.Date(side = 1, at=seq.Date(from = as.Date('2017/12/1'), to = as.Date('2018/5/03'), by='months'), format = '%m/%d/%y')
+#abline(h=30, lty=2)
+#abline(h=10, lty=2)
+#legend('topleft', legend=(c("< 1200", '1200-1410', '>1410')), lty=1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), inset=0.01, lwd = 1.3)
+dev.off()
+
+#22 cm 2017 soil T
+tiff(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', 'aspect scheme', '22 cm plots', paste0('WY2017.soilT.22cm.tif')), family = 'Times New Roman', width = 9, height = 3, units = 'in', res=150, pointsize = 11)
+par(mar=c(2.25, 4.5, 0.5, 4.5))
+for (i in 1:16) {
+  if (i == 1) {
+    plot(as.Date(colnames(soilT_data_22cm_2017)[2:ncol(soilT_data_22cm_2017)], '%b_%d_%Y'), soilT_data_22cm_2017[i,2:ncol(soilT_data_22cm_2017)], type='l', col=forage_terrain_energy$energy_colors[i], xaxt='n', xlab='', yaxt = 'n', ylab = expression('22 cm depth soil temperature ('~degree*'C)'), ylim = c(0,32), xlim = as.Date(c('2016-11-25', '2017-05-03')))
+  } else {lines(as.Date(colnames(soilT_data_22cm_2017)[2:ncol(soilT_data_22cm_2017)], '%b_%d_%Y'), soilT_data_22cm_2017[i,2:ncol(soilT_data_22cm_2017)], col=forage_terrain_energy$energy_colors[i])}
+}
+#text(x=as.Date('2016/12/15'), y=30, label='WY2017', cex = 1.5)
+axis(side = 2, at=c(0, 10, 20, 30))
+axis.Date(side = 1, at=seq.Date(from = as.Date('2016/12/1'), to = as.Date('2017/5/03'), by='months'), format = '%m/%d/%y')
+#abline(h=30, lty=2)
+#abline(h=10, lty=2)
+legend('topleft', legend=(c("< 1200", '1200-1410', '>1410')), lty=1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), inset=0.01, lwd=1.3)
+dev.off()
+
+#count days below AD
+date1_2017 <- 'Jan_10_2017'
+date2_2017 <- 'Apr_15_2017'
+date1_2018 <- 'Jan_10_2018'
+date2_2018 <- 'Apr_15_2018'
+days.below.AD2017 <- apply(depletion_vwc_2017[,which(colnames(depletion_vwc_2017) ==date1_2017):which(colnames(depletion_vwc_2017)==date2_2017)], 1, function(x) sum(x < 0.5))
+days.below.AD2017 #missing location 13
+days.below.AD2018 <- apply(depletion_vwc_2018[,which(colnames(depletion_vwc_2018)==date1_2018):which(colnames(depletion_vwc_2018)==date2_2018)], 1, function(x) sum(x < 0.5))
+days.below.AD2018 #not missing any
+days.below.AD2017_22 <- apply(depletion_vwc_2017_22[,which(colnames(depletion_vwc_2017_22) ==date1_2017):which(colnames(depletion_vwc_2017_22)==date2_2017)], 1, function(x) sum(x < 0.5))
+days.below.AD2017_22 #missing location 13
+days.below.AD2018_22 <- apply(depletion_vwc_2018_22[,which(colnames(depletion_vwc_2018_22) ==date1_2018):which(colnames(depletion_vwc_2018_22)==date2_2018)], 1, function(x) sum(x < 0.5))
+days.below.AD2018_22 #missing location 3
+#plot(seq(from=0.4, by=.005, length.out = 16), days.below.AD2018_22, xlim = c(0,1), cex=1.5, col=forage_terrain_energy$energy_colors)
+days.below.50AD.summary <- data.frame(WY=c(2017, 2018), depth7cm_mean=c(mean(days.below.AD2017, na.rm = TRUE), mean(days.below.AD2018, na.rm = TRUE)), depth7cm_sd=c(sd(days.below.AD2017, na.rm = TRUE), sd(days.below.AD2018, na.rm = TRUE)), depth22cm_mean=c(mean(days.below.AD2017_22, na.rm = TRUE), mean(days.below.AD2018_22, na.rm = TRUE)), depth22cm_sd=c(sd(days.below.AD2017_22, na.rm = TRUE), sd(days.below.AD2018_22, na.rm = TRUE)), depth7cm_max = c(max(days.below.AD2017, na.rm = TRUE), max(days.below.AD2018, na.rm = TRUE)), depth7cm_min=c(min(days.below.AD2017, na.rm = TRUE), min(days.below.AD2018, na.rm = TRUE)), depth22cm_max=c(max(days.below.AD2017_22, na.rm = TRUE), max(days.below.AD2018_22, na.rm = TRUE)), depth22cm_min=c(min(days.below.AD2017_22, na.rm = TRUE), min(days.below.AD2018_22, na.rm = TRUE)))
+days.below.50AD.summary
+write.csv(days.below.50AD.summary, file.path(results, 'tables', 'days.below50percentPAW.Jan10.Apr15.csv'), row.names = FALSE)
+barplot(as.matrix(days.below.50AD.summary[ ,c(2,4)]), beside = TRUE, col=c('blue', 'red3'), ylab='Days below 50% plant available water', names.arg = c('0-15 cm', '15-30 cm'), legend.text = c('WY2017 (wet)', 'WY2018 (dry)'), cex.axis = 1.3, cex.names = 1.3, cex.lab = 1.3, args.legend = list(x="topleft", inset=0.005, cex=1.4))
+
+
+png(file = file.path(results, 'figures', 'finals', 'days below AD', 'days.below.50percentPAW.Jan10_Apr15.png'), family = 'Book Antiqua', width = 800, height = 650, units = 'px', res=100)
+par(mar=c(4.8, 4.8, 1, 1))
+plot(x=seq(from=0.08, by=.0025, length.out = 16), days.below.AD2017, pch=1, col=forage_terrain_energy$energy_colors, xlim = c(0.05, 0.5), ylim=c(0, length(seq.Date(as.Date(date1_2018, '%b_%d_%Y'), as.Date(date2_2018, '%b_%d_%Y'), by='day'))), xaxt='n', ylab = 'days below 50% plant available water (Jan 10 - Apr 15)', xlab = '', cex=1.3, cex.axis=1.3, cex.lab=1.3)
+points(x=seq(from=0.18, by=.0025, length.out = 16), days.below.AD2017_22, pch=1, col=forage_terrain_energy$energy_colors, cex=1.3)
+#abline(h=96, lty=1)
+abline(v=0.275, lty=2)
+points(x=seq(from=0.33, by=.0025, length.out = 16), days.below.AD2018, pch=1, col=forage_terrain_energy$energy_colors, cex=1.3)
+points(x=seq(from=0.43, by=.0025, length.out = 16), days.below.AD2018_22, pch=1, col=forage_terrain_energy$energy_colors, cex=1.3)
+axis(side = 1, at = c(0.1, 0.2, 0.35, 0.45), labels = FALSE, tick = TRUE)
+mtext(text = c('WY2017', 'WY2018'), side = 1, at=c(0.15, 0.4), line=2.5, cex=1.3)
+mtext(text = c('0-15 cm', '15-30 cm', '0-15 cm', '15-30 cm'), side = 1, at = c(0.1, 0.2, 0.35, 0.45), line=1, cex = 1.3)
+legend('topleft', legend=(c("< 1200", '1200-1410', '>1410')), pch = 1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), inset=0.1, cex = 1.3)
+dev.off()
+
+plot(days.below.AD2017, forage_terrain_energy$Apr2017growth)
+summary(lm(forage_terrain_energy$Apr2017growth ~ days.below.AD2017)) #explains 45% of variance in Mar 14 - Apr 10 growth
+days.below.AD2017_end <- apply(depletion_vwc_2017[,which(colnames(depletion_vwc_2017) =="Mar_01_2017"):which(colnames(depletion_vwc_2017)=='Apr_15_2017')], 1, function(x) sum(x < 0.5))
+first.day.below.50AD <- apply(depletion_vwc_2017[,which(colnames(depletion_vwc_2017) =="Mar_01_2017"):which(colnames(depletion_vwc_2017)=='Apr_15_2017')], 1, function(x) which(x < 0.5)[1])
+summary(lm(forage_terrain_energy$Apr2017growth ~ days.below.AD2017_end))
+plot(days.below.AD2017_end, forage_terrain_energy$Apr2017growth, col=forage_terrain_energy$energy_colors)
+plot(first.day.below.50AD, forage_terrain_energy$Apr2017growth, col=forage_terrain_energy$energy_colors)
+plot(depletion_vwc_2017$Mar_18_2017, forage_terrain_energy$Apr2017growth, col=forage_terrain_energy$energy_colors)
+
+plot(days.below.AD2017, forage_terrain_energy$peak2017)
+abline(lm(forage_terrain_energy$peak2017 ~ days.below.AD2017))
+summary(lm(forage_terrain_energy$peak2017 ~ days.below.AD2017))
+plot(lm(forage_terrain_energy$peak2017 ~ days.below.AD2017))
+plot(days.below.AD2017_22, forage_terrain_energy$peak2017)
+summary(lm(forage_terrain_energy$peak2017 ~ days.below.AD2017_22))
+plot(days.below.AD2018, forage_terrain_energy$peak2018)
+summary(lm(forage_terrain_energy$peak2018 ~ days.below.AD2018))
+plot(days.below.AD2018_22, forage_terrain_energy$peak2018)
+abline(lm(forage_terrain_energy$peak2018 ~ days.below.AD2018_22))
+summary(lm(forage_terrain_energy$peak2018 ~ days.below.AD2018_22))
+
+#days below WP
+
+
+
 avg.soilT.2018.growing.seson <- apply(soilT_data[,which(colnames(soilT_data) =="Jan_08_2018"):which(colnames(soilT_data)=='Apr_15_2018')], 1, mean)
 mean.depletion <- apply(depletion_vwc_2018[,which(colnames(depletion_vwc_2018) =="Jan_08_2018"):which(colnames(depletion_vwc_2018)=='Apr_15_2018')], 1, mean)
 summary(lm(forage_terrain_energy$peak2018 ~ days.below.AD2018 * avg.soilT.2018.growing.seson))
