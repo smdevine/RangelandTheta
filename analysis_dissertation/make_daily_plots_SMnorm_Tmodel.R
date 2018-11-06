@@ -90,6 +90,8 @@ wilting.point.by.location <- if (depth == 7) {
     1.35 * apply(vwc_data[,which(colnames(vwc_data)=='Nov_30_2017'):which(colnames(vwc_data)=='Dec_31_2017')], 1, mean, na.rm=TRUE)
 }
 paw.by.location <- FC.by.location - wilting.point.by.location
+SM_chars <- data.frame(location=1:16, FC=FC.by.location, WP=wilting.point.by.location, PAW=paw.by.location)
+write.csv(SM_chars, file.path(results, 'tables', paste0('SM_characteristics_', depth, 'cm.11.2.18.csv')), row.names = FALSE)
 mean(paw.by.location, na.rm = TRUE)
 mean(FC.by.location, na.rm = TRUE)
 mean(wilting.point.by.location, na.rm = TRUE)
