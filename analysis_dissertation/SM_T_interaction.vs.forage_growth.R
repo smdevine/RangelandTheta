@@ -368,4 +368,127 @@ all_0_15cm_results <- do.call(rbind, lapply(results_fnames, read.csv, stringsAsF
 all_0_15cm_results <- all_0_15cm_results[all_0_15cm_results$depth=='0_15',]
 all_0_15cm_results <- all_0_15cm_results[order(as.Date(all_0_15cm_results$start_date, format = '%b_%d_%Y'), as.Date(all_0_15cm_results$end_date, format='%b_%d_%Y'), all_0_15cm_results$model.code), ]
 write.csv(all_0_15cm_results, file.path(model_resultsDir, '0_15cm_only', 'forage_growth_vs.0_15cm_all_model_results.csv'), row.names=FALSE)
+#to-do: paste 2017 forage growth vs. SM * T figures from 'make_daily_plots_SMnorm_Tmodel.R' here
 
+#2018 figures
+#Mar 2018 growth fig
+#SM_T_interaction_model(2018, 'Feb_16_2018', 'Mar_22_2018', 'Mar2018growth', TRUE, 'Mar 2018 growth')
+start_date <- 'Feb_16_2018'
+end_date <- 'Mar_22_2018'
+normalizeVars <- FALSE
+forage_growth <- 'Mar2018growth'
+dates <- which(colnames(depletion_vwc_2018)==start_date):which(colnames(depletion_vwc_2018)==end_date)
+avg_depletion_7cm <- if(normalizeVars) {normalize_var(apply(depletion_vwc_2018[ ,dates], 1, mean))} else {apply(depletion_vwc_2018[ ,dates], 1, mean)}
+avg_depletion_22cm <- if(normalizeVars) {normalize_var(apply(depletion_vwc_2018_22[ ,dates], 1, mean))} else {apply(depletion_vwc_2018_22[ ,dates], 1, mean)}
+avg_depletion <- if(normalizeVars) {normalize_var(rowMeans(cbind(apply(depletion_vwc_2018[ ,dates], 1, mean), apply(depletion_vwc_2018_22[ ,dates], 1, mean))))} else {rowMeans(cbind(avg_depletion_7cm, avg_depletion_22cm))}
+avg_soilT_7cm <- if(normalizeVars) {normalize_var(apply(soilT_data_7cm_2018[ ,dates], 1, mean))} else {apply(soilT_data_7cm_2018[ ,dates], 1, mean)}
+avg_soilT_22cm <- if(normalizeVars) {normalize_var(apply(soilT_data_22cm_2018[ ,dates], 1, mean))} else {apply(soilT_data_22cm_2018[ ,dates], 1, mean)}
+avg_soilT <- if(normalizeVars) {normalize_var(rowMeans(cbind(apply(soilT_data_7cm_2018[ ,dates], 1, mean), apply(soilT_data_22cm_2018[ ,dates], 1, mean))))} else {rowMeans(cbind(avg_soilT_7cm, avg_soilT_22cm))}
+df_7cm <- data.frame(growth_period = forage_terrain_energy[[forage_growth]], avg_soilT_7cm, avg_depletion_7cm)
+df_22cm <- data.frame(growth_period = forage_terrain_energy[[forage_growth]], avg_soilT_22cm, avg_depletion_22cm)
+df_0_30cm <- data.frame(growth_period = forage_terrain_energy[[forage_growth]], avg_soilT, avg_depletion)
+
+#0-30 cm plot forage growth vs. soil T plot
+cex.adjuster <- 8
+tiff(file = file.path(results, 'figures', 'finals', 'SM_T_effects_visualizations', '2018 growth', 'Mar2018.growth.vs.soilT30cm.tif'), pointsize = 11, family = 'Times New Roman', width = 4.5, height = 4, units = 'in', res = 150)
+par(mar=c(4, 4.25, 1, 1))
+plot(df_0_30cm$avg_soilT, df_0_30cm$growth_period, ylab=expression('forage growth, Feb 16-Mar 22 (kg'~~ha^-1*')'), xlab=expression('0-30 cm soil temperature, Feb 16-Mar 22, 2018 mean ('*degree*'C)'), cex.axis=1, xlim=c(8.1, 15.1), cex.lab=1, pch=19, cex=ifelse(df_0_30cm$avg_depletion < 0.1, 0.1*cex.adjuster, df_0_30cm$avg_depletion * cex.adjuster), col=forage_terrain_energy$energy_colors) #mgp=c(2.5, 1, 0)) #  cex=forage_terrain_energy$clp031417/750
+#axis(side = 2, at=c(-0.2, 0, 0.2, 0.4), labels = c('-20', '0', '20', '40'), mgp=c(2.5, 1, 0))
+legend('bottomleft', legend=c(expression('< 1200 annual kWh'~m^-2), expression('1200-1410 annual kWh'~m^-2), expression('>1410 annual kWh'~m^-2), '<10% PAW', '25% PAW', '40% PAW'), pch = c(19,19,19,1,1,1), pt.cex = c(0.25*cex.adjuster, 0.25*cex.adjuster, 0.25*cex.adjuster, 0.1*cex.adjuster, 0.25*cex.adjuster, 0.4*cex.adjuster), col=c('blue', 'orange2', 'red3', 'black', 'black', 'black'), inset=0.01, cex = 1)#, bty = 'n') #y.intersp =1) # expression('1000 kg'~ha^-1~'Mar 14, 2017'), expression('2500 kg'~ha^-1~'Mar 14, 2017')
+#rect(xleft = 7.9, ytop = .05, xright = 12.15, ybottom = -0.22)
+#abline(v=13, lty=2)
+#text(x=9, y=0.41, label=expression('< 13'~degree*'C soil temperature'), cex=1, adj=c(0,0))
+#text(x=9, y=0.38, label='soil temperature', cex=1, adj=c(0,0))
+#text(x=9, y=0.37, label=expression('414 \u00B1 160 kg'~ha^-1~'growth'), cex=1, adj=c(0,0))
+#text(x=13.1, y=0.41, label=expression('> 13'~degree*'C'), cex=1, adj=c(0,0))
+#text(x=13.1, y=0.375, label='soil temperature', cex=1, adj=c(0,0))
+#text(x=13.1, y=0.33, label=expression('84 \u00B1 240 kg'~ha^-1), cex=1, adj=c(0,0))
+dev.off()
+
+#0-7 cm plot
+cex.adjuster <- 175
+tiff(file = file.path(results, 'figures', 'finals', 'SM_T_effects_visualizations', '2018 growth', 'Mar2018.growth.vs.SM_T_int7cm.tif'), pointsize = 11, family = 'Times New Roman', width = 4.5, height = 4.5, units = 'in', res = 150)
+par(mar=c(4, 4, 1, 1))
+plot(df_7cm$avg_soilT, df_7cm$avg_depletion, ylab='0-15 cm plant available water, Feb 16-Mar 22, 2018 mean (%)', xlab=expression('0-15 cm soil temperature, Feb 16-Mar 22, 2018 mean ('*degree*'C)'), cex.axis=1, yaxt='n', xlim=c(8.1, 15.1), cex.lab=1, pch=19, cex=ifelse(df_7cm$growth_period < 100, 100/cex.adjuster, df_7cm$growth_period/cex.adjuster), col=forage_terrain_energy$energy_colors) #mgp=c(2.5, 1, 0)) #  cex=forage_terrain_energy$clp031417/750
+axis(side = 2, at=c(-0.2, 0, 0.2, 0.4, 0.6), labels = c('-20', '0', '20', '40', '60'), mgp=c(2.5, 1, 0))
+legend('bottomleft', legend=c(expression('< 1200 annual kWh'~m^-2), expression('1200-1410 annual kWh'~m^-2), expression('>1410 annual kWh'~m^-2), expression('<100 kg'~ha^-1~'growth'), expression('300 kg'~ha^-1~'growth'), expression('600 kg'~ha^-1~'growth')), pch = c(19,19,19,1,1,1), pt.cex = c(300/cex.adjuster, 300/cex.adjuster, 300/cex.adjuster, 100/cex.adjuster, 300/cex.adjuster, 600/cex.adjuster), col=c('blue', 'orange2', 'red3', 'black', 'black', 'black'), inset=0.01, cex = 1) #y.intersp =1) # expression('1000 kg'~ha^-1~'Mar 14, 2017'), expression('2500 kg'~ha^-1~'Mar 14, 2017')
+abline(v=13, lty=2)
+#text(x=10.5, y=0.6, label=expression('< 13'~degree*'C'), cex=1, adj=c(0,0))
+text(x=9, y=0.54, label=expression('< 13'~degree*'C soil temperature'), cex=1, adj=c(0,0))
+text(x=9, y=0.48, label=expression('414 \u00B1 160 kg'~ha^-1~'growth'), cex=1, adj=c(0,0))
+text(x=13.1, y=0.54, label=expression('> 13'~degree*'C'), cex=1, adj=c(0,0))
+text(x=13.1, y=0.48, label='soil temperature', cex=1, adj=c(0,0))
+text(x=13.1, y=0.4, label=expression('84 \u00B1 240 kg'~ha^-1), cex=1, adj=c(0,0))
+dev.off()
+
+#0-30 cm plot
+tiff(file = file.path(results, 'figures', 'finals', 'SM_T_effects_visualizations', '2018 growth', 'Mar2018.growth.vs.SM_T_int30cm.tif'), pointsize = 11, family = 'Times New Roman', width = 4.5, height = 4.5, units = 'in', res = 150)
+par(mar=c(4, 4, 1, 1))
+plot(df_0_30cm$avg_soilT, df_0_30cm$avg_depletion, ylab='0-30 cm plant available water, Feb 16-Mar 22, 2018 mean (%)', xlab=expression('0-30 cm soil temperature, Feb 16-Mar 22, 2018 mean ('*degree*'C)'), cex.axis=1, yaxt='n', xlim=c(8.1, 15.1), cex.lab=1, pch=19, cex=ifelse(df_0_30cm$growth_period < 100, 100/cex.adjuster, df_0_30cm$growth_period/cex.adjuster), col=forage_terrain_energy$energy_colors) #mgp=c(2.5, 1, 0)) #  cex=forage_terrain_energy$clp031417/750
+axis(side = 2, at=c(-0.2, 0, 0.2, 0.4), labels = c('-20', '0', '20', '40'), mgp=c(2.5, 1, 0))
+legend('bottomleft', legend=c(expression('< 1200 annual kWh'~m^-2), expression('1200-1410 annual kWh'~m^-2), expression('>1410 annual kWh'~m^-2), expression('<100 kg'~ha^-1~'growth'), expression('300 kg'~ha^-1~'growth'), expression('600 kg'~ha^-1~'growth')), pch = c(19,19,19,1,1,1), pt.cex = c(300/cex.adjuster, 300/cex.adjuster, 300/cex.adjuster, 100/cex.adjuster, 300/cex.adjuster, 600/cex.adjuster), col=c('blue', 'orange2', 'red3', 'black', 'black', 'black'), inset=0.01, cex = 1) #y.intersp =1) # expression('1000 kg'~ha^-1~'Mar 14, 2017'), expression('2500 kg'~ha^-1~'Mar 14, 2017')
+abline(v=13, lty=2)
+text(x=9, y=0.42, label=expression('< 13'~degree*'C'), cex=1, adj=c(0,0))
+text(x=9, y=0.38, label='soil temperature', cex=1, adj=c(0,0))
+text(x=9, y=0.34, label=expression('414 \u00B1 160 kg'~ha^-1~'growth'), cex=1, adj=c(0,0))
+text(x=13.1, y=0.42, label=expression('> 13'~degree*'C'), cex=1, adj=c(0,0))
+text(x=13.1, y=0.38, label='soil temperature', cex=1, adj=c(0,0))
+text(x=13.1, y=0.34, label=expression('84 \u00B1 240 kg'~ha^-1), cex=1, adj=c(0,0))
+dev.off()
+
+#0-30 cm plot v2
+tiff(file = file.path(results, 'figures', 'finals', 'SM_T_effects_visualizations', '2018 growth', 'Mar2018.growth.vs.SM_T_int30cm.v2.tif'), pointsize = 11, family = 'Times New Roman', width = 4.5, height = 4, units = 'in', res = 150)
+par(mar=c(4, 4.25, 1, 1))
+plot(df_0_30cm$avg_soilT, df_0_30cm$avg_depletion, ylab='0-30 cm mean plant available water (%)', xlab=expression('0-30 cm soil temperature, Feb 16-Mar 22, 2018 mean ('*degree*'C)'), cex.axis=1, yaxt='n', xlim=c(8.1, 15.1), cex.lab=1, pch=19, cex=ifelse(df_0_30cm$growth_period < 100, 100/cex.adjuster, df_0_30cm$growth_period/cex.adjuster), col=forage_terrain_energy$energy_colors) #mgp=c(2.5, 1, 0)) #  cex=forage_terrain_energy$clp031417/750
+axis(side = 2, at=c(-0.2, 0, 0.2, 0.4), labels = c('-20', '0', '20', '40'), mgp=c(2.5, 1, 0))
+legend('bottomleft', legend=c(expression('< 1200 annual kWh'~m^-2), expression('1200-1410 annual kWh'~m^-2), expression('>1410 annual kWh'~m^-2), expression('<100 kg'~ha^-1~'growth'), expression('300 kg'~ha^-1~'growth'), expression('600 kg'~ha^-1~'growth')), pch = c(19,19,19,1,1,1), pt.cex = c(300/cex.adjuster, 300/cex.adjuster, 300/cex.adjuster, 100/cex.adjuster, 300/cex.adjuster, 600/cex.adjuster), col=c('blue', 'orange2', 'red3', 'black', 'black', 'black'), inset=0.01, cex = 1, bty = 'n') #y.intersp =1) # expression('1000 kg'~ha^-1~'Mar 14, 2017'), expression('2500 kg'~ha^-1~'Mar 14, 2017')
+rect(xleft = 7.9, ytop = .05, xright = 12.15, ybottom = -0.22)
+abline(v=13, lty=2)
+text(x=9, y=0.41, label=expression('< 13'~degree*'C soil temperature'), cex=1, adj=c(0,0))
+#text(x=9, y=0.38, label='soil temperature', cex=1, adj=c(0,0))
+text(x=9, y=0.37, label=expression('414 \u00B1 160 kg'~ha^-1~'growth'), cex=1, adj=c(0,0))
+text(x=13.1, y=0.41, label=expression('> 13'~degree*'C'), cex=1, adj=c(0,0))
+text(x=13.1, y=0.375, label='soil temperature', cex=1, adj=c(0,0))
+text(x=13.1, y=0.33, label=expression('84 \u00B1 240 kg'~ha^-1), cex=1, adj=c(0,0))
+dev.off()
+
+#15-30 cm plot for Mar 2018 growth
+tiff(file = file.path(results, 'figures', 'finals', 'SM_T_effects_visualizations', '2018 growth', 'Mar2018.growth.vs.SM_T_int22cm.tif'), pointsize = 11, family = 'Times New Roman', width = 4.5, height = 4.5, units = 'in', res = 150)
+par(mar=c(4, 4, 1, 1))
+plot(df_22cm$avg_soilT, df_22cm$avg_depletion, ylab='15-30 cm plant available water, Feb 16-Mar 22, 2018 mean (%)', xlab=expression('15-30 cm soil temperature, Feb 16-Mar 22, 2018 mean ('*degree*'C)'), cex.axis=1, yaxt='n', xlim=c(8.1, 15.1), cex.lab=1, pch=19, cex=ifelse(df_22cm$growth_period < 100, 100/cex.adjuster, df_22cm$growth_period/cex.adjuster), col=forage_terrain_energy$energy_colors) #mgp=c(2.5, 1, 0)) #  cex=forage_terrain_energy$clp031417/750
+axis(side = 2, at=c(-0.2, 0, 0.2, 0.4), labels = c('-20', '0', '20', '40'), mgp=c(2.5, 1, 0))
+legend('bottomleft', legend=c(expression('< 1200 annual kWh'~m^-2), expression('1200-1410 annual kWh'~m^-2), expression('>1410 annual kWh'~m^-2), expression('<100 kg'~ha^-1~'growth'), expression('300 kg'~ha^-1~'growth'), expression('600 kg'~ha^-1~'growth')), pch = c(19,19,19,1,1,1), pt.cex = c(300/cex.adjuster, 300/cex.adjuster, 300/cex.adjuster, 100/cex.adjuster, 300/cex.adjuster, 600/cex.adjuster), col=c('blue', 'orange2', 'red3', 'black', 'black', 'black'), inset=0.01, cex = 1) #y.intersp =1) # expression('1000 kg'~ha^-1~'Mar 14, 2017'), expression('2500 kg'~ha^-1~'Mar 14, 2017')
+abline(v=13, lty=2)
+text(x=9.5, y=0.28, label=expression('< 13'~degree*'C'), cex=1, adj=c(0,0))
+text(x=9.5, y=0.25, label='soil temperature', cex=1, adj=c(0,0))
+text(x=9.5, y=0.21, label=expression('414 \u00B1 160 kg'~ha^-1~'growth'), cex=1, adj=c(0,0))
+text(x=13.1, y=0.28, label=expression('> 13'~degree*'C'), cex=1, adj=c(0,0))
+text(x=13.1, y=0.25, label='soil temperature', cex=1, adj=c(0,0))
+text(x=13.1, y=0.21, label=expression('84 \u00B1 240 kg'~ha^-1), cex=1, adj=c(0,0))
+dev.off()
+
+#Apr 2018 growth plots
+# SM_T_interaction_model(2018, 'Mar_23_2018', 'Apr_15_2018', 'Apr2018growth', TRUE, 'Apr 2018 growth')
+start_date <- 'Mar_23_2018'
+end_date <- 'Apr_15_2018'
+normalizeVars <- FALSE
+forage_growth <- 'Apr2018growth'
+dates <- which(colnames(depletion_vwc_2018)==start_date):which(colnames(depletion_vwc_2018)==end_date)
+avg_depletion_7cm <- if(normalizeVars) {normalize_var(apply(depletion_vwc_2018[ ,dates], 1, mean))} else {apply(depletion_vwc_2018[ ,dates], 1, mean)}
+avg_depletion_22cm <- if(normalizeVars) {normalize_var(apply(depletion_vwc_2018_22[ ,dates], 1, mean))} else {apply(depletion_vwc_2018_22[ ,dates], 1, mean)}
+avg_depletion <- if(normalizeVars) {normalize_var(rowMeans(cbind(apply(depletion_vwc_2018[ ,dates], 1, mean), apply(depletion_vwc_2018_22[ ,dates], 1, mean))))} else {rowMeans(cbind(avg_depletion_7cm, avg_depletion_22cm))}
+avg_soilT_7cm <- if(normalizeVars) {normalize_var(apply(soilT_data_7cm_2018[ ,dates], 1, mean))} else {apply(soilT_data_7cm_2018[ ,dates], 1, mean)}
+avg_soilT_22cm <- if(normalizeVars) {normalize_var(apply(soilT_data_22cm_2018[ ,dates], 1, mean))} else {apply(soilT_data_22cm_2018[ ,dates], 1, mean)}
+avg_soilT <- if(normalizeVars) {normalize_var(rowMeans(cbind(apply(soilT_data_7cm_2018[ ,dates], 1, mean), apply(soilT_data_22cm_2018[ ,dates], 1, mean))))} else {rowMeans(cbind(avg_soilT_7cm, avg_soilT_22cm))}
+df_7cm <- data.frame(growth_period = forage_terrain_energy[[forage_growth]], avg_soilT_7cm, avg_depletion_7cm)
+df_22cm <- data.frame(growth_period = forage_terrain_energy[[forage_growth]], avg_soilT_22cm, avg_depletion_22cm)
+df_0_30cm <- data.frame(growth_period = forage_terrain_energy[[forage_growth]], avg_soilT, avg_depletion)
+
+cex.adjuster <- 3
+tiff(file = file.path(results, 'figures', 'finals', 'SM_T_effects_visualizations', '2018 growth', 'Apr2018.growth.vs.SM_T_int30cm.tif'), pointsize = 11, family = 'Times New Roman', width = 4.5, height = 4, units = 'in', res = 150)
+par(mar=c(4, 4.25, 1, 1))
+plot(df_0_30cm$avg_soilT, df_0_30cm$growth_period, ylab=expression(' Forage growth, Mar 23-Apr 15, 2018 (kg '~~ha^-1*')'), xlab=expression('0-30 cm soil temperature, Mar 23-Apr 15, 2018 mean ('*degree*'C)'), cex.axis=1, cex.lab=1, pch=19, cex=df_0_30cm$avg_depletion*cex.adjuster, col=forage_terrain_energy$energy_colors)
+#axis(side = 2, at=c(0, 200, 400, 600, 800), labels = c('0', '200', '400', '600', '800'), mgp=c(2.5, 1, 0))
+legend('bottomright', legend=c('40% PAW', '55% PAW', '70% PAW'), pch = c(1,1,1), pt.cex = c(0.4*cex.adjuster, 0.55*cex.adjuster, 0.7*cex.adjuster), col='black', inset=0.01, cex = 1, title = '0-30 cm mean\nplant available water\nMar 23-Apr 15, 2018', bty='n')
+rect(xleft = 17.4, ybottom = -162, xright = 19.71, ytop = 275)
+dev.off()
