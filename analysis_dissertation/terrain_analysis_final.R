@@ -362,9 +362,9 @@ forage_terrain_energy$aspect_cex_v2 <- seq(from=0.5, to=2.75, length.out = 16)[r
 #forage_terrain_energy$slope_cex <- ifelse(forage_terrain_energy$slope < summary(forage_terrain_energy$slope)[2], 2.5, ifelse(forage_terrain_energy$slope > summary(forage_terrain_energy$slope)[2] & forage_terrain_energy$slope < summary(forage_terrain_energy$slope)[3], 1.75, ifelse(forage_terrain_energy$slope > summary(forage_terrain_energy$slope)[3] & forage_terrain_energy$slope < summary(forage_terrain_energy$slope)[5], 1.25, 0.75))) #4 classes
 
 #make a temporal plot of forage growth
-png(file = file.path(results, 'figures', 'finals', 'forage_vs_terrain', 'forage_vs_terrain_detail_v2.png'), family = 'Book Antiqua', width = 800, height = 700, units = 'px', res=100)
-par(mar=c(3.5, 4.5, 2, 2))
-plot(x=rep(0.25,16), forage_terrain_energy$clp021517, type = 'p', col=forage_terrain_energy$energy_colors, pch=1, ylim=c(0, 4600), xlim=c(0,5), xaxt='n', xlab='', ylab=expression(paste('standing forage (kg', ' ', ha^-1, ')')), cex.axis=1.2, cex.lab=1.2, cex=1.2) #cex=forage_terrain_energy$curvature_cex_v2
+tiff(file = file.path(results, 'figures', 'finals', 'forage_vs_terrain', 'forage_vs_terrain_detail_v2.tif'), family = 'Times New Roman', width = 6.5, height = 4.5, pointsize = 11, units = 'in', res=150)
+par(mar=c(3, 4.5, 1, 1))
+plot(x=rep(0.25,16), forage_terrain_energy$clp021517, type = 'p', col=forage_terrain_energy$energy_colors, pch=1, ylim=c(0, 4600), xlim=c(0,5), xaxt='n', xlab='', ylab=expression(paste('standing forage (kg', ' ', ha^-1, ')')), cex.axis=1, cex.lab=1, cex=1.2) #cex=forage_terrain_energy$curvature_cex_v2
 points(x=rep(1,16), forage_terrain_energy$clp031417, col=forage_terrain_energy$energy_colors, pch=1, cex=1.2) #cex=forage_terrain_energy$slope_cex_v2
 points(x=rep(1.75,16), forage_terrain_energy$clp041017, col=forage_terrain_energy$energy_colors, pch=1, cex=1.2) #cex=forage_terrain_energy$elevation_cex_v2) this is non-significant but notable
 points(x=rep(2.5,16), forage_terrain_energy$clp050117, col=forage_terrain_energy$energy_colors, pch=1, cex=1.2) # cex=forage_terrain_energy$elevation_cex_v2) non-significant but notable
@@ -379,10 +379,10 @@ points(x=rep(4.75,16), forage_terrain_energy$clp041518, col=forage_terrain_energ
 #text(x=3.25, y = 1300, label = 'mean curvature', srt=90, cex = 1.1)
 #text(x=4, y = 1600, label = 'non-linear aspect', srt=90, cex=1.1)
 #text(x=4.75, y=2600, label='slope & non-linear aspect', srt=90, cex = 1.1)
-axis(side = 1, at = c(0.25, 1, 1.75, 2.5, 3.25, 4, 4.75), labels = c('Feb 15', 'Mar 22', 'Apr 10', 'May 1', 'Feb 15', 'Mar 22', 'Apr 15'), cex=1.2)
-legend('topright', legend=(c("< 1200", '1200-1410', '>1410')), pch=1, pt.cex = c(1.5, 1.5, 1.5), col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), inset=0.01, cex = 1.2)
-text(x=0.375, y=4400, label='wet year', cex=1.3)
-text(x=3.375, y=4400, label='dry year', cex=1.3)
+axis(side = 1, at = c(0.25, 1, 1.75, 2.5, 3.25, 4, 4.75), labels = c('Feb 15', 'Mar 22', 'Apr 10', 'May 1', 'Feb 15', 'Mar 22', 'Apr 15'), cex=1)
+legend('topright', legend=(c("< 1200", '1200-1410', '>1410')), pch=1, pt.cex = 1.2, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^-2)), inset=0.01, cex = 1)
+text(x=0.375, y=4400, label='wet year', cex=1)
+text(x=3.375, y=4400, label='dry year', cex=1)
 dev.off()
 
 #2017 vs. 2018 relationship
@@ -393,23 +393,23 @@ abline(v=median(forage_terrain_energy$peak2017), lty=2)
 
 
 #make a plot of peak2017 vs. peak2018
-png(file = file.path(results, 'figures', 'finals', 'forage_vs_terrain', 'peak2017.vs.2018.forage.v4.png', sep = ''), family = 'Book Antiqua', width = 800, height = 700, units = 'px', res=100)
-par(mar=c(4.5, 4.5, 2, 2))
-plot(forage_terrain_energy$peak2017, forage_terrain_energy$peak2018, xlab=expression(paste('2017 peak forage (kg', ' ', ha^-1, ')')), ylab=expression(paste('2018 peak forage (kg', ' ', ha^-1, ')')), pch=19, cex=forage_terrain_energy$curvature_cex, ylim = c(300, 1600), xlim=c(1400, 4700), col=forage_terrain_energy$energy_colors, cex.axis=1.2, cex.lab=1.2)
+tiff(file = file.path(results, 'figures', 'finals', 'forage_vs_terrain', 'peak2017.vs.2018.forage.tif', sep = ''), family = 'Times New Roman', width = 6.5, height = 5.5, pointsize = 11, units = 'in', res=150)
+par(mar=c(4.5, 4.5, 1, 1))
+plot(forage_terrain_energy$peak2017, forage_terrain_energy$peak2018, xlab=expression(paste('2017 peak forage (kg', ' ', ha^-1, ')')), ylab=expression(paste('2018 peak forage (kg', ' ', ha^-1, ')')), pch=19, cex=forage_terrain_energy$curvature_cex, ylim = c(300, 1600), xlim=c(1400, 4700), col=forage_terrain_energy$energy_colors, cex.axis=1, cex.lab=1)
 abline(h=median(forage_terrain_energy$peak2018), lty=2)
 abline(v=median(forage_terrain_energy$peak2017), lty=2)
 #text(x=forage_terrain_energy$peak2017, y=forage_terrain_energy$peak2018, labels = forage_terrain_energy$landform_code, pos = 1, offset = 0.3)
 #legend(x=2000, y=1625, legend=(c("< 1254", '1254-1341', "1341-1458", '>1458')), pch=19, col=c('blue', 'lightblue2', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2))) #4 color energy legend
-legend(x=2800, y=1625, legend=(c("< 1200", '1200-1410', '>1410')), pch=19, pt.cex = c(1.5, 1.5, 1.5), col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), cex = 1.2) #3 color energy legend
-legend(x=3700, y=1625, legend=(c("concave", 'linear', "convex")), pt.cex=c(1, 1.5, 2.5), pch=c(1, 1, 1), col=c('black', 'black', 'black'), title = 'Mean curvature', cex=1.2)
-text(x=4000, y=650, label=paste('% slope 26', '\u00B1', '9'), cex=1.2)
-text(x=4000, y=600, label=paste('elev 485', '\u00B1', '8'), cex=1.2)
-text(x=4000, y=1300, label=paste('% slope 17', '\u00B1', '6'), cex=1.2)
-text(x=4000, y=1250, label=paste('elev 490', '\u00B1', '10'), cex=1.2)
-text(x=2000, y=1375, label=paste('% slope 20', '\u00B1', '7'), cex= 1.2)
-text(x=2000, y=1325, label=paste('elev 496', '\u00B1', '6'), cex=1.2)
-text(x=2000, y=650, label=paste('% slope 26', '\u00B1', '10'), cex=1.2)
-text(x=2000, y=600, label=paste('elev 488', '\u00B1', '6'), cex=1.2)
+legend(x=2800, y=1625, legend=(c("< 1200", '1200-1410', '>1410')), pch=19, pt.cex = c(1.5, 1.5, 1.5), col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^-2)), cex = 1) #3 color energy legend
+legend(x=3700, y=1625, legend=(c("concave", 'linear', "convex")), pt.cex=c(1, 1.5, 2.5), pch=c(1, 1, 1), col=c('black', 'black', 'black'), title = 'Mean curvature', cex=1)
+text(x=4000, y=650, label=paste('% slope 26', '\u00B1', '9'), cex=1)
+text(x=4000, y=600, label=paste('elev 485', '\u00B1', '8'), cex=1)
+text(x=4000, y=1300, label=paste('% slope 17', '\u00B1', '6'), cex=1)
+text(x=4000, y=1250, label=paste('elev 490', '\u00B1', '10'), cex=1)
+text(x=2000, y=1375, label=paste('% slope 20', '\u00B1', '7'), cex= 1)
+text(x=2000, y=1325, label=paste('elev 496', '\u00B1', '6'), cex=1)
+text(x=2000, y=650, label=paste('% slope 26', '\u00B1', '10'), cex=1)
+text(x=2000, y=600, label=paste('elev 488', '\u00B1', '6'), cex=1)
 #legend(x=3600, y=1625, legend=(c("1 = footslope", '2 = backslope', "3 = shoulder", '4 = summit')), title = 'hillslope position')
 dev.off()
 
