@@ -147,7 +147,7 @@ depletion_vwc_2018_22 <- read.csv(file.path(results, 'processed_soil_moisture/Ju
 
 #make 2017 Mar 14-Apr 10 plot
 Mar_growth_dates <- which(colnames(depletion_vwc_2017)=='Dec_01_2016'):which(colnames(depletion_vwc_2017)=='Mar_15_2017')
-Mar_growth_dates_v2 <- which(colnames(depletion_vwc_2017)=='Feb_15_2017'):which(colnames(depletion_vwc_2017)=='Mar_15_2017')
+Mar_growth_dates_v2 <- which(colnames(depletion_vwc_2017)=='Feb_15_2017'):which(colnames(depletion_vwc_2017)=='Mar_14_2017')
 Apr_growth_dates <- which(colnames(depletion_vwc_2017)=='Mar_15_2017'):which(colnames(depletion_vwc_2017)=='Apr_10_2017')
 spring_growth_dates <- which(colnames(depletion_vwc_2017)=='Feb_28_2017'):which(colnames(depletion_vwc_2017)=='Apr_10_2017')
 mean_depletion_Mar_growth <- apply(depletion_vwc_2017[,Mar_growth_dates], 1, mean)
@@ -161,14 +161,14 @@ mean_soilT_Apr_growth <- apply(soilT_data_7cm_2017[,Apr_growth_dates], 1, mean)
 mean_depletion_spring_growth <- apply(depletion_vwc_2017[,spring_growth_dates], 1, mean)
 mean_depletion22_spring_growth <- apply(depletion_vwc_2017_22[,spring_growth_dates], 1, mean)
 mean_depletion22_Apr_growth <- apply(depletion_vwc_2017_22[,Apr_growth_dates], 1, mean)
-tiff(file = file.path(results, 'figures', 'finals', 'SM_T_effects_visualizations', '2017 drawdown', 'Apr2017.growth.vs.PAW.v3.tif'), pointsize = 11, family = 'Times New Roman', width = 4.5, height = 4, units = 'in', res = 150)
+tiff(file = file.path(results, 'figures', 'finals', 'SM_T_effects_visualizations', '2017 drawdown', 'Apr2017.growth.vs.PAW.final.tif'), pointsize = 11, family = 'Times New Roman', width = 4.5, height = 4, units = 'in', res = 150)
 par(mar=c(4, 4, 0.5, 0.5))
-plot(rowMeans(cbind(mean_depletion_Apr_growth, mean_depletion22_Apr_growth)), forage_terrain_energy$Apr2017growth, col=forage_terrain_energy$energy_colors, ylab=expression('Mar 15 - Apr 10, 2017 growth (kg '~~ha^-1*')'), xaxt='n', xlab='% plant available water, 0-30 cm avg (Mar 15 - Apr 10, 2017)', cex.axis=1, cex.lab=1, pch=19, mgp=c(2.5, 1, 0)) #  cex=forage_terrain_energy$clp031417/750
+plot(rowMeans(cbind(mean_depletion_Apr_growth, mean_depletion22_Apr_growth)), forage_terrain_energy$Apr2017growth, col=forage_terrain_energy$energy_colors, ylab=expression('Mar 15 - Apr 10, 2017 growth (kg '~~ha^-1*')'), xaxt='n', xlab='Mar 15 - Apr 10, 2017, mean 0-30 cm plant available water (%)', cex.axis=1, cex.lab=1, pch=19, mgp=c(2.5, 1, 0), cex=1.3) #  cex=forage_terrain_energy$clp031417/750
 axis(side = 1, at=c(0.3, 0.4, 0.5, 0.6, 0.7), labels = c('30', '40', '50', '60', '70'), mgp=c(2.5, 1, 0))
 #text(rowMeans(cbind(mean_depletion_Apr_growth, mean_depletion22_Apr_growth)), forage_terrain_energy$Apr2017growth, labels=round(forage_terrain_energy$elevation, 0), pos=1, offset = 0.5)
 #abline(v=0.5, lty=2, col='grey')
 abline(lm(forage_terrain_energy$Apr2017growth ~ rowMeans(cbind(mean_depletion_Apr_growth, mean_depletion22_Apr_growth))), lty=2)
-legend('topleft', legend=(c(expression('< 1200 annual kWh'~m^-2), expression('1200-1410 annual kWh'~m^-2), expression('>1410 annual kWh'~m^-2), 'linear fit')), lty=c(NA, NA, NA, 2), pch = c(19,19,19,1), pt.cex = c(1.5, 1.5, 1.5, NA), col=c('blue', 'orange2', 'red3', 'black'), inset=0.01, cex = 1, y.intersp =1) # expression('1000 kg'~ha^-1~'Mar 14, 2017'), expression('2500 kg'~ha^-1~'Mar 14, 2017')
+#legend('topleft', legend=(c(expression('< 1200 annual kWh'~m^-2), expression('1200-1410 annual kWh'~m^-2), expression('>1410 annual kWh'~m^-2), 'linear fit')), lty=c(NA, NA, NA, 2), pch = c(19,19,19,1), pt.cex = c(1.5, 1.5, 1.5, NA), col=c('blue', 'orange2', 'red3', 'black'), inset=0.01, cex = 1, y.intersp =1) # expression('1000 kg'~ha^-1~'Mar 14, 2017'), expression('2500 kg'~ha^-1~'Mar 14, 2017')
 text(x=0.45, y=700, label='linear model results', cex=1, adj=c(0,0))
 text(x=0.45, y=500, label=expression(paste(r^2, ' = 0.44, p.val = 0.006')), cex = 1, adj = c(0, 0))
 text(x=0.45, y=300, label=expression(paste('RMSE = 594 kg ', ha^-1)), cex = 1, adj = c(0, 0))
@@ -240,18 +240,18 @@ summary(lm(forage_terrain_energy$Mar2017growth ~ mean_depletion_Mar_growth + mea
 #Mar 2017 growth fig
 tiff(file = file.path(results, 'figures', 'finals', 'SM_T_effects_visualizations', '2017 drawdown', 'Mar2017.growth.vs.soilT.tif'), pointsize = 11, family = 'Times New Roman', width = 4.5, height = 4, units = 'in', res = 150)
 par(mar=c(4, 4, 0.5, 0.5))
-plot(mean_soilT_Mar_growth_v2, forage_terrain_energy$Mar2017growth, col=forage_terrain_energy$energy_colors, ylab=expression('Feb 15 - Mar 14, 2017 growth (kg '~~ha^-1*')'), xlab=expression('Feb 15 - Mar 14, 2017 mean 7 cm soil temperature ('~degree*'C)'), ylim=c(200, 1500), cex.axis=1, cex.lab=1, pch=19, mgp=c(2.5, 1, 0)) #  cex=forage_terrain_energy$clp031417/750
+plot(mean_soilT_Mar_growth_v2, forage_terrain_energy$Mar2017growth, col=forage_terrain_energy$energy_colors, ylab=expression('Feb 15 - Mar 14, 2017 growth (kg '~~ha^-1*')'), xlab=expression('Feb 15 - Mar 14, 2017, mean 0-30 cm soil temperature ('~degree*'C)'), ylim=c(200, 1500), cex.axis=1, cex.lab=1, pch=19, cex=1.3, mgp=c(2.5, 1, 0)) #  cex=forage_terrain_energy$clp031417/750
 #axis(side = 1, at=c(0.3, 0.4, 0.5, 0.6, 0.7), labels = c('30', '40', '50', '60', '70'), mgp=c(2.5, 1, 0))
 #text(rowMeans(cbind(mean_depletion_Apr_growth, mean_depletion22_Apr_growth)), forage_terrain_energy$Apr2017growth, labels=round(forage_terrain_energy$elevation, 0), pos=1, offset = 0.5)
 #abline(v=0.5, lty=2, col='grey')
 abline(lm(forage_terrain_energy$Mar2017growth ~ mean_soilT_Mar_growth_v2), lty=2)
-legend('topleft', legend=(c(expression('< 1200 annual kWh'~m^-2), expression('1200-1410 annual kWh'~m^-2), expression('>1410 annual kWh'~m^-2), 'linear fit')), lty=c(NA, NA, NA, 2), pch = c(19,19,19,1), pt.cex = c(1.5, 1.5, 1.5, NA), col=c('blue', 'orange2', 'red3', 'black'), inset=0.01, cex = 1, y.intersp =1) # expression('1000 kg'~ha^-1~'Mar 14, 2017'), expression('2500 kg'~ha^-1~'Mar 14, 2017')
-text(x=11.5, y=700, label='linear model results', cex=1, adj=c(0,0))
-text(x=10.4, y=600, label=expression(r^2~'= 0.47, p.val = 0.005, RMSE = 237 kg'~ha^-1), cex = 1, adj = c(0, 0))
+legend('topleft', legend=(c(expression('< 1200 annual kWh'~m^-2), expression('1200-1410 annual kWh'~m^-2), expression('>1410 annual kWh'~m^-2), 'linear fit')), lty=c(NA, NA, NA, 2), pch = c(19,19,19,1), pt.cex = c(1.3, 1.3, 1.3, NA), col=c('blue', 'orange2', 'red3', 'black'), inset=0.01, cex = 1, y.intersp =1) # expression('1000 kg'~ha^-1~'Mar 14, 2017'), expression('2500 kg'~ha^-1~'Mar 14, 2017')
+text(x=11.3, y=675, label='linear model results', cex=1, adj=c(0,0))
+text(x=10.1, y=575, label=expression(r^2~'= 0.48, p.val = 0.004, RMSE = 237 kg'~ha^-1), cex = 1, adj = c(0, 0))
 #text(x=8, y=1500, label=expression(paste('RMSE = 232 kg ', ha^-1)), cex = 1, adj = c(0, 0))
-text(x=10.4, y=500, label=expression('slope = 6.6 \u00B1 1.9  kg forage'~ha^-1~degree*C^-1~day^-1), adj = c(0, 0), cex = 1)
+text(x=10.1, y=475, label=expression('slope = 6.6 \u00B1 1.9  kg forage'~ha^-1~degree*C^-1~day^-1), adj = c(0, 0), cex = 1)
 dev.off()
-
+summary(lm(forage_terrain_energy$Mar2017growth ~ mean_soilT_Mar_growth_v2))
 #now 2018 growth
 winter_growth_dates <- which(colnames(depletion_vwc_2018)=='Jan_10_2018'):which(colnames(depletion_vwc_2018)=='Feb_01_2018')
 late_winter_growth_dates <- which(colnames(depletion_vwc_2018)=='Feb_15_2018'):which(colnames(depletion_vwc_2018)=='Mar_22_2018')
@@ -379,7 +379,7 @@ text(x=as.Date('2017/2/07'), y= 0.7, label='easily available \nwater', cex=1)
 text(x=as.Date('2016/12/07'), y= -0.1, label='wilting point', cex=1)
 #text(x=as.Date('2016/12/15'), y=1.4, label='WY2017', cex = 1)
 axis(side = 4, at = c(0, 0.15, 0.3, 0.45, 0.6), labels = c('0', '10', '20', '30', '40'))
-mtext("mm precipitation per day", side=4, line=2.5, at=0.2)
+mtext("precipitation per day (mm)", side=4, line=2.5, at=0.2)
 lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 0.015, type='s', col='lightblue', cex=0.5)
 dev.off()
 
@@ -396,7 +396,7 @@ axis.Date(side = 1, at=seq.Date(from = as.Date('2016/12/1'), to = as.Date('2017/
 #text(x=as.Date('2016/12/15'), y=30, label='WY2017', cex = 1.5)
 #abline(h=30, lty=2)
 #abline(h=10, lty=2)
-legend('topleft', legend=(c("< 1200", '1200-1410', '>1410')), lty=1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), inset=0.01, lwd = 1.3)
+legend('topleft', legend=(c("< 1200", '1200-1410', '>1410')), lty=1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^-2)), inset=0.01, lwd = 1.3)
 dev.off()
 
 #now 2018 7 cm
@@ -417,7 +417,7 @@ text(x=as.Date('2017/12/15'), y= 0.75, label='easily available \nwater', cex=1)
 text(x=as.Date('2017/12/15'), y= -0.1, label='wilting point', cex=1)
 #text(x=as.Date('2017/12/15'), y=1.4, label='WY2018', cex = 1)
 axis(side = 4, at = c(0, 0.15, 0.3, 0.45, 0.6), labels = c('0', '10', '20', '30', '40'))
-mtext("mm precipitation per day", side=4, line=2.5, at=0.2)
+mtext("precipitation per day (mm)", side=4, line=2.5, at=0.2)
 lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 0.015, type='s', col='lightblue', cex=0.5)
 dev.off()
 
@@ -451,18 +451,18 @@ axis(side = 2, at=c(-0.5, 0, 0.5, 1.0, 1.5))
 axis.Date(side = 1, at=seq.Date(from = as.Date('2016/12/1'), to = as.Date('2017/5/03'), by='months'), format = '%m/%d/%y')
 abline(h=0.5, lty=2)
 abline(h=1, lty=2)
-legend(x=as.Date('2017/1/10'), y=-0.05, legend=(c("< 1200", '1200-1410', '>1410')), lty=1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), inset=0.01, ncol=3, lwd = 1.3)
+legend(x=as.Date('2017/1/10'), y=-0.05, legend=(c("< 1200", '1200-1410', '>1410')), lty=1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^-2)), inset=0.01, ncol=3, lwd = 1.3)
 text(x=as.Date('2016/12/07'), y= 1.1, label='field capacity', cex=1)
 text(x=as.Date('2017/2/07'), y= 0.75, label='easily available \nwater', cex=1)
 text(x=as.Date('2017/4/25'), y= -0.1, label='wilting point', cex=1)
 #text(x=as.Date('2016/12/15'), y=1.4, label='WY2017', cex = 1)
 axis(side = 4, at = c(0, 0.15, 0.3, 0.45, 0.6), labels = c('0', '10', '20', '30', '40'))
-mtext("mm precipitation per day", side=4, line=2.5, at=0.2)
+mtext("precipitation per day (mm)", side=4, line=2.5, at=0.2)
 lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 0.015, type='s', col='lightblue', cex=0.5)
 dev.off()
 
 #now 2018 22 cm
-png(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', 'aspect scheme', '22 cm plots', paste0('WY2018.SM.22cm.WP1.35xFD.png')), family = 'Times New Roman', pointsize = 11, width = 9, height = 3, units = 'in', res=150)
+tiff(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', 'aspect scheme', '22 cm plots', paste0('WY2018.SM.22cm.WP1.35xFD.tif')), family = 'Times New Roman', pointsize = 11, width = 9, height = 3, units = 'in', res=150)
 par(mar=c(2.25, 4.5, 0.5, 4.5))
 for (i in 1:16) {
   if (i == 1) {
@@ -479,7 +479,7 @@ text(x=as.Date('2017/12/15'), y= 0.75, label='easily available \nwater', cex=1.1
 text(x=as.Date('2017/12/15'), y= -0.1, label='wilting point', cex=1.1)
 #text(x=as.Date('2017/12/15'), y=1.4, label='WY2018', cex = 1.5)
 axis(side = 4, at = c(0, 0.15, 0.3, 0.45, 0.6), labels = c('0', '10', '20', '30', '40'))
-mtext("mm precipitation per day", side=4, line=2.5, at=0.2)
+mtext("precipitation per day (mm)", side=4, line=2.5, at=0.2)
 lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 0.015, type='s', col='lightblue', cex=0.5)
 dev.off()
 
@@ -512,13 +512,13 @@ axis(side = 2, at=c(0, 10, 20, 30))
 axis.Date(side = 1, at=seq.Date(from = as.Date('2016/12/1'), to = as.Date('2017/5/03'), by='months'), format = '%m/%d/%y')
 #abline(h=30, lty=2)
 #abline(h=10, lty=2)
-legend('topleft', legend=(c("< 1200", '1200-1410', '>1410')), lty=1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), inset=0.01, lwd=1.3)
+legend('topleft', legend=(c("< 1200", '1200-1410', '>1410')), lty=1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^-2)), inset=0.01, lwd=1.3)
 dev.off()
 
 #count days below AD
-date1_2017 <- 'Jan_10_2017'
+date1_2017 <- 'Dec_01_2016'
 date2_2017 <- 'Apr_15_2017'
-date1_2018 <- 'Jan_10_2018'
+date1_2018 <- 'Dec_01_2017'
 date2_2018 <- 'Apr_15_2018'
 days.below.AD2017 <- apply(depletion_vwc_2017[,which(colnames(depletion_vwc_2017) ==date1_2017):which(colnames(depletion_vwc_2017)==date2_2017)], 1, function(x) sum(x < 0.5))
 days.below.AD2017 #missing location 13
@@ -535,18 +535,18 @@ write.csv(days.below.50AD.summary, file.path(results, 'tables', 'days.below50per
 barplot(as.matrix(days.below.50AD.summary[ ,c(2,4)]), beside = TRUE, col=c('blue', 'red3'), ylab='Days below 50% plant available water', names.arg = c('0-15 cm', '15-30 cm'), legend.text = c('WY2017 (wet)', 'WY2018 (dry)'), cex.axis = 1.3, cex.names = 1.3, cex.lab = 1.3, args.legend = list(x="topleft", inset=0.005, cex=1.4))
 
 
-png(file = file.path(results, 'figures', 'finals', 'days below AD', 'days.below.50percentPAW.Jan10_Apr15.png'), family = 'Book Antiqua', width = 800, height = 650, units = 'px', res=100)
-par(mar=c(4.8, 4.8, 1, 1))
-plot(x=seq(from=0.08, by=.0025, length.out = 16), days.below.AD2017, pch=1, col=forage_terrain_energy$energy_colors, xlim = c(0.05, 0.5), ylim=c(0, length(seq.Date(as.Date(date1_2018, '%b_%d_%Y'), as.Date(date2_2018, '%b_%d_%Y'), by='day'))), xaxt='n', ylab = 'days below 50% plant available water (Jan 10 - Apr 15)', xlab = '', cex=1.3, cex.axis=1.3, cex.lab=1.3)
-points(x=seq(from=0.18, by=.0025, length.out = 16), days.below.AD2017_22, pch=1, col=forage_terrain_energy$energy_colors, cex=1.3)
+tiff(file = file.path(results, 'figures', 'finals', 'days below AD', 'days.below.50percentPAW.Dec1_Apr15.tif'), family = 'Times New Roman', width = 6.5, height = 4.5, units = 'in', res=150)
+par(mar=c(3.5, 4.5, 1, 1))
+plot(x=seq(from=0.08, by=.0025, length.out = 16), days.below.AD2017, pch=1, col=forage_terrain_energy$energy_colors, xlim = c(0.05, 0.5), ylim=c(0, length(seq.Date(as.Date(date1_2018, '%b_%d_%Y'), as.Date(date2_2018, '%b_%d_%Y'), by='day'))), xaxt='n', ylab = 'days below 50% plant available water (Jan 10 - Apr 15)', xlab = '', cex=1.2, cex.axis=1, cex.lab=1)
+points(x=seq(from=0.18, by=.0025, length.out = 16), days.below.AD2017_22, pch=1, col=forage_terrain_energy$energy_colors, cex=1.2)
 #abline(h=96, lty=1)
 abline(v=0.275, lty=2)
-points(x=seq(from=0.33, by=.0025, length.out = 16), days.below.AD2018, pch=1, col=forage_terrain_energy$energy_colors, cex=1.3)
-points(x=seq(from=0.43, by=.0025, length.out = 16), days.below.AD2018_22, pch=1, col=forage_terrain_energy$energy_colors, cex=1.3)
+points(x=seq(from=0.33, by=.0025, length.out = 16), days.below.AD2018, pch=1, col=forage_terrain_energy$energy_colors, cex=1.2)
+points(x=seq(from=0.43, by=.0025, length.out = 16), days.below.AD2018_22, pch=1, col=forage_terrain_energy$energy_colors, cex=1.2)
 axis(side = 1, at = c(0.1, 0.2, 0.35, 0.45), labels = FALSE, tick = TRUE)
-mtext(text = c('WY2017', 'WY2018'), side = 1, at=c(0.15, 0.4), line=2.5, cex=1.3)
-mtext(text = c('0-15 cm', '15-30 cm', '0-15 cm', '15-30 cm'), side = 1, at = c(0.1, 0.2, 0.35, 0.45), line=1, cex = 1.3)
-legend('topleft', legend=(c("< 1200", '1200-1410', '>1410')), pch = 1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), inset=0.1, cex = 1.3)
+mtext(text = c('WY2017', 'WY2018'), side = 1, at=c(0.15, 0.4), line=2.5, cex=1)
+mtext(text = c('0-15 cm', '15-30 cm', '0-15 cm', '15-30 cm'), side = 1, at = c(0.1, 0.2, 0.35, 0.45), line=1, cex = 1)
+legend('topleft', legend=(c("< 1200", '1200-1410', '>1410')), pch = 1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^-2)), inset=0.1, pt.cex = 1.2)
 dev.off()
 
 plot(days.below.AD2017, forage_terrain_energy$Apr2017growth)
