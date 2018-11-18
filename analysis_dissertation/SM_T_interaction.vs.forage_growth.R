@@ -7,6 +7,8 @@ model_resultsDir <- 'C:/Users/smdevine/Desktop/rangeland project/results/growth_
 resultsFigures <- 'C:/Users/smdevine/Desktop/rangeland project/results/figures'
 forageDir <- 'C:/Users/smdevine/Desktop/rangeland project/clip_plots'
 results <- 'C:/Users/smdevine/Desktop/rangeland project/results'
+climateDir <- 'C:/Users/smdevine/Desktop/rangeland project/climate_data'
+precip_data <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/climate_data/Camatta_precip_WY2017_2018.csv'), stringsAsFactors = FALSE)
 forage_terrain_energy <- read.csv(file.path(results, 'tables', 'forage_terrain_energy_3m_final.csv'), stringsAsFactors = FALSE)
 forage_terrain_energy$energy_colors <- ifelse(forage_terrain_energy$annual_kwh.m2 <= 1200, 'blue', ifelse(forage_terrain_energy$annual_kwh.m2 > 1200 & forage_terrain_energy$annual_kwh.m2 < 1410, 'orange2', 'red3'))
 forage_terrain_energy$Mar2017growth <- forage_terrain_energy$clp031417 - forage_terrain_energy$clp021517
@@ -25,6 +27,40 @@ depletion_vwc_2018_22 <- read.csv(file.path(results, 'processed_soil_moisture/Ju
 normalize_var <- function(x) {
   (x - mean(x, na.rm = TRUE)) / sd(x, na.rm = TRUE)
 }
+#get r2 values again for depletion vs. T
+list.files('C:/Users/smdevine/Desktop/rangeland project/results/depletionVWC_T_model_results/')
+depletion_T7_r2_2017 <- read.csv('C:/Users/smdevine/Desktop/rangeland project/results/depletionVWC_T_model_results/depletionVWC_T_vs_Apr2017biomass_7cm.csv', stringsAsFactors = FALSE)
+depletion_T22_r2_2017 <- read.csv('C:/Users/smdevine/Desktop/rangeland project/results/depletionVWC_T_model_results/depletionVWC_T_vs_Apr2017biomass_22cm.csv', stringsAsFactors = FALSE)
+depletion_T7_r2_2018 <- read.csv('C:/Users/smdevine/Desktop/rangeland project/results/depletionVWC_T_model_results/depletionVWC_T_vs_Apr2018biomass_7cm.csv', stringsAsFactors = FALSE)
+depletion_T22_r2_2018 <- read.csv('C:/Users/smdevine/Desktop/rangeland project/results/depletionVWC_T_model_results/depletionVWC_T_vs_Apr2018biomass_22cm.csv', stringsAsFactors = FALSE)
+depletion_T_r2_2017_2018 <- data.frame(dates=c(depletion_T7_r2_2017$dates, '2017-7-30', depletion_T7_r2_2018$dates), r2.depletion.vs.T7=c(depletion_T7_r2_2017$r2.SM.vs.T, NA, depletion_T7_r2_2018$r2.SM.vs.T), p.val.depletion.vs.T7=c(depletion_T7_r2_2017$p.value.SM.vs.T, NA, depletion_T7_r2_2018$p.value.SM.vs.T), slope.depletion.vs.T7=c(depletion_T7_r2_2017$slope.SM.vs.T, NA, depletion_T7_r2_2018$slope.SM.vs.T), r2.depletion.vs.T22=c(depletion_T22_r2_2017$r2.SM.vs.T, NA, depletion_T22_r2_2018$r2.SM.vs.T), p.val.depletion.vs.T22=c(depletion_T22_r2_2017$p.value.SM.vs.T, NA, depletion_T22_r2_2018$p.value.SM.vs.T), slope.depletion.vs.T22=c(depletion_T22_r2_2017$slope.SM.vs.T, NA, depletion_T22_r2_2018$slope.SM.vs.T))
+#7 cm plot
+tiff(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', 'depletion_vs_T', paste0('WY2017_2018.r2.depletion_vs_T7cm.tif')), family = 'Times New Roman', pointsize = 11, width = 9, height = 3, units = 'in', res=150)
+par(mar=c(1, 4.5, 0.5, 4.5))
+plot(as.Date(depletion_T_r2_2017_2018$dates[depletion_T_r2_2017_2018$p.val.depletion.vs.T7 < 0.05], format='%Y-%m-%d'), depletion_T_r2_2017_2018$r2.depletion.vs.T7[depletion_T_r2_2017_2018$p.val.depletion.vs.T7 < 0.05], type = 'p', col=ifelse(depletion_T_r2_2017_2018$slope.depletion.vs.T7[depletion_T_r2_2017_2018$p.val.depletion.vs.T7 < 0.05] < 0, 'red', 'blue'), xaxt='n', xlab = "", ylim=c(0,1), ylab = '')
+#axis(side=1, at=as.Date(c('2016-12-01', '2017-02-01', '2017-04-01', '2017-06-01', '2017-12-01', '2018-02-01', '2018-04-01', '2018-06-01')), labels=c('Dec 2016', 'Feb 2017', 'Apr 2017', 'Jun 2017', 'Dec 2017', 'Feb 2018', 'Apr 2018', 'June 2018'))
+axis(side = 4, at = c(0, 0.0625, 0.125, 0.1875, 0.25), labels = c('0', '10', '20', '30', '40'))
+mtext("precipitation per day (mm)", side=4, line=2.5, at=0.3)
+lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 0.00625, type='s', col='lightblue', cex=0.5)
+legend('topright', legend = c('warmer = drier (p < 0.05)', 'colder = drier (p < 0.05)'), pch = 1, col=c('red', 'blue'), inset = 0.01)
+mtext(text='daily 7 cm VWC depletion variance', side=2, line=3.5)
+mtext(text=expression('explained by soil temperature ('~r^2*')'), side=2, line=2.25)
+dev.off()
+
+#22 cm plot
+tiff(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', 'depletion_vs_T', paste0('WY2017_2018.r2.depletion_vs_T22cm.tif')), family = 'Times New Roman', pointsize = 11, width = 9, height = 3, units = 'in', res=150)
+par(mar=c(2.25, 4.5, 0.5, 4.5))
+plot(as.Date(depletion_T_r2_2017_2018$dates[depletion_T_r2_2017_2018$p.val.depletion.vs.T22 < 0.05], format='%Y-%m-%d'), depletion_T_r2_2017_2018$r2.depletion.vs.T22[depletion_T_r2_2017_2018$p.val.depletion.vs.T22 < 0.05], type = 'p', col=ifelse(depletion_T_r2_2017_2018$slope.depletion.vs.T22[depletion_T_r2_2017_2018$p.val.depletion.vs.T22 < 0.05] < 0, 'red', 'blue'), xaxt='n', xlab = "", ylim=c(0,1), ylab = '')
+axis(side=1, at=as.Date(c('2016-12-01', '2017-02-01', '2017-04-01', '2017-06-01', '2017-12-01', '2018-02-01', '2018-04-01', '2018-06-01')), labels=c('Dec 2016', 'Feb 2017', 'Apr 2017', 'Jun 2017', 'Dec 2017', 'Feb 2018', 'Apr 2018', 'June 2018'))
+axis(side = 4, at = c(0, 0.0625, 0.125, 0.1875, 0.25), labels = c('0', '10', '20', '30', '40'))
+mtext("precipitation per day (mm)", side=4, line=2.5, at=0.2)
+lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 0.00625, type='s', col='lightblue', cex=0.5)
+legend('topright', legend = c('warmer = drier (p < 0.05)', 'colder = drier (p < 0.05)'), pch = 1, col=c('red', 'blue'), inset = 0.01)
+mtext(text='daily 22 cm VWC depletion variance', side=2, line=3.5)
+mtext(text=expression('explained by soil temperature ('~r^2*')'), side=2, line=2.25)
+dev.off()
+
+
 # year <- 2017
 # start_date <- 'Feb_16_2017'
 # end_date <- 'Mar_14_2017'
@@ -389,12 +425,33 @@ df_22cm <- data.frame(growth_period = forage_terrain_energy[[forage_growth]], av
 df_0_30cm <- data.frame(growth_period = forage_terrain_energy[[forage_growth]], avg_soilT, avg_depletion)
 
 #0-30 cm plot forage growth vs. soil T plot
-cex.adjuster <- 8
+cex.adjuster <- 5
 tiff(file = file.path(results, 'figures', 'finals', 'SM_T_effects_visualizations', '2018 growth', 'Mar2018.growth.vs.soilT30cm.tif'), pointsize = 11, family = 'Times New Roman', width = 4.5, height = 4, units = 'in', res = 150)
 par(mar=c(4, 4.25, 1, 1))
 plot(df_0_30cm$avg_soilT, df_0_30cm$growth_period, ylab=expression('forage growth, Feb 16-Mar 22 (kg'~~ha^-1*')'), xlab=expression('0-30 cm soil temperature, Feb 16-Mar 22, 2018 mean ('*degree*'C)'), cex.axis=1, xlim=c(8.1, 15.1), cex.lab=1, pch=19, cex=ifelse(df_0_30cm$avg_depletion < 0.1, 0.1*cex.adjuster, df_0_30cm$avg_depletion * cex.adjuster), col=forage_terrain_energy$energy_colors) #mgp=c(2.5, 1, 0)) #  cex=forage_terrain_energy$clp031417/750
 #axis(side = 2, at=c(-0.2, 0, 0.2, 0.4), labels = c('-20', '0', '20', '40'), mgp=c(2.5, 1, 0))
 legend('bottomleft', legend=c(expression('< 1200 annual kWh'~m^-2), expression('1200-1410 annual kWh'~m^-2), expression('>1410 annual kWh'~m^-2), '<10% PAW', '25% PAW', '40% PAW'), pch = c(19,19,19,1,1,1), pt.cex = c(0.25*cex.adjuster, 0.25*cex.adjuster, 0.25*cex.adjuster, 0.1*cex.adjuster, 0.25*cex.adjuster, 0.4*cex.adjuster), col=c('blue', 'orange2', 'red3', 'black', 'black', 'black'), inset=0.01, cex = 1)#, bty = 'n') #y.intersp =1) # expression('1000 kg'~ha^-1~'Mar 14, 2017'), expression('2500 kg'~ha^-1~'Mar 14, 2017')
+#rect(xleft = 7.9, ytop = .05, xright = 12.15, ybottom = -0.22)
+#abline(v=13, lty=2)
+#text(x=9, y=0.41, label=expression('< 13'~degree*'C soil temperature'), cex=1, adj=c(0,0))
+#text(x=9, y=0.38, label='soil temperature', cex=1, adj=c(0,0))
+#text(x=9, y=0.37, label=expression('414 \u00B1 160 kg'~ha^-1~'growth'), cex=1, adj=c(0,0))
+#text(x=13.1, y=0.41, label=expression('> 13'~degree*'C'), cex=1, adj=c(0,0))
+#text(x=13.1, y=0.375, label='soil temperature', cex=1, adj=c(0,0))
+#text(x=13.1, y=0.33, label=expression('84 \u00B1 240 kg'~ha^-1), cex=1, adj=c(0,0))
+dev.off()
+
+#0-7 cm forage vs. temperature plot with aws symbolization
+cex.adjuster <- 4
+tiff(file = file.path(results, 'figures', 'finals', 'SM_T_effects_visualizations', '2018 growth', 'Mar2018.growth.vs.soilT7cm.tif'), pointsize = 11, family = 'Times New Roman', width = 4.5, height = 4, units = 'in', res = 150)
+par(mar=c(4, 4.25, 1, 1))
+plot(df_7cm$avg_soilT, df_7cm$growth_period, ylab=expression('Forage growth, Feb 16-Mar 22, 2018 (kg'~~ha^-1*')'), xlab=expression('7 cm soil temperature, Feb 16-Mar 22, 2018 mean ('*degree*'C)'), cex.axis=1, xlim=c(8.1, 15.1), cex.lab=1, pch=19, cex=ifelse(df_7cm$avg_depletion < 0.1, 0.1*cex.adjuster, df_7cm$avg_depletion * cex.adjuster), col=forage_terrain_energy$energy_colors) #mgp=c(2.5, 1, 0)) #  cex=forage_terrain_energy$clp031417/750
+#axis(side = 2, at=c(-0.2, 0, 0.2, 0.4), labels = c('-20', '0', '20', '40'), mgp=c(2.5, 1, 0))
+abline(lm(growth_period ~ avg_soilT, data=df_7cm), lty=2)
+legend('bottomleft', legend=c(expression('< 1200 annual kWh'~m^-2), expression('1200-1410 annual kWh'~m^-2), expression('>1410 annual kWh'~m^-2), '<10% PAW, period mean', '25% PAW, period mean', '50% PAW, period mean'), pch = c(19,19,19,1,1,1), pt.cex = c(0.25*cex.adjuster, 0.25*cex.adjuster, 0.25*cex.adjuster, 0.1*cex.adjuster, 0.25*cex.adjuster, 0.5*cex.adjuster), col=c('blue', 'orange2', 'red3', 'black', 'black', 'black'), inset=0.01, cex = 1)#, bty = 'n') #y.intersp =1) # expression('1000 kg'~ha^-1~'Mar 14, 2017'), expression('2500 kg'~ha^-1~'Mar 14, 2017')
+text(x=12.5, y=580, label='linear model results', cex=1, adj=c(0,0))
+text(x=12.5, y=505, label=expression(paste(r^2, ' = 0.29, p.val = 0.03')), cex = 1, adj = c(0, 0))
+text(x=12.5, y=430, label=expression(paste('RMSE = 222 kg ', ha^-1)), cex = 1, adj = c(0, 0))
 #rect(xleft = 7.9, ytop = .05, xright = 12.15, ybottom = -0.22)
 #abline(v=13, lty=2)
 #text(x=9, y=0.41, label=expression('< 13'~degree*'C soil temperature'), cex=1, adj=c(0,0))
@@ -484,11 +541,26 @@ df_7cm <- data.frame(growth_period = forage_terrain_energy[[forage_growth]], avg
 df_22cm <- data.frame(growth_period = forage_terrain_energy[[forage_growth]], avg_soilT_22cm, avg_depletion_22cm)
 df_0_30cm <- data.frame(growth_period = forage_terrain_energy[[forage_growth]], avg_soilT, avg_depletion)
 
-cex.adjuster <- 3
+#0-30 cm forage vs soil T plot
+cex.adjuster <- 4
 tiff(file = file.path(results, 'figures', 'finals', 'SM_T_effects_visualizations', '2018 growth', 'Apr2018.growth.vs.SM_T_int30cm.tif'), pointsize = 11, family = 'Times New Roman', width = 4.5, height = 4, units = 'in', res = 150)
 par(mar=c(4, 4.25, 1, 1))
 plot(df_0_30cm$avg_soilT, df_0_30cm$growth_period, ylab=expression(' Forage growth, Mar 23-Apr 15, 2018 (kg '~~ha^-1*')'), xlab=expression('0-30 cm soil temperature, Mar 23-Apr 15, 2018 mean ('*degree*'C)'), cex.axis=1, cex.lab=1, pch=19, cex=df_0_30cm$avg_depletion*cex.adjuster, col=forage_terrain_energy$energy_colors)
 #axis(side = 2, at=c(0, 200, 400, 600, 800), labels = c('0', '200', '400', '600', '800'), mgp=c(2.5, 1, 0))
 legend('bottomright', legend=c('40% PAW', '55% PAW', '70% PAW'), pch = c(1,1,1), pt.cex = c(0.4*cex.adjuster, 0.55*cex.adjuster, 0.7*cex.adjuster), col='black', inset=0.01, cex = 1, title = '0-30 cm mean\nplant available water\nMar 23-Apr 15, 2018', bty='n')
 rect(xleft = 17.4, ybottom = -162, xright = 19.71, ytop = 275)
+dev.off()
+
+#7 cm forage vs soil T plot
+cex.adjuster <- 4
+tiff(file = file.path(results, 'figures', 'finals', 'SM_T_effects_visualizations', '2018 growth', 'Apr2018.growth.vs.temp7cm.tif'), pointsize = 11, family = 'Times New Roman', width = 4.5, height = 4, units = 'in', res = 150)
+par(mar=c(4, 4.25, 1, 1))
+plot(df_7cm$avg_soilT, df_7cm$growth_period, ylab=expression('Forage growth, Mar 23-Apr 15, 2018 (kg '~~ha^-1*')'), xlab=expression('7 cm soil temperature, Mar 23-Apr 15, 2018 mean ('*degree*'C)'), cex.axis=1, cex.lab=1, pch=19, cex=df_7cm$avg_depletion*cex.adjuster, col=forage_terrain_energy$energy_colors)
+abline(lm(growth_period ~ avg_soilT, data = df_7cm), lty = 2)
+#axis(side = 2, at=c(0, 200, 400, 600, 800), labels = c('0', '200', '400', '600', '800'), mgp=c(2.5, 1, 0))
+#legend('bottomright', legend=c('40% PAW', '55% PAW', '70% PAW'), pch = c(1,1,1), pt.cex = c(0.4*cex.adjuster, 0.55*cex.adjuster, 0.7*cex.adjuster), col='black', inset=0.01, cex = 1, title = '0-30 cm mean\nplant available water\nMar 23-Apr 15, 2018', bty='n') #used legend from March 2018 plot
+#rect(xleft = 17.4, ybottom = -162, xright = 19.71, ytop = 275)
+text(x=14.1, y=825, label='linear model results', cex=1, adj=c(0,0))
+text(x=14.1, y=750, label=expression(paste(r^2, ' = 0.38, p.val = 0.01')), cex = 1, adj = c(0, 0))
+text(x=14.1, y=675, label=expression(paste('RMSE = 221 kg ', ha^-1)), cex = 1, adj = c(0, 0))
 dev.off()
