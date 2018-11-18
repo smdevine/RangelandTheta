@@ -24,3 +24,15 @@ ggplot(data=species_comp) +
   theme(legend.position = 'bottom') +
   facet_grid( ~ Date)
 dev.off()
+
+tiff(file = file.path(resultsFigures, 'species.comp', paste0('species.comp.by.date.landscape.tif')), family = 'Times New Roman', width = 6.5, height = 5.5, units = 'in', pointsize = 10, res=150)
+ggplot(data=species_comp) +
+  geom_col(aes(y = Composition_perc, x = Site_class, fill = as.character(Dummy_var)), position='stack') +
+  labs(x = 'Landscape position', y = 'Species composition (%)') + #title= 'Species composition in 2017 by date and landscape position'
+  scale_fill_manual(values=c('forestgreen', 'springgreen', 'lightgreen', 'thistle', 'gold1', 'goldenrod2', 'lemonchiffon', 'rosybrown', 'brown'), name ='Species', labels=legend_labels) +
+  theme_classic(base_size = 11) +
+  theme(legend.position = 'bottom')  +
+  #theme(legend.margin = unit(c(0.25, 0.5, 0.25, 0.25), 'in')) +
+  facet_grid( ~ Date) +
+  theme(plot.margin = unit(c(0.1, 0.75, 0.1, 0.3), 'in'))
+dev.off()
