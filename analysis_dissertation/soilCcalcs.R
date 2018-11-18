@@ -45,10 +45,11 @@ hist(soilCorgN$orgC.percent)
 summary(soilCorgN$orgC.percent)
 duplicated_samples_orgC <- which(soilCorgN$sample.ID %in% soilCorgN$sample.ID[duplicated(soilCorgN$sample.ID)])
 soilCorgN[duplicated_samples_orgC, c('sample.ID', 'orgC.percent', 'totN.percent.v2', 'tray.ID')]
-QC_orgC <- data.frame(sample.ID =unique(soilCorgN$sample.ID), orgC.error = as.numeric(tapply(soilCorgN$orgC.percent, soilCorgN$sample.ID, function(x) round(100*(max(x) - min(x))/mean(x), 1))))
-QC_orgC[QC_orgC$orgC.error > 5,]
-samples_to_review <- QC_orgC$sample.ID[QC_orgC$orgC.error > 5]
-check <- soilCorgN[soilCorgN$sample.ID %in% samples_to_review, c('sample.ID', 'orgC.percent', 'totN.percent.v2', 'tray.ID')]
+QC_orgC <- data.frame(sample.ID =as.character(unique(soilCorgN$sample.ID)), orgC.error = as.numeric(tapply(soilCorgN$orgC.percent, soilCorgN$sample.ID, function(x) round(100*(max(x) - min(x))/mean(x), 1))))
+QC_orgC[QC_orgC$orgC.error > 15,]
+samples_to_review <- QC_orgC[QC_orgC$orgC.error > 15,]
+samples_to_review[order(samples_to_review$orgC.error),]
+check <- soilCorgN[soilCorgN$sample.ID %in% samples_to_review$sample.ID, c('sample.ID', 'orgC.percent', 'totN.percent.v2', 'tray.ID')]
 check[order(check$sample.ID, check$tray.ID),]
 #soilCorgN$sample.ID
 colnames(soilCtotN)
@@ -56,7 +57,7 @@ colnames(soilCtotN)[2] <- 'tray.ID.TC'
 colnames(soilCorgN)
 colnames(soilCorgN)[2] <- 'tray.ID.OC'
 soilC_all <- merge(soilCtotN[,c('sample.ID', 'tray.ID.TC', 'totC.percent', 'totN.percent')], soilCorgN[ ,c('sample.ID', 'tray.ID.OC', 'orgC.percent', 'totN.percent.v2')], by='sample.ID') #W in org C samples denoted those that had not been dried at 60C first before immediately weighing !grepl('W', soilCorgN$sample.ID)
-dim(soilC_all) #221 rows
+dim(soilC_all) #299 rows
 length(unique(soilC_all$sample.ID)) #210 unique, so 11 duplicates (2 OC, 9 TC as of 11/8/18)
 soilC_all$inorgC.percent <- soilC_all$totC.percent - soilC_all$orgC.percent
 soilC_all$orgC.to.totC <- round(soilC_all$orgC.percent / soilC_all$totC.percent, 3)
@@ -64,7 +65,7 @@ summary(soilC_all$inorgC.percent)
 hist(soilC_all$orgC.to.totC)
 hist(soilC_all$orgC.to.totC[grepl('_1', soilC_all$sample.ID)])
 hist(soilC_all$orgC.to.totC[grepl('_2', soilC_all$sample.ID)])
-sum(soilC_all$inorgC.percent < 0) #6 less than 0
+sum(soilC_all$inorgC.percent < 0) #11 less than 0
 soilC_all[soilC_all$inorgC.percent < 0,]
 plot(soilC_all$totN.percent, soilC_all$totN.percent.v2)
 summary(lm(totN.percent.v2 ~ totN.percent, data = soilC_all))
@@ -143,6 +144,7 @@ tapply(soilC_0_10cm$totC.percent, soilC_0_10cm$sample.ID, length) #57_1 and 58_1
 # soilC_0_10cm[soilC_0_10cm$sample.ID=='58_1',]
 #temp fix to get rid of duplicate IDs
 # soilC_0_10cm <- soilC_0_10cm[-c(36, 39), ]
+hist(soilC_10_30cm$orgC.percent)
 hist(soilC_10_30cm$orgC.percent)
 write.csv(soilC_0_10cm, file.path(soilCDir, 'soilC_0_10cm.draft.csv'), row.names = FALSE)
 write.csv(soilC_10_30cm, file.path(soilCDir, 'soilC_10_30cm.draft.csv'), row.names = FALSE)
