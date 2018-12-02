@@ -153,6 +153,11 @@ autocorr_test_forage <- function(nsim) {
   set.seed(19801976)
   #MedianVWC_7cm_dailymeans_by_location.csv
   forage_data <- read.csv(file.path(forageDir, 'summaries', 'forage2017_2018_summary.csv'), stringsAsFactors = FALSE)
+  forage_data$Mar2017growth <- forage_data$clp031417 - forage_data$clp021517
+  forage_data$Apr2017growth <- forage_data$clp041017 - forage_data$clp031417
+  forage_data$May2017growth <- forage_data$clp050117 - forage_data$clp041017
+  forage_data$Mar2018growth <- forage_data$clp032218 - forage_data$clp021518
+  forage_data$Apr2018growth <- forage_data$clp041518 - forage_data$clp032218
   sensor_pts <- shapefile(file.path(sensor_coords, '5TM_sensor_locations_Camatta.shp'))
   names(sensor_pts)[1] <- 'location'
   coords <- sensor_pts[which(sensor_pts$location %in% forage_data$location), c('Est_10N', 'Nrt_10N')]
@@ -176,7 +181,7 @@ autocorr_test_forage <- function(nsim) {
   if (!dir.exists(file.path(forageDir, 'summaries', 'autocorrelation_test_abs'))) {
     dir.create(file.path(forageDir, 'summaries', 'autocorrelation_test_abs'))
   }
-  write.csv(results, file.path(forageDir, 'summaries', 'autocorrelation_test_abs', 'forage_autocorrtest.csv'), row.names = FALSE)
+  write.csv(results, file.path(forageDir, 'summaries', 'autocorrelation_test_abs', 'forage_autocorrtest_final.csv'), row.names = FALSE)
 }
 autocorr_test_forage(nsim=999)
 
