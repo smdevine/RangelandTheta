@@ -8,6 +8,7 @@ loadfonts()
 library(animation)
 #define data summary directory (summaries produced by soil_moisture_processing.R)
 dataDir <- 'C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location'
+DepletiondataDir <- 'C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/depletion_vwc'
 soil_temperatureData <- 'C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location/Temperature'
 spatialDir <- 'C:/Users/smdevine/Desktop/rangeland project/soilmoisture/sensor_coordinates'
 dem_fineres <- 'C:/Users/smdevine/Desktop/rangeland project/DEMs_10cm'
@@ -147,6 +148,46 @@ autocorr_test_abs('2017', 'Temperature', 'T', 'Mean', '22', 999)
 autocorr_test_abs('2018', 'Temperature', 'T', 'Mean', '7', 999)
 autocorr_test_abs('2018', 'Temperature', 'T', 'Mean', '22', 999)
 
+#autocorrelation of depletion data
+autocorr_test_depletionVWC <- function(year, depth, nsim, varname2) {
+  set.seed(19801976)
+  sensor_pts <- shapefile(file.path(spatialDir, '5TM_sensor_locations_Camatta.shp'))
+  names(sensor_pts)[1] <- 'location'
+  vwc_data <- read.csv(file.path(DepletiondataDir, paste0('depletion_vwc_', depth, 'cm_', year, '.csv')), stringsAsFactors = FALSE) #depletion_vwc_7cm_2017.csv
+  if(sum(is.na(vwc_data)) > 0) {
+    vwc_data <- vwc_data[-which(apply(vwc_data, 1, anyNA)), ]
+  } #have to remove rows for entire time frame if data missing
+  coords <- sensor_pts[which(sensor_pts$location %in% vwc_data$location), c('Est_10N', 'Nrt_10N')]
+  vwc_data_sp <- SpatialPointsDataFrame(coords=coords, proj4string = crs('+proj=utm +zone=10 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0'), data=vwc_data)
+  print(as.data.frame(vwc_data_sp))
+  #vwc_data_sp <- vwc_data_sp[-13, ]
+  #vwc_data <- vwc_data[-13, ]
+  #then, make an inverse distance weighted matrix
+  idw <- 1/pointDistance(vwc_data_sp, latlon=FALSE)  #equivalent to 1/as.matrix(dist(coordinates(vwc_data_sp))), see GEO200CN lab 14
+  diag(idw) <- 0 #set Inf back to zero
+  idw_list <- mat2listw(idw)
+  dates <- as.Date(colnames(vwc_data)[2:ncol(vwc_data)], '%b_%d_%Y')
+  dates <- format.Date(dates, '%b_%d_%Y')
+  for (i in 1:length(dates)) {
+    result <- moran.mc(vwc_data[[dates[i]]], idw_list, nsim = nsim)
+    if (i==1) {
+      results <- matrix(c(dates[i], result$statistic, result$p.value), nrow=1, ncol=3, byrow=TRUE)
+      next
+    }
+    results <- rbind(results, c(dates[i], result$statistic, result$p.value))
+  }
+  results <- as.data.frame(results)
+  colnames(results) <- c('date', 'Moran I statistic', 'p_value')
+  results$n_pts <- nrow(vwc_data)
+  if (!dir.exists(file.path(dataDir, 'autocorrelation_test_depletionvwc'))) {
+    dir.create(file.path(dataDir, 'autocorrelation_test_depletionvwc'))
+  }
+  write.csv(results, file.path(dataDir, 'autocorrelation_test_depletionvwc', paste0(year, '_', varname2, depth, 'cm_autocorrtest.csv')), row.names = FALSE)
+}
+autocorr_test_depletionVWC(2017, 7, 999, 'depletionVWC')
+autocorr_test_depletionVWC(2017, 22, 999, 'depletionVWC')
+autocorr_test_depletionVWC(2018, 7, 999, 'depletionVWC')
+autocorr_test_depletionVWC(2018, 22, 999, 'depletionVWC')
 #count up the significant days
 # test <- 'autocorrelation_test_abs'
 # varname <- 'T'
@@ -160,6 +201,10 @@ days_sig <- function(test, varname, depth, yr, start_date, end_date, p_val) {
   day_count <- sum(autocorr_result[which(autocorr_result$date==start_date):which(autocorr_result$date==end_date), 'p_value'] < p_val)
   data.frame(test, varname, yr, depth, day_count, total_days=length(which(autocorr_result$date==start_date):which(autocorr_result$date==end_date)))
 }
+yr2017_7cm_depletionVWC <- days_sig('autocorrelation_test_depletionvwc', 'depletionVWC', '7cm', '2017', 'Dec_01_2016', 'May_01_2017', 0.05)
+yr2017_22cm_depletionVWC <- days_sig('autocorrelation_test_depletionvwc', 'depletionVWC', '22cm', '2017', 'Dec_01_2016', 'May_01_2017', 0.05)
+yr2018_7cm_depletionVWC <- days_sig('autocorrelation_test_depletionvwc', 'depletionVWC', '7cm', '2018', 'Dec_01_2017', 'May_01_2018', 0.05)
+yr2018_22cm_depletionVWC <- days_sig('autocorrelation_test_depletionvwc', 'depletionVWC', '22cm', '2018', 'Dec_01_2017', 'May_01_2018', 0.05)
 yr2017_7cm_normVWC <- days_sig('autocorrelation_test_normalized', 'VWC', '7cm', '2017', 'Dec_01_2016', 'May_01_2017', 0.05)
 yr2017_22cm_normVWC <- days_sig('autocorrelation_test_normalized', 'VWC', '22cm', '2017', 'Dec_01_2016', 'May_01_2017', 0.05)
 yr2018_7cm_normVWC <- days_sig('autocorrelation_test_normalized', 'VWC', '7cm', '2018', 'Dec_01_2017', 'May_01_2018', 0.05)
@@ -172,8 +217,8 @@ yr2017_7cm_absT <- days_sig('autocorrelation_test_abs', 'T', '7cm', '2017', 'Dec
 yr2017_22cm_absT <- days_sig('autocorrelation_test_abs', 'T', '22cm', '2017', 'Dec_01_2016', 'May_01_2017', 0.05)
 yr2018_7cm_absT <- days_sig('autocorrelation_test_abs', 'T', '7cm', '2018', 'Dec_01_2017', 'May_01_2018', 0.05)
 yr2018_22cm_absT <- days_sig('autocorrelation_test_abs', 'T', '22cm', '2018', 'Dec_01_2017', 'May_01_2018', 0.05)
-autocorr_count_final <- rbind(yr2017_7cm_absT, yr2017_7cm_absVWC, yr2017_7cm_normVWC, yr2017_22cm_absT, yr2017_22cm_absVWC, yr2017_22cm_normVWC, yr2018_7cm_absT, yr2018_7cm_absVWC, yr2018_7cm_normVWC, yr2018_22cm_absT, yr2018_22cm_absVWC, yr2018_22cm_normVWC)
-write.csv(autocorr_count_final, file.path(tablesDir, 'autocorr_results.csv'), row.names = FALSE)
+autocorr_count_final <- rbind(yr2017_7cm_absT, yr2017_7cm_absVWC, yr2017_7cm_normVWC, yr2017_7cm_depletionVWC, yr2017_22cm_absT, yr2017_22cm_absVWC, yr2017_22cm_normVWC, yr2017_22cm_depletionVWC, yr2018_7cm_absT, yr2018_7cm_absVWC, yr2018_7cm_normVWC, yr2018_7cm_depletionVWC, yr2018_22cm_absT, yr2018_22cm_absVWC, yr2018_22cm_normVWC, yr2018_22cm_depletionVWC)
+write.csv(autocorr_count_final, file.path(tablesDir, 'autocorr_results_final.csv'), row.names = FALSE)
 
 #now do kriging interpolation of some of the significant ones
 read_data <- function(year, varname, stat, depth) {
