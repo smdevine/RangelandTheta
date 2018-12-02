@@ -17,7 +17,14 @@ forage_terrain_energy$May2017growth <- forage_terrain_energy$clp050117 - forage_
 forage_terrain_energy$Mar2018growth <- forage_terrain_energy$clp032218 - forage_terrain_energy$clp021518
 forage_terrain_energy$Apr2018growth <- forage_terrain_energy$clp041518 - forage_terrain_energy$clp032218
 soilT_data_7cm_2017 <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location', '2017', 'Temperature', paste0('MeanT_7cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
+soilT_2017stats <- lapply(soilT_data_7cm_2017[,2:ncol(soilT_data_7cm_2017)], function(x) max(x, na.rm = TRUE) - min(x, na.rm = TRUE))
+names(soilT_2017stats)
+mean(as.numeric(soilT_2017stats[53:102]))
+mean(as.numeric(soilT_2017stats[103:122])) #Mar 1-Mar 20
 soilT_data_7cm_2018 <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location', '2018', 'Temperature', paste0('MeanT_7cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
+soilT_2018stats <- lapply(soilT_data_7cm_2018[,2:ncol(soilT_data_7cm_2018)], function(x) max(x, na.rm = TRUE) - min(x, na.rm = TRUE))
+names(soilT_2018stats)
+mean(as.numeric(soilT_2018stats[80:89])) #Feb 16-Feb 25
 soilT_data_22cm_2017 <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location', '2017', 'Temperature', paste0('MeanT_22cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
 soilT_data_22cm_2018 <- read.csv(file.path('C:/Users/smdevine/Desktop/rangeland project/results/processed_soil_moisture/Jul2018/daily_by_location', '2018', 'Temperature', paste0('MeanT_22cm_dailymeans_by_location.csv')), stringsAsFactors = FALSE)
 depletion_vwc_2017 <- read.csv(file.path(results, 'processed_soil_moisture/Jul2018/depletion_vwc/depletion_vwc_7cm_2017.csv'), stringsAsFactors=FALSE)
