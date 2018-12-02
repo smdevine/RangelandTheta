@@ -537,7 +537,7 @@ barplot(as.matrix(days.below.50AD.summary[ ,c(2,4)]), beside = TRUE, col=c('blue
 
 tiff(file = file.path(results, 'figures', 'finals', 'days below AD', 'days.below.50percentPAW.Dec1_Apr15.tif'), family = 'Times New Roman', width = 6.5, height = 4.5, units = 'in', res=150)
 par(mar=c(3.5, 4.5, 1, 1))
-plot(x=seq(from=0.08, by=.0025, length.out = 16), days.below.AD2017, pch=1, col=forage_terrain_energy$energy_colors, xlim = c(0.05, 0.5), ylim=c(0, length(seq.Date(as.Date(date1_2018, '%b_%d_%Y'), as.Date(date2_2018, '%b_%d_%Y'), by='day'))), xaxt='n', ylab = 'days below 50% plant available water (Jan 10 - Apr 15)', xlab = '', cex=1.2, cex.axis=1, cex.lab=1)
+plot(x=seq(from=0.08, by=.0025, length.out = 16), days.below.AD2017, pch=1, col=forage_terrain_energy$energy_colors, xlim = c(0.05, 0.5), ylim=c(0, length(seq.Date(as.Date(date1_2018, '%b_%d_%Y'), as.Date(date2_2018, '%b_%d_%Y'), by='day'))), xaxt='n', ylab = 'days below 50% plant available water (Dec 1-Apr 15)', xlab = '', cex=1.2, cex.axis=1, cex.lab=1)
 points(x=seq(from=0.18, by=.0025, length.out = 16), days.below.AD2017_22, pch=1, col=forage_terrain_energy$energy_colors, cex=1.2)
 #abline(h=96, lty=1)
 abline(v=0.275, lty=2)
