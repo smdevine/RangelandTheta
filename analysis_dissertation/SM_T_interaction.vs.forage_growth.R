@@ -73,6 +73,7 @@ dev.off()
 # end_date <- 'Mar_14_2017'
 # forage_growth <- 'Mar2017growth'
 # normalizeVars <- TRUE
+# growth_name <- 'Mar 2017 growth'
 SM_T_interaction_model <- function(year, start_date, end_date, forage_growth, normalizeVars, growth_name) {
   if (year==2017) {
     dates <- which(colnames(depletion_vwc_2017)==start_date):which(colnames(depletion_vwc_2017)==end_date)
@@ -171,7 +172,7 @@ SM_T_interaction_model <- function(year, start_date, end_date, forage_growth, no
   SM_T_vs_growth_analysis[SM_T_vs_growth_analysis$depth=='0_30', 'p.value.SM'] <- c(NA, lm.0_30.depletion$coefficients[2, 4], lm.0_30.interaction$coefficients[2, 4], lm.0_30.additive$coefficients[2, 4])
   SM_T_vs_growth_analysis[SM_T_vs_growth_analysis$depth=='0_15', 'slope.T'] <- c(lm.7.soilT$coefficients[2, 1], NA, lm.7.interaction$coefficients[3, 1], lm.7.additive$coefficients[3, 1])
   SM_T_vs_growth_analysis[SM_T_vs_growth_analysis$depth=='15_30', 'slope.T'] <- c(lm.22.soilT$coefficients[2, 1], NA, lm.22.interaction$coefficients[3, 1], lm.22.additive$coefficients[3, 1])
-  SM_T_vs_growth_analysis[SM_T_vs_growth_analysis$depth=='0_30', 'slope.T'] <- c(lm.0_30.soilT$coefficients[2, 1], NA, lm.0_30.interaction$coefficients[3, 1], lm.0_30.interaction$coefficients[3, 1])
+  SM_T_vs_growth_analysis[SM_T_vs_growth_analysis$depth=='0_30', 'slope.T'] <- c(lm.0_30.soilT$coefficients[2, 1], NA, lm.0_30.interaction$coefficients[3, 1], lm.0_30.additive$coefficients[3, 1]) #fixed mistake here on 2/6/19 where slope for additive model T coeff was referenced to interactive model result
   SM_T_vs_growth_analysis[SM_T_vs_growth_analysis$depth=='0_15', 'p.value.T'] <- c(lm.7.soilT$coefficients[2, 4], NA, lm.7.interaction$coefficients[3, 4], lm.7.additive$coefficients[3, 4])
   SM_T_vs_growth_analysis[SM_T_vs_growth_analysis$depth=='15_30', 'p.value.T'] <- c(lm.22.soilT$coefficients[2, 4], NA, lm.22.interaction$coefficients[3, 4], lm.22.additive$coefficients[3, 4])
   SM_T_vs_growth_analysis[SM_T_vs_growth_analysis$depth=='0_30', 'p.value.T'] <- c(lm.0_30.soilT$coefficients[2, 4], NA, lm.0_30.interaction$coefficients[3, 4], lm.0_30.additive$coefficients[3, 4])
