@@ -68,16 +68,20 @@ plot(may_pts, pch=17, col='orange', add=T)
 plot(forage_summary_sp, pch=17, col='black', add=T)
 
 feb_coords <- data.frame(feb_pts)
+feb_coords <- feb_coords[order(feb_coords$Comment),]
 mar_coords <- data.frame(mar_pts)
+mar_coords <- mar_coords[order(mar_coords$Comment),]
 apr_coords <- data.frame(apr_pts)
+apr_coords <- apr_coords[order(apr_coords$Comment),]
 may_coords <- data.frame(may_pts)
-cbind(feb_coords$Comment, mar_coords$Comment, apr_coords$Comment, may_coords$Comment)
-
-#check the order of each data.frame
+may_coords$Comment[may_coords$Comment=='A3'] <- 'A03'
+may_coords <- may_coords[order(may_coords$Comment),]
+cbind(feb_coords$Comment, mar_coords$Comment, apr_coords$Comment, may_coords$Comment) #check the order of each data.frame; looks good now 12/3/18
 Nrt_10N <- rowMeans(cbind(feb_coords$coords.x2, mar_coords$coords.x2, apr_coords$coords.x2, may_coords$coords.x2))
 Est_10N <- rowMeans(cbind(feb_coords$coords.x1, mar_coords$coords.x1, apr_coords$coords.x1, may_coords$coords.x1))
 avg_coords <- data.frame(location=feb_coords$Comment, Nrt_10N=Nrt_10N, Est_10N=Est_10N)
 waypoint_forage <- merge(waypoint_forage, avg_coords, by='location')
+colnames(waypoint_forage)
 colnames(waypoint_forage)[2:5] <- c("clp021517", "clp031417", "clp041017", "clp050117")
 waypoint_coords <- waypoint_forage[ ,c('Est_10N', 'Nrt_10N')]
 waypoint_forage <- waypoint_forage[ ,-6:-7] #get rid of coordinates
