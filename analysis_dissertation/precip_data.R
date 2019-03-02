@@ -22,9 +22,9 @@ precip_summary
 precip_summary_GS <- precip_summary[ ,c('Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr')]
 precip_summary_GS$TOTAL <- apply(precip_summary_GS, 1, sum)
 precip_summary_GS
-tiff(file = file.path(results, 'figures', 'finals', 'precip_summary',  'WY2017_2018_precip_11.21.18.tif'), family = 'Times New Roman', pointsize = 11, width = 6.5, height = 4.5, units = 'in', res=150)
+tiff(file = file.path(results, 'figures', 'finals', 'precip_summary',  'WY2017_2018_precip_02.28.19.tif'), family = 'Times New Roman', pointsize = 11, width = 6.5, height = 4.5, units = 'in', res=150)
 par(mar=c(3, 5, 1, 1))
-barplot(as.matrix(precip_summary_GS), beside = TRUE, col=c('blue', 'red3'), ylab = 'Precipitation (mm)', legend.text = c('WY2017 (wet)', 'WY2018 (dry)'), cex.axis = 1, cex.names = 1, cex.lab = 1, args.legend = list(x="topleft", inset=0.1, cex=1))
+barplot(as.matrix(precip_summary_GS), beside = TRUE, col=c('blue', 'red3'), ylab = 'Precipitation (mm)', legend.text = c('2016-17 (wet)', '2017-18 (dry)'), cex.axis = 1, cex.names = 1, cex.lab = 1, args.legend = list(x="topleft", inset=0.1, cex=1))
 dev.off()
 
 #working with old precip_file
@@ -40,6 +40,18 @@ precip_summary <- precip_summary[ ,c('Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', '
 precip_summary$Oct[1] <- precip_summary$Oct[1] + Oct_15_16_2016
 precip_summary$TOTAL <- apply(precip_summary, 1, sum)
 precip_summary
+
+#producing a cumulative precipitation vector
+precip_data_2017 <- precip_data[precip_data$WY==2017,]
+precip_data_2017$Rainfall.mm.cumulative <- cumsum(precip_data_2017$Rainfall..mm.)
+precip_data_2018  <- precip_data[precip_data$WY==2018,]
+precip_data_2018$Rainfall.mm.cumulative <- cumsum(precip_data_2018$Rainfall..mm.)
+as.Date('2017-05-01') - as.Date('2017-02-05')
+#Time difference of 85 days + 1
+as.Date('2017-04-15') - as.Date('2017-02-05')
+nrow(precip_data_2017[102:nrow(precip_data_2017),])
+nrow(precip_data_2018[128:197,])
+
 tiff(file = file.path(results, 'figures', 'finals', 'precip_summary',  'WY2017_2018_precip.tif'), family = 'Times New Roman', pointsize = 11, width = 6.5, height = 4.5, units = 'in', res=150)
 par(mar=c(3, 5, 1, 1))
 barplot(as.matrix(precip_summary), beside = TRUE, col=c('blue', 'red3'), ylab = 'Precipitation (mm)', legend.text = c('WY2017 (wet)', 'WY2018 (dry)'), cex.axis = 1, cex.names = 1, cex.lab = 1, args.legend = list(x="topleft", inset=0.1, cex=1))
@@ -62,6 +74,7 @@ tapply(PRISM_precip$tmean..degrees.F.[PRISM_precip$Year %in% 1980:2010], PRISM_p
 (46.16452 - 32) * (5/9)
 (74.22258 - 32) * (5/9)
 WY_summary <- data.frame(year=unique(PRISM_precip$WY), precip_WY_mm=as.numeric(tapply(PRISM_precip$ppt..inches., PRISM_precip$WY, function(x) sum(x) * 25.4)))
+WY_summary$precip_WY_mm[WY_summary$year==2017] #527
 mean(WY_summary$precip_WY_mm[WY_summary$year %in% 2001:2018])
 mean(WY_summary$precip_WY_mm[WY_summary$year %in% 1980:2010])
 plot(WY_summary$year[-c(1,nrow(WY_summary))], WY_summary$precip_WY_mm[-c(1,nrow(WY_summary))], type = 'b')
