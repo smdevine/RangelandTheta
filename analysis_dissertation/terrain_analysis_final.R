@@ -361,9 +361,10 @@ forage_terrain_energy$elevation_cex_v2 <- seq(from=0.5, to=2.75, length.out = 16
 forage_terrain_energy$aspect_cex_v2 <- seq(from=0.5, to=2.75, length.out = 16)[rank(forage_terrain_energy$annual_kwh.m2)]
 #forage_terrain_energy$slope_cex <- ifelse(forage_terrain_energy$slope < summary(forage_terrain_energy$slope)[2], 2.5, ifelse(forage_terrain_energy$slope > summary(forage_terrain_energy$slope)[2] & forage_terrain_energy$slope < summary(forage_terrain_energy$slope)[3], 1.75, ifelse(forage_terrain_energy$slope > summary(forage_terrain_energy$slope)[3] & forage_terrain_energy$slope < summary(forage_terrain_energy$slope)[5], 1.25, 0.75))) #4 classes
 
+#plot depends on precip_data.R
 #make a temporal plot of forage growth
-tiff(file = file.path(results, 'figures', 'finals', 'forage_vs_terrain', 'forage_vs_terrain_detail_v2.tif'), family = 'Times New Roman', width = 6.5, height = 4.5, pointsize = 11, units = 'in', res=150)
-par(mar=c(3, 4.5, 1, 1))
+tiff(file = file.path(results, 'figures', 'finals', 'forage_vs_terrain', 'forage_vs_terrain_detail_fig2.3.tif'), family = 'Times New Roman', width = 6.5, height = 4.5, pointsize = 11, units = 'in', res=150)
+par(mar=c(3, 4.5, 1, 4.5))
 plot(x=rep(0.25,16), forage_terrain_energy$clp021517, type = 'p', col=forage_terrain_energy$energy_colors, pch=1, ylim=c(0, 4600), xlim=c(0,5), xaxt='n', xlab='', ylab=expression(paste('standing forage (kg', ' ', ha^-1, ')')), cex.axis=1, cex.lab=1, cex=1.2) #cex=forage_terrain_energy$curvature_cex_v2
 points(x=rep(1,16), forage_terrain_energy$clp031417, col=forage_terrain_energy$energy_colors, pch=1, cex=1.2) #cex=forage_terrain_energy$slope_cex_v2
 points(x=rep(1.75,16), forage_terrain_energy$clp041017, col=forage_terrain_energy$energy_colors, pch=1, cex=1.2) #cex=forage_terrain_energy$elevation_cex_v2) this is non-significant but notable
@@ -372,6 +373,8 @@ abline(v=2.875, lty=2)
 points(x=rep(3.25,16), forage_terrain_energy$clp021518, col=forage_terrain_energy$energy_colors, pch=1, cex=1.2)# cex=forage_terrain_energy$curvature_cex_v2)
 points(x=rep(4,16), forage_terrain_energy$clp032218, col=forage_terrain_energy$energy_colors, pch=1, cex=1.2) #cex=forage_terrain_energy$aspect_cex_v2) non-significant
 points(x=rep(4.75,16), forage_terrain_energy$clp041518, col=forage_terrain_energy$energy_colors, pch=1, cex=1.2)# cex=forage_terrain_energy$slope_cex_v2)
+lines(x=seq(from=-0.2, to=2.5, length.out = 85), y=10*287/303.276*c(precip_data_2017$Rainfall.mm.cumulative[102:nrow(precip_data_2017)], rep(precip_data_2017$Rainfall.mm.cumulative[nrow(precip_data_2017)], 10)))
+lines(x=seq(from=2.875, to=4.75, length.out = 70), y=10*123/136*precip_data_2018$Rainfall.mm.cumulative[128:197])
 #text(x=0.25, y= 2500, label = 'mean curvature', srt = 90, cex=1.1)
 #text(x=1, y= 3300, label = 'aspect & slope', srt = 90, cex = 1.1)
 #text(x=1.75, y= 500, label = 'NS', srt = 90, cex = 1.1)
@@ -379,10 +382,12 @@ points(x=rep(4.75,16), forage_terrain_energy$clp041518, col=forage_terrain_energ
 #text(x=3.25, y = 1300, label = 'mean curvature', srt=90, cex = 1.1)
 #text(x=4, y = 1600, label = 'non-linear aspect', srt=90, cex=1.1)
 #text(x=4.75, y=2600, label='slope & non-linear aspect', srt=90, cex = 1.1)
-axis(side = 1, at = c(0.25, 1, 1.75, 2.5, 3.25, 4, 4.75), labels = c('Feb 15', 'Mar 22', 'Apr 10', 'May 1', 'Feb 15', 'Mar 22', 'Apr 15'), cex=1)
+axis(side = 1, at = c(0.25, 1, 1.75, 2.5, 3.25, 4, 4.75), labels = c('Feb 15', 'Mar 14', 'Apr 10', 'May 1', 'Feb 15', 'Mar 22', 'Apr 15'), cex=1)
+axis(side = 4, at = c(0, 1000, 2000, 3000), labels = c('0', '100', '200', '300'))
+mtext("cumulative precipitation (mm)", side=4, line=2.5, at=1500)
 legend('topright', legend=(c("< 1200", '1200-1410', '>1410')), pch=1, pt.cex = 1.2, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^-2)), inset=0.01, cex = 1)
-text(x=0.375, y=4400, label='wet year', cex=1)
-text(x=3.375, y=4400, label='dry year', cex=1)
+text(x=0.375, y=4400, label='wet 2016-17', cex=1)
+text(x=3.375, y=4400, label='dry 2017-18', cex=1)
 dev.off()
 
 #2017 vs. 2018 relationship
