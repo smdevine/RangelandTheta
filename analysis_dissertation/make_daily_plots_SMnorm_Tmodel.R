@@ -359,9 +359,10 @@ forage_terrain_energy$energy_colors <- ifelse(forage_terrain_energy$annual_kwh.m
 forage_terrain_energy[order(forage_terrain_energy$annual_kwh.m2) ,c('location', 'annual_kwh.m2', 'aspect_class', 'aspect_class_sp', 'energy_colors')]
 #old def
 #forage_terrain_energy$energy_colors <- ifelse(forage_terrain_energy$annual_kwh.m2 < summary(forage_terrain_energy$annual_kwh.m2)[2], 'blue', ifelse(forage_terrain_energy$annual_kwh.m2 > summary(forage_terrain_energy$annual_kwh.m2)[2] & forage_terrain_energy$annual_kwh.m2 < summary(forage_terrain_energy$annual_kwh.m2)[5], 'orange2', 'red3'))
+
 ######
 #7cm VWC depletion
-tiff(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', 'aspect scheme', '7 cm plots', paste0('WY2017.SM.7cm.WP.2xFD.tif')), family = 'Times New Roman', pointsize = 11, width = 9, height = 3, units = 'in', res=150)
+tiff(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', 'aspect scheme', '7 cm plots', paste0('WY2017.SM.7cm.WP.2xFD_3.1.19.tif')), family = 'Times New Roman', pointsize = 11, width = 9, height = 3, units = 'in', res=150)
 par(mar=c(2.25, 4.5, 0.5, 4.5))
 for (i in 1:16) {
   if (i == 1) {
@@ -380,7 +381,7 @@ text(x=as.Date('2016/12/07'), y= -0.1, label='wilting point', cex=1)
 #text(x=as.Date('2016/12/15'), y=1.4, label='WY2017', cex = 1)
 axis(side = 4, at = c(0, 0.15, 0.3, 0.45, 0.6), labels = c('0', '10', '20', '30', '40'))
 mtext("precipitation per day (mm)", side=4, line=2.5, at=0.2)
-lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 0.015, type='s', col='lightblue', cex=0.5)
+lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 0.015, type='s', col='black', cex=0.5)
 dev.off()
 
 #7 cm soil T 2017
@@ -400,7 +401,7 @@ legend('topleft', legend=(c("< 1200", '1200-1410', '>1410')), lty=1, col=c('blue
 dev.off()
 
 #now 2018 7 cm
-tiff(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', 'aspect scheme', '7 cm plots', paste0('WY2018.SM.7cm.WP2xFD.tif')), family = 'Times New Roman', pointsize = 11, width = 9, height = 3, units = 'in', res=150)
+tiff(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', 'aspect scheme', '7 cm plots', paste0('WY2018.SM.7cm.WP2xFD.3.1.19.tif')), family = 'Times New Roman', pointsize = 11, width = 9, height = 3, units = 'in', res=150)
 par(mar=c(2.25, 4.5, 0.5, 4.5))
 for (i in 1:16) {
   if (i == 1) {
@@ -418,7 +419,7 @@ text(x=as.Date('2017/12/15'), y= -0.1, label='wilting point', cex=1)
 #text(x=as.Date('2017/12/15'), y=1.4, label='WY2018', cex = 1)
 axis(side = 4, at = c(0, 0.15, 0.3, 0.45, 0.6), labels = c('0', '10', '20', '30', '40'))
 mtext("precipitation per day (mm)", side=4, line=2.5, at=0.2)
-lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 0.015, type='s', col='lightblue', cex=0.5)
+lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 0.015, type='s', col='black', cex=0.5)
 dev.off()
 
 #7 cm soil T 2018
@@ -440,7 +441,7 @@ dev.off()
 
 #now 22 cm graphs
 #2017
-tiff(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', 'aspect scheme', '22 cm plots', paste0('WY2017.SM.22cm.WP1.35xFD.tif')), family = 'Times New Roman', pointsize = 11, width = 9, height = 3, units = 'in', res=150)
+tiff(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', 'aspect scheme', '22 cm plots', paste0('WY2017.SM.22cm.WP1.35xFD.3.1.19.tif')), family = 'Times New Roman', pointsize = 11, width = 9, height = 3, units = 'in', res=150)
 par(mar=c(2.25, 4.5, 0.5, 4.5))
 for (i in 1:16) {
   if (i == 1) {
@@ -458,11 +459,11 @@ text(x=as.Date('2017/4/25'), y= -0.1, label='wilting point', cex=1)
 #text(x=as.Date('2016/12/15'), y=1.4, label='WY2017', cex = 1)
 axis(side = 4, at = c(0, 0.15, 0.3, 0.45, 0.6), labels = c('0', '10', '20', '30', '40'))
 mtext("precipitation per day (mm)", side=4, line=2.5, at=0.2)
-lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 0.015, type='s', col='lightblue', cex=0.5)
+lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 0.015, type='s', col='black', cex=0.5)
 dev.off()
 
 #now 2018 22 cm
-tiff(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', 'aspect scheme', '22 cm plots', paste0('WY2018.SM.22cm.WP1.35xFD.tif')), family = 'Times New Roman', pointsize = 11, width = 9, height = 3, units = 'in', res=150)
+tiff(file = file.path(resultsFigures, 'finals', 'SM_T_effects_visualizations', 'aspect scheme', '22 cm plots', paste0('WY2018.SM.22cm.WP1.35xFD.3.1.19.tif')), family = 'Times New Roman', pointsize = 11, width = 9, height = 3, units = 'in', res=150)
 par(mar=c(2.25, 4.5, 0.5, 4.5))
 for (i in 1:16) {
   if (i == 1) {
@@ -480,7 +481,7 @@ text(x=as.Date('2017/12/15'), y= -0.1, label='wilting point', cex=1.1)
 #text(x=as.Date('2017/12/15'), y=1.4, label='WY2018', cex = 1.5)
 axis(side = 4, at = c(0, 0.15, 0.3, 0.45, 0.6), labels = c('0', '10', '20', '30', '40'))
 mtext("precipitation per day (mm)", side=4, line=2.5, at=0.2)
-lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 0.015, type='s', col='lightblue', cex=0.5)
+lines(as.Date(precip_data$Date, '%m/%d/%Y'), precip_data$Rainfall..mm. * 0.015, type='s', col='black', cex=0.5)
 dev.off()
 
 #22 cm soil T 2018
@@ -534,7 +535,7 @@ days.below.50AD.summary
 write.csv(days.below.50AD.summary, file.path(results, 'tables', 'days.below50percentPAW.Jan10.Apr15.csv'), row.names = FALSE)
 barplot(as.matrix(days.below.50AD.summary[ ,c(2,4)]), beside = TRUE, col=c('blue', 'red3'), ylab='Days below 50% plant available water', names.arg = c('0-15 cm', '15-30 cm'), legend.text = c('WY2017 (wet)', 'WY2018 (dry)'), cex.axis = 1.3, cex.names = 1.3, cex.lab = 1.3, args.legend = list(x="topleft", inset=0.005, cex=1.4))
 
-
+#v1
 tiff(file = file.path(results, 'figures', 'finals', 'days below AD', 'days.below.50percentPAW.Dec1_Apr15.tif'), family = 'Times New Roman', width = 6.5, height = 4.5, units = 'in', res=150)
 par(mar=c(3.5, 4.5, 1, 1))
 plot(x=seq(from=0.08, by=.0025, length.out = 16), days.below.AD2017, pch=1, col=forage_terrain_energy$energy_colors, xlim = c(0.05, 0.5), ylim=c(0, length(seq.Date(as.Date(date1_2018, '%b_%d_%Y'), as.Date(date2_2018, '%b_%d_%Y'), by='day'))), xaxt='n', ylab = 'days below 50% plant available water (Dec 1-Apr 15)', xlab = '', cex=1.2, cex.axis=1, cex.lab=1)
@@ -548,6 +549,19 @@ mtext(text = c('WY2017', 'WY2018'), side = 1, at=c(0.15, 0.4), line=2.5, cex=1)
 mtext(text = c('0-15 cm', '15-30 cm', '0-15 cm', '15-30 cm'), side = 1, at = c(0.1, 0.2, 0.35, 0.45), line=1, cex = 1)
 legend('topleft', legend=(c("< 1200", '1200-1410', '>1410')), pch = 1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^-2)), inset=0.1, pt.cex = 1.2)
 dev.off()
+
+#v2
+#test <- boxplot(days.below.AD2017, days.below.AD2017_22, days.below.AD2018, days.below.AD2018_22, ylim=c(0, length(seq.Date(as.Date(date1_2018, '%b_%d_%Y'), as.Date(date2_2018, '%b_%d_%Y'), by='day'))), xaxt='n', ylab = 'days below 50% plant available water (Dec 1-Apr 15)', xlab = '', cex=1, cex.axis=1, cex.lab=1)
+tiff(file = file.path(results, 'figures', 'finals', 'days below AD', 'days.below.50percentPAW.Dec1_Apr15_BPversion.tif'), family = 'Times New Roman', width = 6.5, height = 4.5, units = 'in', res=150)
+par(mar=c(3.5, 4.5, 1, 1))
+boxplot(days.below.AD2017, days.below.AD2017_22, days.below.AD2018, days.below.AD2018_22, ylim=c(0, length(seq.Date(as.Date(date1_2018, '%b_%d_%Y'), as.Date(date2_2018, '%b_%d_%Y'), by='day'))), xaxt='n', ylab = 'days below 50% plant available water (Dec 1-Apr 15)', xlab = '', pars = list(boxwex=0.6, staplewex=0.4, outwex=0.4))
+abline(v=2.5, lty=2)
+axis(side = 1, at = c(1, 2, 3, 4), labels = FALSE, tick = TRUE)
+mtext(text = c('2016-17 growing season', '2017-18 growing season'), side = 1, at=c(1.5, 3.5), line=2.5, cex=1)
+mtext(text = c('0-15 cm', '15-30 cm', '0-15 cm', '15-30 cm'), side = 1, at = c(1, 2, 3, 4), line=1, cex = 1)
+#legend('topleft', legend=(c("< 1200", '1200-1410', '>1410')), pch = 1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^-2)), inset=0.1, pt.cex = 1.2)
+dev.off()
+
 
 plot(days.below.AD2017, forage_terrain_energy$Apr2017growth)
 summary(lm(forage_terrain_energy$Apr2017growth ~ days.below.AD2017)) #explains 45% of variance in Mar 14 - Apr 10 growth
