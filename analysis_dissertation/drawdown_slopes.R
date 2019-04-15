@@ -92,13 +92,16 @@ tiff(file = file.path(results, 'figures', 'finals', 'SM_T_effects_visualizations
 par(mar=c(4, 4, 0.5, 0.5))
 plot(avgsoilT_2017[-13], forage_terrain_energy$clp031417[-13], col=forage_terrain_energy$energy_colors[-13], xlab = expression(paste('Dec 1, 2016 - Mar 15, 2017, mean 7 cm soil temperature ('*degree*'C)')), ylab = expression('Mar 14, 2017 standing forage (kg '~~ha^-1*')'), pch=19, cex=1.3, cex.axis=1, cex.lab=1, mgp=c(2.5, 1, 0))
 abline(lm(forage_terrain_energy$clp031417[-13] ~ avgsoilT_2017[-13]), lty=2)
-legend('topleft', legend=(c("< 1200", '1200-1410', '>1410')), pch = 19, col=c('blue', 'orange2', 'red3'), pt.cex = 1.3, title = expression(paste('annual kWh ', m^2)), inset=0.01, cex = 1)
-text(x=8.9, y=2600, label='linear model results', cex=1, adj=c(0,0))
-text(x=8.9, y=2450, label=expression(r^2~'= 0.61, p.val < 0.001'), cex = 1, adj = c(0, 0))
-text(x=8.9, y=2300, label=expression('slope = 360 \u00B1 81 kg forage'~ha^-1~degree*C^-1), adj = c(0, 0), cex = 1)
-text(x=8.9, y=2150, label=expression('RMSE = 326 kg forage'~ha^-1), cex = 1, adj = c(0, 0))
+legend('topleft', legend=(c("< 1200", '1200-1410', '>1410')), pch = 19, col=c('blue', 'orange2', 'red3'), pt.cex = 1.3, title = expression(paste('annual kWh ', m^-2)), inset=0.01, cex = 1)
+text(x=8.95, y=2600, label='linear model results', cex=1, adj=c(0,0))
+text(x=8.95, y=2450, label=expression(R^2~'= 0.61, p value < 0.001'), cex = 1, adj = c(0, 0))
+text(x=8.95, y=2300, label=expression('slope = 360 \u00B1 81 kg forage'~ha^-1~degree*C^-1), adj = c(0, 0), cex = 1)
+text(x=8.95, y=2125, label=expression('RMSE = 326 kg forage'~ha^-1), cex = 1, adj = c(0, 0))
+text(x=11, y=1000, label='a', adj=c(0, 0))
 #text(avgsoilT_2017[-13], forage_terrain_energy$clp031417[-13], col=forage_terrain_energy$energy_colors[-13], pos = 1, offset = 0.5, labels = forage_terrain_energy$location[-13])
 dev.off()
+summary(lm(forage_terrain_energy$clp031417[-13] ~ avgsoilT_2017[-13])) #verified matches plot on 3/22/19
+
 #check energy classification
 forage_terrain_energy[order(forage_terrain_energy$annual_kwh.m2), c('location', 'annual_kwh.m2')]
 
@@ -124,7 +127,8 @@ plot(avgsoilT_2017[], forage_terrain_energy$clp041017[], col=forage_terrain_ener
 abline(lm(forage_terrain_energy$clp041017[] ~ avgsoilT_2017[]), lty=2)
 #legend('topleft', legend=(c("< 1254", '1254-1458', '>1458')), pch = 19, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), inset=0.01, cex = 1.1)
 text(x=9.1, y=4400, label='19 days later', cex=1, adj=c(0,0))
-text(x=9.1, y=4200, label='linear relationship non-significant (p = 0.70)', cex = 1, adj=c(0,0))
+text(x=9.1, y=4200, label='linear relationship non-significant (p value = 0.70)', cex = 1, adj=c(0,0))
+text(x=12.25, y=1500, label='b', adj=c(0,0))
 #text(x=7.9, y=2200, label=expression(paste(r^2, ' = 0.61')), cex = 1.1, adj = c(0, 0))
 #text(x=7.9, y=2100, label=expression(paste('RMSE = 326 kg ', ha^-1)), cex = 1.1, adj = c(0, 0))
 #text(x=7.9, y=2000, label=expression(paste('wet year mid-March standing forage (kg ', ha^-1, ') =' ~degree*'C * 360 - 1911')), adj = c(0, 0), cex = 1.1)
@@ -181,15 +185,19 @@ plot(avgsoilT_2018, forage_terrain_energy$clp032218, col=forage_terrain_energy$e
 abline(lm(forage_terrain_energy$clp032218[] ~ avgsoilT_2018[]), lty=2)
 curve(nlm_2018(x, 'clp032218'), from=min(avgsoilT_2018), to=max(avgsoilT_2018), lty=2, add=TRUE)
 legend(x=9.5, y=500, legend=(c("< 1200", '1200-1410', '>1410')), pch = 19, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), inset=0.01, pt.cex = 1.3, cex = 1)
-text(x=8.1, y=225, label='linear model results', cex = 1, adj = c(0, 0))
-text(x=8.1, y=150, label=expression(paste(r^2, ' = 0.25, p.val = 0.048')), cex = 1, adj = c(0, 0))
+text(x=8.0, y=225, label='linear model results', cex = 1, adj = c(0, 0))
+text(x=8.1, y=150, label=expression(paste(R^2, ' = 0.25, p value = 0.048')), cex = 1, adj = c(0, 0))
 text(x=8.1, y=75, label=expression(paste('RMSE = 226 kg ', ha^-1)), cex = 1, adj = c(0, 0))
-text(x=11, y=225, label='non-linear model results', cex = 1, adj = c(0, 0))
-text(x=11, y=150, label=expression(paste(r^2, ' = 0.46, p.val = 0.018')), cex = 1, adj = c(0, 0))
-text(x=11, y=75, label=expression(paste('RMSE = 198 kg ', ha^-1)), cex = 1, adj = c(0, 0))
+text(x=11.15, y=225, label='non-linear model results', cex = 1, adj = c(0, 0))
+text(x=11.25, y=150, label=expression(paste(R^2, ' = 0.46, p value = 0.018')), cex = 1, adj = c(0, 0))
+text(x=11.25, y=75, label=expression(paste('RMSE = 199 kg ', ha^-1)), cex = 1, adj = c(0, 0))
+text(x=14, y=800, label='a', adj=c(0,0))
 #text(x=7.9, y=130, label=expression(paste('dry year mid-March standing forage (kg ', ha^-1, ') = deg C * -57 + 1181')), adj = c(0, 0), cex = 1.2)
 #text(avgsoilT_2018[], forage_terrain_energy$clp032218[], col=forage_terrain_energy$energy_colors[], pos = 1, offset = 0.5, labels = forage_terrain_energy$location[])
 dev.off()
+summary(lm(forage_terrain_energy$clp032218 ~ avgsoilT_2018))
+summary(lm(forage_terrain_energy$clp032218[] ~ avgsoilT_2018[] + I(avgsoilT_2018[]^2)))
+#verified both summary lm's match plot on 3/22/19
 
 #overall relationship between Apr forage 2018 and soil T
 avgsoilT_dates_2018 <- which(colnames(soilT_7cm_2018)=='Dec_01_2017'):which(colnames(soilT_7cm_2018)=='Apr_15_2018') #because location 13 lost on Mar 10th
@@ -212,13 +220,16 @@ plot(avgsoilT_2018[], forage_terrain_energy$clp041518[], col=forage_terrain_ener
 #abline(lm(forage_terrain_energy$clp041518[] ~ avgsoilT_2018[]), lty=2)
 curve(nlm_2018(x, 'clp041518'), from=min(avgsoilT_2018), to=max(avgsoilT_2018), lty=2, add = TRUE)
 #legend('topleft', legend=(c("< 1254", '1254-1458', '>1458')), pch = 19, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^2)), inset=0.01, cex = 1.1)
-text(x=9.3, y=1500, label='24 days later', cex=1, adj = c(0, 0))
+text(x=9.3, y=1490, label='24 days later', cex=1, adj = c(0, 0))
 text(x=9.3, y=1425, label='non-linear model results', cex = 1, adj = c(0, 0))
-text(x=9.3, y=1350, label=expression(paste(r^2, ' = 0.57, p.val = 0.004')), cex = 1, adj = c(0, 0))
-text(x=9.3, y=1275, label=expression(paste('RMSE = 245 kg ', ha^-1)), cex = 1, adj = c(0, 0))
+text(x=9.3, y=1350, label=expression(paste(R^2, ' = 0.59, p value = 0.003')), cex = 1, adj = c(0, 0))
+text(x=9.3, y=1275, label=expression(paste('RMSE = 242 kg ', ha^-1)), cex = 1, adj = c(0, 0))
+text(x=15, y=1400, label='b', adj=c(0,0))
 #text(x=7.9, y=130, label=expression(paste('dry year mid-March standing forage (kg ', ha^-1, ') = deg C * -57 + 1181')), adj = c(0, 0), cex = 1.2)
 #text(avgsoilT_2018[], forage_terrain_energy$clp041518[], col=forage_terrain_energy$energy_colors[], pos = 1, offset = 0.5, labels = forage_terrain_energy$location[])
 dev.off()
+summary(lm(forage_terrain_energy$clp041518[] ~ avgsoilT_2018[] + I(avgsoilT_2018[]^2))) #verified matches plot text on 3/22/19
+
 
 #plot Mar week 0 drydown
 Mar_week0 <- which(colnames(vwc_7cm_2017)=='Feb_21_2017'):which(colnames(vwc_7cm_2017)=='Feb_27_2017')
