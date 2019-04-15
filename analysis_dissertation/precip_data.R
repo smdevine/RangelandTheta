@@ -22,9 +22,21 @@ precip_summary
 precip_summary_GS <- precip_summary[ ,c('Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr')]
 precip_summary_GS$TOTAL <- apply(precip_summary_GS, 1, sum)
 precip_summary_GS
-tiff(file = file.path(results, 'figures', 'finals', 'precip_summary',  'WY2017_2018_precip_02.28.19.tif'), family = 'Times New Roman', pointsize = 11, width = 6.5, height = 4.5, units = 'in', res=150)
+
+precip_data_v2_mm <- 25.4 * precip_data_v2
+precip_error_summary <- as.data.frame(t(data.frame(WY.2017=tapply(25.4*precip_data_v2$WY.2017, precip_data_v2$Month, function(x) sd(x)), WY.2018=tapply(25.4*precip_data_v2$WY.2018, precip_data_v2$Month, function(x) sd(x))))) #there is a slight difference if you re-scale stdevs after the calc
+precip_error_summary <- precip_error_summary[,c('Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr')]
+precip_error_summary
+precip_error_summary$TOTAL <- c(24.63, 12.97) #Camatta_precip_2001_2018by.month.xlsx
+
+barcenters <- barplot(as.matrix(precip_summary_GS), beside = TRUE, col=c('blue', 'red3'), ylab = 'Precipitation (mm)', legend.text = c('2016-17 (wet)', '2017-18 (dry)'), cex.axis = 1, cex.names = 1, cex.lab = 1, args.legend = list(x="topleft", inset=0.1, cex=1))
+tiff(file = file.path(results, 'figures', 'finals', 'precip_summary',  'WY2017_2018_precip_03.4.19.tif'), family = 'Times New Roman', pointsize = 11, width = 6.5, height = 4.5, units = 'in', res=150)
 par(mar=c(3, 5, 1, 1))
-barplot(as.matrix(precip_summary_GS), beside = TRUE, col=c('blue', 'red3'), ylab = 'Precipitation (mm)', legend.text = c('2016-17 (wet)', '2017-18 (dry)'), cex.axis = 1, cex.names = 1, cex.lab = 1, args.legend = list(x="topleft", inset=0.1, cex=1))
+barplot(as.matrix(precip_summary_GS), beside = TRUE, col=c('lightblue3', 'red3'), ylab = 'Precipitation (mm)', legend.text = c('2016-17 (wet)', '2017-18 (dry)'), ylim = c(0,320), cex.axis = 1, cex.names = 1, cex.lab = 1, args.legend = list(x="topleft", inset=0.1, cex=1))
+segments(x0=barcenters[1,], y0=as.matrix(precip_summary_GS)[1,] + qnorm(0.975) * as.matrix(precip_error_summary)[1,] / sqrt(3), x1=barcenters[1,], y1=as.matrix(precip_summary_GS)[1,] + qnorm(0.025) * as.matrix(precip_error_summary)[1,] / sqrt(3), lwd = 1.2)
+segments(x0=barcenters[2,], y0=as.matrix(precip_summary_GS)[2,] + qnorm(0.975) * as.matrix(precip_error_summary)[2,] / sqrt(3), x1=barcenters[2,], y1=as.matrix(precip_summary_GS)[2,] + qnorm(0.025) * as.matrix(precip_error_summary)[2,] / sqrt(3), lwd = 1.2)
+arrows(x0=barcenters[1,], y0=as.matrix(precip_summary_GS)[1,] + qnorm(0.975) * as.matrix(precip_error_summary)[1,] / sqrt(3), x1=barcenters[1,], y1=as.matrix(precip_summary_GS)[1,] + qnorm(0.025) * as.matrix(precip_error_summary)[1,] / sqrt(3), lwd = 1.2, angle = 90, code = 3, length = 0.05)
+arrows(x0=barcenters[2,], y0=as.matrix(precip_summary_GS)[2,] + qnorm(0.975) * as.matrix(precip_error_summary)[2,] / sqrt(3), x1=barcenters[2,], y1=as.matrix(precip_summary_GS)[2,] + qnorm(0.025) * as.matrix(precip_error_summary)[2,] / sqrt(3), lwd = 1.2, angle = 90, code = 3, length = 0.05)
 dev.off()
 
 #working with old precip_file
