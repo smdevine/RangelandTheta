@@ -365,7 +365,7 @@ forage_terrain_energy$aspect_cex_v2 <- seq(from=0.5, to=2.75, length.out = 16)[r
 #make a temporal plot of forage growth
 tiff(file = file.path(results, 'figures', 'finals', 'forage_vs_terrain', 'forage_vs_terrain_detail_fig2.3.tif'), family = 'Times New Roman', width = 6.5, height = 4.5, pointsize = 11, units = 'in', res=150)
 par(mar=c(3, 4.5, 1, 4.5))
-plot(x=rep(0.25,16), forage_terrain_energy$clp021517, type = 'p', col=forage_terrain_energy$energy_colors, pch=1, ylim=c(0, 4600), xlim=c(0,5), xaxt='n', xlab='', ylab=expression(paste('standing forage (kg', ' ', ha^-1, ')')), cex.axis=1, cex.lab=1, cex=1.2) #cex=forage_terrain_energy$curvature_cex_v2
+plot(x=rep(0.25,16), forage_terrain_energy$clp021517, type = 'p', col=forage_terrain_energy$energy_colors, pch=1, ylim=c(0, 4600), xlim=c(0,5), xaxt='n', xlab='', ylab=expression(paste('Standing forage (kg', ' ', ha^-1, ')')), cex.axis=1, cex.lab=1, cex=1.2) #cex=forage_terrain_energy$curvature_cex_v2
 points(x=rep(1,16), forage_terrain_energy$clp031417, col=forage_terrain_energy$energy_colors, pch=1, cex=1.2) #cex=forage_terrain_energy$slope_cex_v2
 points(x=rep(1.75,16), forage_terrain_energy$clp041017, col=forage_terrain_energy$energy_colors, pch=1, cex=1.2) #cex=forage_terrain_energy$elevation_cex_v2) this is non-significant but notable
 points(x=rep(2.5,16), forage_terrain_energy$clp050117, col=forage_terrain_energy$energy_colors, pch=1, cex=1.2) # cex=forage_terrain_energy$elevation_cex_v2) non-significant but notable
@@ -384,7 +384,7 @@ lines(x=seq(from=2.875, to=4.75, length.out = 70), y=10*123/136*precip_data_2018
 #text(x=4.75, y=2600, label='slope & non-linear aspect', srt=90, cex = 1.1)
 axis(side = 1, at = c(0.25, 1, 1.75, 2.5, 3.25, 4, 4.75), labels = c('Feb 15', 'Mar 14', 'Apr 10', 'May 1', 'Feb 15', 'Mar 22', 'Apr 15'), cex=1)
 axis(side = 4, at = c(0, 1000, 2000, 3000), labels = c('0', '100', '200', '300'))
-mtext("cumulative precipitation (mm)", side=4, line=2.5, at=1500)
+mtext("Cumulative precipitation (mm)", side=4, line=2.5, at=1500)
 legend('topright', legend=(c("< 1200", '1200-1410', '>1410')), pch=1, pt.cex = 1.2, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^-2)), inset=0.01, cex = 1)
 text(x=0.375, y=4400, label='wet 2016-17', cex=1)
 text(x=3.375, y=4400, label='dry 2017-18', cex=1)
