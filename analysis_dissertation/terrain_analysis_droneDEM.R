@@ -49,6 +49,8 @@ stack_30cm <- stack(file.path(terrainDir, 'dem30cm.tif'), file.path(terrainDir, 
 names(stack_30cm) <- c('elevation', 'aspect', 'slope', 'roughness', 'TRI', 'TPI', 'curvature_mean', 'CTI')
 
 sensor_shp <- shapefile(file.path(sensorDir, "5TM_sensor_locations_Camatta.shp"))
+sensor_WGS84 <- spTransform(sensor_shp, CRS("+init=epsg:4326")) #this is to geo coords WGS84
+coordinates(sensor_WGS84)
 plot(sensor_shp, col='blue')
 sensor_terrain_summary <- extract(stack_30cm, sensor_shp, buffer=1.5, fun=mean)
 sensor_terrain_summary <- as.data.frame(sensor_terrain_summary)
