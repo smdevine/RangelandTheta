@@ -131,6 +131,17 @@ text(8.8, 275, 'median precipitation', adj=c(0,0))
 text(8.8, 170, '10th percentile', adj=c(0,0))
 dev.off()
 
+#make a 1980-2018 plot
+tiff(file = file.path(results, 'Fig11.tif'), family = 'Times New Roman', pointsize = 11, width = 9, height = 3, units = 'in', res=res_plots, compression = 'lzw')
+par(mar=c(2.25, 4.5, 0.5, 4.5))
+plot(WY_summary_GS$year[which(WY_summary_GS$year==1978):nrow(WY_summary_GS)], WY_summary_GS$precip_GS_mm[which(WY_summary_GS$year==1978):nrow(WY_summary_GS)], ylab = ' growing season precipitation, WY1975-WY2018 (Oct - May, mm)', xlab = 'Water year', type = 'b')
+abline(h=quantile(WY_summary_GS$precip_GS_mm[which(WY_summary_GS$year==1978):nrow(WY_summary_GS)], probs=c(0.1, 0.9)), lty=2, col='grey')
+abline(h=median(WY_summary_GS$precip_GS_mm[which(WY_summary_GS$year==1978):nrow(WY_summary_GS)]), lty=1, col='black')
+text(1988, quantile(WY_summary_GS$precip_GS_mm[which(WY_summary_GS$year==1978):nrow(WY_summary_GS)], probs=0.9), '90th percentile', pos=3, offset = 0.3)
+text(1988, median(WY_summary_GS$precip_GS_mm[which(WY_summary_GS$year==1978):nrow(WY_summary_GS)]), 'median', pos=3, offset = 0.3)
+text(1989, quantile(WY_summary_GS$precip_GS_mm[which(WY_summary_GS$year==1978):nrow(WY_summary_GS)], probs=0.1), '10th percentile', pos=3, offset = 0.3)
+dev.off()
+
 sum(WY_summary_GS$precip_GS_mm < mean(WY_summary_GS$precip_GS_mm)) / nrow(WY_summary_GS) #59% below average overall
 sum(WY_summary_GS$precip_GS_mm[WY_summary_GS$year >=1970] < mean(WY_summary_GS$precip_GS_mm)) / length(WY_summary_GS$precip_GS_mm[WY_summary_GS$year >=1970]) #59% below average
 count <- 0
