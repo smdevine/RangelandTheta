@@ -612,6 +612,8 @@ text(3.1, 0.58, '8 \u00B1 7')
 text(4.3, 0.51, '18 \u00B1 11')
 dev.off()
 
+
+
 #Figure S1
 barcenters <- barplot(as.matrix(precip_summary_GS), beside = TRUE, col=c('blue', 'red3'), ylab = 'Precipitation (mm)', legend.text = c('2016-17 (wet)', '2017-18 (dry)'), cex.axis = 1, cex.names = 1, cex.lab = 1, args.legend = list(x="topleft", inset=0.1, cex=1))
 tiff(file = file.path(results, 'FigS1.tif'), family = 'Times New Roman', pointsize = 11, width = 6.5, height = 4.5, units = 'in', res=res_plots, compression = 'lzw')
@@ -623,7 +625,25 @@ arrows(x0=barcenters[1,], y0=as.matrix(precip_summary_GS)[1,] + qnorm(0.975) * a
 arrows(x0=barcenters[2,], y0=as.matrix(precip_summary_GS)[2,] + qnorm(0.975) * as.matrix(precip_error_summary)[2,] / sqrt(3), x1=barcenters[2,], y1=as.matrix(precip_summary_GS)[2,] + qnorm(0.025) * as.matrix(precip_error_summary)[2,] / sqrt(3), lwd = 1.2, angle = 90, code = 3, length = 0.05)
 dev.off()
 
-#Figure S2
+#make a 1980-2018 plot
+tiff(file = file.path(results, 'FigS2.tif'), family = 'Times New Roman', pointsize = 11, width = 9, height = 3, units = 'in', res=res_plots, compression = 'lzw')
+par(mar=c(4.5, 4.5, 0.5, 0.5))
+plot(WY_summary_GS$year[which(WY_summary_GS$year==1975):nrow(WY_summary_GS)], WY_summary_GS$precip_GS_mm[which(WY_summary_GS$year==1975):nrow(WY_summary_GS)], ylab = '', xlab = '', type = 'b')
+mtext(text = 'Growing season precipitation (Oct - May, mm)', side = 2, line = 2.4, at=310)
+mtext(text = 'Water year', side = 1, line = 2.4, at=1995)
+abline(h=quantile(WY_summary_GS$precip_GS_mm[which(WY_summary_GS$year==1975):nrow(WY_summary_GS)], probs=0.1), lty=2, col='red3')
+abline(h=quantile(WY_summary_GS$precip_GS_mm[which(WY_summary_GS$year==1975):nrow(WY_summary_GS)], probs=0.9), lty=2, col='lightblue3')
+abline(h=median(WY_summary_GS$precip_GS_mm[which(WY_summary_GS$year==1975):nrow(WY_summary_GS)]), lty=1, col='black')
+text(1988, quantile(WY_summary_GS$precip_GS_mm[which(WY_summary_GS$year==1975):nrow(WY_summary_GS)], probs=0.9), '90th percentile', pos=3, offset = 0.3)
+text(1986, median(WY_summary_GS$precip_GS_mm[which(WY_summary_GS$year==1975):nrow(WY_summary_GS)]), 'median', pos=3, offset = 0.3)
+text(1995, quantile(WY_summary_GS$precip_GS_mm[which(WY_summary_GS$year==1975):nrow(WY_summary_GS)], probs=0.1), '10th percentile', pos=3, offset=0.3)
+arrows(x0=2016, y0=WY_summary_GS$precip_GS_mm[which(WY_summary_GS$year==2017)] + 50, x1 = 2017, y1 = WY_summary_GS$precip_GS_mm[which(WY_summary_GS$year==2017)], length=0.05)
+text(2016, WY_summary_GS$precip_GS_mm[which(WY_summary_GS$year==2017)] + 50, 'wet study yr', pos=3, offset=0.3)
+arrows(x0=2016.75, y0=WY_summary_GS$precip_GS_mm[which(WY_summary_GS$year==2018)] - 50, x1 = 2018, y1 = WY_summary_GS$precip_GS_mm[which(WY_summary_GS$year==2018)], length=0.05)
+text(2016.75, WY_summary_GS$precip_GS_mm[which(WY_summary_GS$year==2018)] - 50, 'dry study yr', pos=1, offset=0.3)
+dev.off()
+
+#Figure S3 as of 7/10/19
 library(ggplot2)
 species_comp <- read.csv('C:/Users/smdevine/Desktop/rangeland project/clip_plots/Camatta_species_comp_2017.csv', stringsAsFactors = FALSE)
 species_comp$Composition_perc <- species_comp$Composition_perc * 100
@@ -642,7 +662,7 @@ legend_labels <- species_comp[1:9,]
 legend_labels <- legend_labels[order(legend_labels$Dummy_var),]
 legend_labels <- paste(legend_labels$Genus, legend_labels$Species)
 
-tiff(file = file.path(results,'FigS2.tif'), family = 'Times New Roman', width = 7.5, height = 6.5, units = 'in', pointsize = 11, res=res_plots, compression = 'lzw')
+tiff(file = file.path(results,'FigS3.tif'), family = 'Times New Roman', width = 7.5, height = 6.5, units = 'in', pointsize = 11, res=res_plots, compression = 'lzw')
 ggplot(data=species_comp) +
   geom_col(aes(y = Composition_perc, x = Site_class, fill = as.character(Dummy_var)), position='stack') +
   labs(x = 'Landscape position', y = 'Species composition (%)') + #title= 'Species composition in 2017 by date and landscape position'
@@ -654,7 +674,7 @@ ggplot(data=species_comp) +
   theme(plot.margin = unit(c(0.1, 0.75, 0.1, 0.3), 'in'))
 dev.off()
 
-#Fig S3
+#Fig S4 now as of 7/10/19
 #set up data for plot
 #count days below AD
 date1_2017 <- 'Dec_01_2016'
@@ -673,7 +693,7 @@ days.below.AD2018_22 #missing location 3
 days.below.50AD.summary <- data.frame(WY=c(2017, 2018), depth7cm_mean=c(mean(days.below.AD2017, na.rm = TRUE), mean(days.below.AD2018, na.rm = TRUE)), depth7cm_sd=c(sd(days.below.AD2017, na.rm = TRUE), sd(days.below.AD2018, na.rm = TRUE)), depth22cm_mean=c(mean(days.below.AD2017_22, na.rm = TRUE), mean(days.below.AD2018_22, na.rm = TRUE)), depth22cm_sd=c(sd(days.below.AD2017_22, na.rm = TRUE), sd(days.below.AD2018_22, na.rm = TRUE)), depth7cm_max = c(max(days.below.AD2017, na.rm = TRUE), max(days.below.AD2018, na.rm = TRUE)), depth7cm_min=c(min(days.below.AD2017, na.rm = TRUE), min(days.below.AD2018, na.rm = TRUE)), depth22cm_max=c(max(days.below.AD2017_22, na.rm = TRUE), max(days.below.AD2018_22, na.rm = TRUE)), depth22cm_min=c(min(days.below.AD2017_22, na.rm = TRUE), min(days.below.AD2018_22, na.rm = TRUE)))
 days.below.50AD.summary
 
-tiff(file = file.path(results, 'FigS3.tif'), family = 'Times New Roman', width = 6.5, height = 4.5, units = 'in', res=res_plots, compression = 'lzw')
+tiff(file = file.path(results, 'FigS4.tif'), family = 'Times New Roman', width = 6.5, height = 4.5, units = 'in', res=res_plots, compression = 'lzw')
 par(mar=c(3.5, 4.5, 1, 1))
 boxplot(days.below.AD2017, days.below.AD2017_22, days.below.AD2018, days.below.AD2018_22, ylim=c(0, length(seq.Date(as.Date(date1_2018, '%b_%d_%Y'), as.Date(date2_2018, '%b_%d_%Y'), by='day'))), xaxt='n', ylab = 'Days below 50% plant available water (Dec 1-Apr 15)', xlab = '', pars = list(boxwex=0.6, staplewex=0.4, outwex=0.4))
 abline(v=2.5, lty=2)
@@ -683,9 +703,10 @@ mtext(text = c('0-15 cm', '15-30 cm', '0-15 cm', '15-30 cm'), side = 1, at = c(1
 #legend('topleft', legend=(c("< 1200", '1200-1410', '>1410')), pch = 1, col=c('blue', 'orange2', 'red3'), title = expression(paste('annual kWh ', m^-2)), inset=0.1, pt.cex = 1.2)
 dev.off()
 
-#Fig S4 make a plot of peak2017 vs. peak2018
+#Fig S5 now as of 7/10/19
+#makes a plot of peak2017 vs. peak2018
 forage_terrain_energy$curvature_cex <- ifelse(forage_terrain_energy$curvature_mean < -0.2, 1, ifelse(forage_terrain_energy$curvature_mean > -0.2 & forage_terrain_energy$curvature_mean < 0.2, 1.5, 2.5))
-tiff(file = file.path(results, 'FigS4.tif', sep = ''), family = 'Times New Roman', width = 6.5, height = 5.5, pointsize = 11, units = 'in', res=res_plots, compression = 'lzw')
+tiff(file = file.path(results, 'FigS5.tif', sep = ''), family = 'Times New Roman', width = 6.5, height = 5.5, pointsize = 11, units = 'in', res=res_plots, compression = 'lzw')
 par(mar=c(4.5, 4.5, 1, 1))
 plot(forage_terrain_energy$peak2017, forage_terrain_energy$peak2018, xlab=expression(paste('2017 peak forage (kg', ' ', ha^-1, ')')), ylab=expression(paste('2018 peak forage (kg', ' ', ha^-1, ')')), pch=19, cex=forage_terrain_energy$curvature_cex, ylim = c(300, 1600), xlim=c(1400, 4700), col=forage_terrain_energy$energy_colors, cex.axis=1, cex.lab=1)
 abline(h=median(forage_terrain_energy$peak2018), lty=2)
